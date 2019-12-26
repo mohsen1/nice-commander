@@ -5,14 +5,18 @@ import { buildSchema } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
 import { ConnectionOptions, createConnection } from "typeorm";
+import debug from 'debug';
 
 import { TasksResolver } from "./api/resolvers/TasksResolver";
+
+export const logger = debug('nice-commander');
 
 export const DB_CONNECTION_NAME = `NiceCommander_${Math.random().toString(36).substring(2)}`
 
 export async function getNextJsRequestHandler(assetPrefix: string) {
+  const dev = process.env.NODE_ENV !== 'production';
   const app = next({
-    dev: true,
+    dev,
     dir: path.resolve(__dirname, "ui"),
     conf: { assetPrefix }
   });
@@ -57,7 +61,7 @@ export async function getExpressMiddleware(options: Options) {
     entities: [path.resolve(__dirname, "api/models/*.ts")]
   });
 
-  console.info(`Connection ${connection.name} is created successfully.`);
+  logger(`Connection ${connection.name} is created successfully.`);
 
   // API
   const middleware = await getApolloServerMiddleware();

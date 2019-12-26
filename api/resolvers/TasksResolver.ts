@@ -17,6 +17,12 @@ export class TasksResolver {
     return this.repository.find({});
   }
 
+  /** Get a single task */
+  @Query(returns => Task)
+  async task(@Arg("id") id: string) {
+    return this.repository.findOne({ id })
+  }
+
   @Mutation(returns => Task)
   async createTask(@Arg("name") name: string) {
     const task = new Task();
