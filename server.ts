@@ -7,7 +7,15 @@ async function main() {
 
   app.get("/foo", (req, res) => res.status(200).send("OK"));
 
-  const middleware = await getExpressMiddleware();
+  const middleware = await getExpressMiddleware({
+    sqlConnectionOptions: {
+      type: "mysql",
+      host: "localhost",
+      port: 3306,
+      username: "root",
+      database: "nicecommander"
+    }
+  });
   app.use("/nice-commander", middleware);
 
   app.listen(3000);

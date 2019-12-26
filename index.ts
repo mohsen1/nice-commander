@@ -1,9 +1,12 @@
 import "reflect-metadata";
+import path from "path";
 import { Router } from "express";
 import { buildSchema } from "type-graphql";
-import { TasksResolver } from "./resolvers/TasksResolver";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
+import { ConnectionOptions, createConnection } from "typeorm";
+
+import { TasksResolver } from "./resolvers/TasksResolver";
 
 export async function getNextJsRequestHandler() {
   const app = next({ dev: true });
@@ -20,6 +23,10 @@ export async function getApolloServerMiddleware() {
   return server.getMiddleware({ path: "/graphql" });
 }
 
+export interface Options {
+  sqlConnectionOptions: ConnectionOptions;
+}
+
 /**
  * Get express middleware to be mounted in your app
  *
@@ -27,8 +34,17 @@ export async function getApolloServerMiddleware() {
  *    const middleware = await getExpressMiddleware();
  *    app.use('/admin/commander', middleware);
  */
-export async function getExpressMiddleware() {
+export async function getExpressMiddleware(options: Options) {
   const router = Router();
+
+  const connection = await createConnection({
+    ...options.sqlConnectionOptions,
+    synchronize: true,
+    logging: false,
+    entities: [path.resolve(__dirname, "models/*.ts")]
+  });
+
+  console.info(`Connection ${connection.name} is created successfully.`);
 
   // API
   const middleware = await getApolloServerMiddleware();

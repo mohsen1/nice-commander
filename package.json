@@ -6,7 +6,7 @@
   "author": "Mohsen Azimi <me@azimi.me>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node src/server.ts",
+    "start": "ts-node --compiler-options '{\"module\": \"commonjs\"}' server.ts",
     "fix": "prettier --write '**/*.{ts,tsx}'"
   },
   "devDependencies": {
