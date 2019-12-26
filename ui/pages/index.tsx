@@ -14,13 +14,13 @@ const Index = () => {
 
   return (
     <>
-    <h1>Tasks:</h1>
-      {data && data.tasks.map((task: any) => (
-        <React.Fragment key={task.name}>Task: {task.name}</React.Fragment>
-      ))}
+      <h1>Tasks:</h1>
+      {data &&
+        data.tasks.map((task: any) => (
+          <React.Fragment key={task.name}>Task: {task.name}</React.Fragment>
+        ))}
     </>
   );
 };
-
 
 export default Index;

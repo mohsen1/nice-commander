@@ -6,10 +6,14 @@ import { ApolloServer } from "apollo-server-express";
 import next from "next";
 import { ConnectionOptions, createConnection } from "typeorm";
 
-import { TasksResolver } from "./resolvers/TasksResolver";
+import { TasksResolver } from "./api/resolvers/TasksResolver";
 
 export async function getNextJsRequestHandler() {
-  const app = next({ dev: true, conf: {assetPrefix: '/nice-commander/' }});
+  const app = next({
+    dev: true,
+    dir: path.resolve(__dirname, "ui"),
+    conf: { assetPrefix: "/nice-commander/" }
+  });
   const handle = app.getRequestHandler();
   await app.prepare();
   return handle;
@@ -41,7 +45,7 @@ export async function getExpressMiddleware(options: Options) {
     ...options.sqlConnectionOptions,
     synchronize: true,
     logging: false,
-    entities: [path.resolve(__dirname, "models/*.ts")]
+    entities: [path.resolve(__dirname, "api/models/*.ts")]
   });
 
   console.info(`Connection ${connection.name} is created successfully.`);
