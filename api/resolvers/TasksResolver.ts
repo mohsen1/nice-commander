@@ -2,11 +2,12 @@ import { Resolver, Query, Mutation, Arg } from "type-graphql";
 
 import { Task } from "../models/Task";
 import { getConnection } from "typeorm";
+import { DB_CONNECTION_NAME } from '../..';
 
 @Resolver(Task)
 export class TasksResolver {
   private get repository() {
-    const connection = getConnection();
+    const connection = getConnection(DB_CONNECTION_NAME);
     const taskRepository = connection.getRepository(Task);
     return taskRepository;
   }

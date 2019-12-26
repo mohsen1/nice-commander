@@ -8,6 +8,8 @@ import { ConnectionOptions, createConnection } from "typeorm";
 
 import { TasksResolver } from "./api/resolvers/TasksResolver";
 
+export const DB_CONNECTION_NAME = `NiceCommander_${Math.random().toString(36).substring(2)}`
+
 export async function getNextJsRequestHandler(assetPrefix: string) {
   const app = next({
     dev: true,
@@ -49,6 +51,7 @@ export async function getExpressMiddleware(options: Options) {
 
   const connection = await createConnection({
     ...options.sqlConnectionOptions,
+    name: DB_CONNECTION_NAME,
     synchronize: true,
     logging: false,
     entities: [path.resolve(__dirname, "api/models/*.ts")]
