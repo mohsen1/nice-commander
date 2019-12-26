@@ -35,7 +35,7 @@ export interface Options {
    * This path can be relative but prefer absolute paths
    * This is used to make URLs of static assets used in UI
    */
-  mountedPath: string;
+  mountPath: string;
   sqlConnectionOptions: ConnectionOptions;
 }
 
@@ -64,7 +64,7 @@ export async function getExpressMiddleware(options: Options) {
   router.use(middleware);
 
   // UI
-  const handler = await getNextJsRequestHandler(options.mountedPath);
+  const handler = await getNextJsRequestHandler(options.mountPath);
   router.all("*", (req, res) => handler(req, res));
 
   return router;
