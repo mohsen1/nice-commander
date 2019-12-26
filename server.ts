@@ -13,7 +13,9 @@ async function main() {
 
   app.get("/foo", (req, res) => res.status(200).send("OK"));
 
+  const mountedPath = "/nice-commander";
   const middleware = await getExpressMiddleware({
+    mountedPath,
     sqlConnectionOptions: {
       type: "mysql",
       host: "localhost",
@@ -22,7 +24,7 @@ async function main() {
       database: "nicecommander"
     }
   });
-  app.use("/nice-commander", middleware);
+  app.use(mountedPath, middleware);
 
   app.listen(3000);
 }

@@ -8,11 +8,11 @@ import { ConnectionOptions, createConnection } from "typeorm";
 
 import { TasksResolver } from "./api/resolvers/TasksResolver";
 
-export async function getNextJsRequestHandler() {
+export async function getNextJsRequestHandler(assetPrefix: string) {
   const app = next({
     dev: true,
     dir: path.resolve(__dirname, "ui"),
-    conf: { assetPrefix: "/nice-commander/" }
+    conf: { assetPrefix }
   });
   const handle = app.getRequestHandler();
   await app.prepare();
@@ -28,6 +28,12 @@ export async function getApolloServerMiddleware() {
 }
 
 export interface Options {
+  /** 
+   * At what point this middleware is mounted?
+   * This path can be relative but prefer absolute paths
+   * This is used to make URLs of static assets used in UI
+   */
+  mountedPath: string;
   sqlConnectionOptions: ConnectionOptions;
 }
 
@@ -55,7 +61,7 @@ export async function getExpressMiddleware(options: Options) {
   router.use(middleware);
 
   // UI
-  const handler = await getNextJsRequestHandler();
+  const handler = await getNextJsRequestHandler(options.mountedPath);
   router.all("*", (req, res) => handler(req, res));
 
   return router;
