@@ -4,6 +4,7 @@
     "module": "esnext",
     "lib": [
       "es2016",
+      "DOM",
       "esnext.asynciterable"
     ],
     "outDir": "./dist",

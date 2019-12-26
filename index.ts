@@ -9,7 +9,7 @@ import { ConnectionOptions, createConnection } from "typeorm";
 import { TasksResolver } from "./resolvers/TasksResolver";
 
 export async function getNextJsRequestHandler() {
-  const app = next({ dev: true });
+  const app = next({ dev: true, conf: {assetPrefix: '/nice-commander/' }});
   const handle = app.getRequestHandler();
   await app.prepare();
   return handle;
