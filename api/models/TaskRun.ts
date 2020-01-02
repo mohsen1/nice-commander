@@ -4,7 +4,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
-  ManyToOne
+  ManyToOne,
+  Double
 } from "typeorm";
 import { Task } from "./Task";
 
@@ -16,11 +17,11 @@ export class TaskRun {
   id!: string;
 
   @Field(type => Number, { description: "Start time" })
-  @Column()
+  @Column({ type: "bigint" })
   startTime!: number;
 
   @Field(type => String, { description: "Logs" })
-  @Column()
+  @Column({ default: "" })
   logs!: string;
 
   @Field(type => Task, {
@@ -31,4 +32,10 @@ export class TaskRun {
     task => task.runs
   )
   task!: Task;
+
+  @Field(type => String, {
+    description: "State of the task run"
+  })
+  @Column()
+  state!: string;
 }

@@ -7,7 +7,7 @@
 import express from "express";
 import path from "path";
 
-import { getExpressMiddleware, readTaskDefinitions } from "../../api/core";
+import NiceCommander from "../..";
 
 async function main() {
   const app = express();
@@ -15,7 +15,7 @@ async function main() {
   app.get("/foo", (req, res) => res.status(200).send("OK"));
 
   const mountPath = "/nice-commander";
-  const middleware = await getExpressMiddleware({
+  const niceCommander = new NiceCommander({
     mountPath,
     sqlConnectionOptions: {
       type: "mysql",
@@ -24,8 +24,11 @@ async function main() {
       username: "root",
       database: "nicecommander"
     },
-    taskDefinitions: readTaskDefinitions(path.resolve(__dirname, "tasks"))
+    taskDefinitions: NiceCommander.readTaskDefinitions(
+      path.resolve(__dirname, "tasks")
+    )
   });
+  const middleware = await niceCommander.getExpressMiddleware();
   app.use(mountPath, middleware);
 
   app.listen(3000);

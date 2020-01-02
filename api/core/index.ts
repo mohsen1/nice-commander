@@ -4,39 +4,13 @@ import { Router } from "express";
 import { buildSchema } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
-import { ConnectionOptions, createConnection } from "typeorm";
+import { ConnectionOptions, createConnection, Connection } from "typeorm";
 import debug from "debug";
 import fs from "fs";
 
-import { TasksResolver } from "../resolvers/TasksResolver";
-import sync from "./sync";
-import schedule from "./schedule";
-
-export const logger = debug("nice-commander");
-
-export const DB_CONNECTION_NAME = `NiceCommander_${Math.random()
-  .toString(36)
-  .substring(2)}`;
-
-export async function getNextJsRequestHandler(assetPrefix: string) {
-  const dev = process.env.NODE_ENV !== "production";
-  const app = next({
-    dev,
-    dir: path.resolve(__dirname, "../../ui"),
-    conf: { assetPrefix }
-  });
-  const handle = app.getRequestHandler();
-  await app.prepare();
-  return handle;
-}
-
-export async function getApolloServerMiddleware() {
-  const schema = await buildSchema({
-    resolvers: [TasksResolver]
-  });
-  const server = new ApolloServer({ schema });
-  return server.getMiddleware({ path: "/graphql" });
-}
+import { getTasksResolver, getTasksRunResolver } from "../resolvers";
+import { Task } from "../models/Task";
+import { TaskRun } from "../models/TaskRun";
 
 export interface TaskDefinition {
   /** Task name must be unique */
@@ -71,41 +45,163 @@ export interface Options {
   sqlConnectionOptions: ConnectionOptions;
 }
 
-/**
- * Get express middleware to be mounted in your app
- *
- *    // Note: this method is asynchronous
- *    const middleware = await getExpressMiddleware();
- *    app.use('/admin/commander', middleware);
- */
-export async function getExpressMiddleware(options: Options) {
-  const router = Router();
+export default class NiceCommander {
+  public DB_CONNECTION_NAME = `NiceCommander_${Math.random()
+    .toString(36)
+    .substring(2)}`;
+  private connectionPromise!: Promise<Connection>;
+  private logger = debug("nice-commander");
 
-  const connection = await createConnection({
-    ...options.sqlConnectionOptions,
-    name: DB_CONNECTION_NAME,
-    synchronize: true,
-    logging: false,
-    entities: [path.resolve(__dirname, "../models/*.ts")]
-  });
+  /**
+   * Read tasks definitions from a directory
+   * @param directory The path where tasks are stored at.
+   *
+   */
+  public static readTaskDefinitions(directory: string): TaskDefinition[] {
+    if (!directory.startsWith("/")) {
+      throw new Error("directory path must be absolute");
+    }
 
-  logger(`Connection ${connection.name} is created successfully.`);
+    return fs.readdirSync(directory).map(file => {
+      const filePath = path.resolve(directory, file);
+      if (fs.statSync(filePath).isFile()) {
+        const taskDefinition = require(filePath).default;
+        validateTaskDefinition(taskDefinition);
+        return taskDefinition;
+      }
+    });
+  }
 
-  // Sync task definitions
-  await sync(options.taskDefinitions);
+  constructor(private options: Options) {
+    // TODO: enforce task definition names are unique
 
-  // Schedule tasks
-  await schedule();
+    // Create the DB connection
+    this.connectionPromise = createConnection({
+      ...options.sqlConnectionOptions,
+      name: this.DB_CONNECTION_NAME,
+      synchronize: true,
+      logging: false,
+      entities: [path.resolve(__dirname, "../models/*.ts")]
+    }).then(connection => {
+      this.logger(`Connection ${connection.name} is created successfully.`);
+      return connection;
+    });
+  }
 
-  // API
-  const middleware = await getApolloServerMiddleware();
-  router.use(middleware);
+  private async getNextJsRequestHandler(assetPrefix: string) {
+    const dev = process.env.NODE_ENV !== "production";
+    const app = next({
+      dev,
+      dir: path.resolve(__dirname, "../../ui"),
+      conf: { assetPrefix }
+    });
+    const handle = app.getRequestHandler();
+    await app.prepare();
+    return handle;
+  }
 
-  // UI
-  const handler = await getNextJsRequestHandler(options.mountPath);
-  router.all("*", (req, res) => handler(req, res));
+  private async getApolloServerMiddleware() {
+    const connection = await this.connectionPromise;
+    const schema = await buildSchema({
+      resolvers: [
+        getTasksResolver(connection),
+        getTasksRunResolver(connection, this)
+      ]
+    });
+    const server = new ApolloServer({ schema });
+    return server.getMiddleware({ path: "/graphql" });
+  }
 
-  return router;
+  /**
+   * Here we manage schedules of each task
+   */
+  private async schedule() {
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+
+    const allTasks = await taskRepository.find({
+      // TODO: paginate
+      take: Number.MAX_SAFE_INTEGER
+    });
+    for (const task of allTasks) {
+      if (task.schedule !== "manual") {
+        // Redis stuff here
+      }
+    }
+  }
+
+  private async sync(taskDefinitions: TaskDefinition[]) {
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+
+    // Sync incoming task definitions to database
+    for (const taskDefinition of taskDefinitions) {
+      const existingTask = await taskRepository.findOne({
+        name: taskDefinition.name
+      });
+
+      const task = existingTask || new Task();
+      task.name = taskDefinition.name;
+      task.timeoutAfter = taskDefinition.timeoutAfter;
+      task.schedule = taskDefinition.schedule;
+
+      await taskRepository.save(task);
+
+      // TODO: handle deleted tasks
+    }
+  }
+
+  public async startTask(taskName: string) {
+    const taskDefinition = this.options.taskDefinitions.find(
+      ({ name }) => name === taskName
+    );
+    const connection = await this.connectionPromise;
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const taskModel = await taskRunRepository.findOne({
+      where: { name: taskName }
+    });
+
+    if (!taskModel) {
+      throw new Error("Can not find task");
+    }
+
+    try {
+      await taskDefinition?.run();
+      taskModel.state = "FINISHED";
+    } catch (err) {
+      taskModel.state = "ERROR";
+    }
+
+    await taskRunRepository.save(taskModel);
+  }
+
+  /**
+   * Get express middleware to be mounted in your app
+   *
+   *    // Note: this method is asynchronous
+   *    const middleware = await getExpressMiddleware();
+   *    app.use('/admin/commander', middleware);
+   */
+  public async getExpressMiddleware() {
+    const connection = await this.connectionPromise;
+
+    // Sync task definitions
+    await this.sync(this.options.taskDefinitions);
+
+    // Schedule tasks
+    await this.schedule();
+    const router = Router();
+
+    // API
+    const middleware = await this.getApolloServerMiddleware();
+    router.use(middleware);
+
+    // UI
+    const handler = await this.getNextJsRequestHandler(this.options.mountPath);
+    router.all("*", (req, res) => handler(req, res));
+
+    return router;
+  }
 }
 
 export class TaskDefinitionValidationError extends Error {}
@@ -126,24 +222,4 @@ export function validateTaskDefinition(
     throw new TaskDefinitionValidationError("run must be a function");
   }
   return true;
-}
-
-/**
- * Read tasks definitions from a directory
- * @param directory The path where tasks are stored at.
- *
- */
-export function readTaskDefinitions(directory: string): TaskDefinition[] {
-  if (!directory.startsWith("/")) {
-    throw new Error("directory path must be absolute");
-  }
-
-  return fs.readdirSync(directory).map(file => {
-    const filePath = path.resolve(directory, file);
-    if (fs.statSync(filePath).isFile()) {
-      const taskDefinition = require(filePath).default;
-      validateTaskDefinition(taskDefinition);
-      return taskDefinition;
-    }
-  });
 }
