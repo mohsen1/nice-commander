@@ -1,12 +1,13 @@
 /**
  * @fileOverview
- * 
+ *
  * This file is just to try out the middleware
  */
 
 import express from "express";
+import path from "path";
 
-import { getExpressMiddleware } from ".";
+import { getExpressMiddleware, readTaskDefinitions } from "../../api/core";
 
 async function main() {
   const app = express();
@@ -22,7 +23,8 @@ async function main() {
       port: 3306,
       username: "root",
       database: "nicecommander"
-    }
+    },
+    taskDefinitions: readTaskDefinitions(path.resolve(__dirname, "tasks"))
   });
   app.use(mountPath, middleware);
 

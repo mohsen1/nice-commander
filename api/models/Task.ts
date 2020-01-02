@@ -1,5 +1,6 @@
 import { ObjectType, ID, Field } from "type-graphql";
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { TaskRun } from "./TaskRun";
 
 @Entity()
 @ObjectType()
@@ -8,11 +9,25 @@ export class Task {
   @PrimaryGeneratedColumn()
   id!: string;
 
-  @Field()
+  @Field({ description: "Task name" })
   @Column()
   name!: string;
 
-  @Field(type => Number)
-  @Column({ type: "int" })
-  startTime!: number;
+  @Field(type => Number, { description: "Path of the task file." })
+  @Column()
+  timeoutAfter!: number;
+
+  @Field(type => [TaskRun], {
+    description: "List of task runs",
+    defaultValue: []
+  })
+  @OneToMany(
+    type => TaskRun,
+    taskRun => taskRun.task
+  )
+  runs!: TaskRun[];
+
+  @Field(type => String)
+  @Column()
+  schedule!: string;
 }
