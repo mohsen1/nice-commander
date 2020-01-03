@@ -11,6 +11,7 @@ import fs from "fs";
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
 import { TaskRun } from "../models/TaskRun";
+import ForkedProcess from "./ForkedProcess";
 
 export interface TaskDefinition {
   /** Task name must be unique */
@@ -151,26 +152,41 @@ export default class NiceCommander {
     }
   }
 
-  public async startTask(taskName: string) {
+  public async startTask(taskRun: TaskRun) {
     const taskDefinition = this.options.taskDefinitions.find(
-      ({ name }) => name === taskName
+      ({ name }) => name === taskRun.task.name
     );
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskModel = await taskRunRepository.findOne({
-      where: { name: taskName }
+      where: { name: taskRun.task.name }
     });
 
     if (!taskModel) {
-      throw new Error("Can not find task");
+      throw new Error("Can not find task model");
     }
 
-    try {
-      await taskDefinition?.run();
-      taskModel.state = "FINISHED";
-    } catch (err) {
-      taskModel.state = "ERROR";
+    if (!taskDefinition) {
+      throw new Error("Can not find task definition");
     }
+
+    const forkedProcess = new ForkedProcess(
+      "/Users/mohsen_azimi/Code/nice-commander/examples/basic/tasks/simple.ts",
+      {},
+      (logChunk: string) => {
+        console.info("ForkedProcess Log:", logChunk);
+      },
+      () => {
+        taskRun.state = "FINISHED";
+        taskRunRepository.save(taskRun);
+      },
+      () => {
+        taskRun.state = "ERROR";
+        taskRunRepository.save(taskRun);
+      }
+    );
+
+    forkedProcess.start();
 
     await taskRunRepository.save(taskModel);
   }

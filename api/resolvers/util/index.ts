@@ -1,6 +1,8 @@
 import assert from "assert";
 import { inRange } from "lodash";
 
+import ArgumentOutOfRange from "../errors/ArgumentOutOfRange";
+
 export function assertNumberArgumentIsInRange(
   argName: string,
   argValue: number,
@@ -9,7 +11,7 @@ export function assertNumberArgumentIsInRange(
 ) {
   assert(
     inRange(argValue, start, end),
-    new RangeError(
+    new ArgumentOutOfRange(
       `${argValue} is out of range for ${argName} argument. Accepted range is (${start}, ${end})`
     )
   );

@@ -2,7 +2,7 @@ import { Resolver, Query, Arg, Int } from "type-graphql";
 import { Connection } from "typeorm";
 
 import { Task } from "../models/Task";
-import { assertNumberArgumentIsInRange } from "../util";
+import { assertNumberArgumentIsInRange } from "./util";
 
 export function getTasksResolver(connection: Connection) {
   @Resolver(Task)
@@ -30,12 +30,12 @@ export function getTasksResolver(connection: Connection) {
       assertNumberArgumentIsInRange("take", take, 1, 500);
       assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
 
-      return this.repository.find({ take, skip });
+      return this.repository.find({ take, skip, relations: ["runs"] });
     }
 
     @Query(returns => Task, { description: "Get a single task" })
     async task(@Arg("id") id: string) {
-      return this.repository.findOne({ id });
+      return this.repository.findOne({ where: { id }, relations: ["runs"] });
     }
   }
 
