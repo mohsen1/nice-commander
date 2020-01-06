@@ -45,7 +45,9 @@ export function getTasksRunResolver(
       await this.repository.save(taskRun);
 
       // start the task
-      niceCommander.startTask(taskRun);
+      await niceCommander.startTask(taskRun);
+
+      console.log({ taskRun });
 
       return taskRun;
     }

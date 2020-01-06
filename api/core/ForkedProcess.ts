@@ -1,30 +1,42 @@
 import cp from "child_process";
 import path from "path";
+import AWS from "aws-sdk";
+import { PassThrough } from "stream";
+
+interface ForkedProcessOptions {
+  /** S3 Object "file name" for logs to store */
+  logKey: string;
+  taskFilePath: string;
+  payload?: object;
+}
 
 export default class ForkedProcess {
   private INVOKE_FILE = path.resolve(__dirname, "./invoke");
   private child?: cp.ChildProcess;
+  private s3 = new AWS.S3({ apiVersion: "2006-03-01" });
 
-  constructor(
-    private taskFilePath: string,
-    private payload: object = {},
-    private logCollector: (logChunk: string) => void,
-    private onExit: () => void,
-    private onError: () => void
-  ) {}
+  constructor(private options: ForkedProcessOptions) {}
 
   public start() {
+    const passThrough = new PassThrough();
+    const upload = this.s3.upload({
+      Bucket: "nice-commander",
+      Key: this.options.logKey,
+      Body: passThrough,
+      ContentType: "text/plain"
+    });
+
     this.child = cp.fork(
       this.INVOKE_FILE,
-      [this.taskFilePath, JSON.stringify(this.payload)],
+      [this.options.taskFilePath, JSON.stringify(this.options.payload ?? {})],
       {
-        silent: true
-        // stdio:
+        stdio: "pipe"
       }
     );
-    this.child.on("message", this.logCollector);
-    this.child.on("exit", this.onExit);
-    this.child.on("error", this.onError);
+
+    this.child.stdout?.pipe(passThrough);
+
+    upload.send();
   }
 
   public stop() {

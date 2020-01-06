@@ -171,11 +171,8 @@ export default class NiceCommander {
     );
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
-    const taskModel = await taskRunRepository.findOne({
-      where: { name: taskRun.task.name }
-    });
 
-    if (!taskModel) {
+    if (!taskRun) {
       throw new Error("Can not find task model");
     }
 
@@ -183,25 +180,16 @@ export default class NiceCommander {
       throw new Error("Can not find task definition");
     }
 
-    const forkedProcess = new ForkedProcess(
-      taskDefinitionFile.filePath,
-      {},
-      (logChunk: string) => {
-        console.info("ForkedProcess Log:", logChunk);
-      },
-      () => {
-        taskRun.state = "FINISHED";
-        taskRunRepository.save(taskRun);
-      },
-      () => {
-        taskRun.state = "ERROR";
-        taskRunRepository.save(taskRun);
-      }
-    );
+    taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
+
+    await taskRunRepository.save(taskRun);
+
+    const forkedProcess = new ForkedProcess({
+      logKey: taskRun.logs,
+      taskFilePath: taskDefinitionFile.filePath
+    });
 
     forkedProcess.start();
-
-    await taskRunRepository.save(taskModel);
   }
 
   /**
