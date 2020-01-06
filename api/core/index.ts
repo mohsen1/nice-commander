@@ -29,9 +29,14 @@ export interface TaskDefinition {
   schedule: "manual" | string;
 }
 
+interface TaskDefinitionFile {
+  taskDefinition: TaskDefinition;
+  filePath: string;
+}
+
 export interface Options {
-  /** List of task definitions */
-  taskDefinitions: TaskDefinition[];
+  /** Path to directory that contains all tasks. This path must be absolute */
+  taskDefinitionsDirectory: string;
 
   /**
    * At what point this middleware is mounted?
@@ -50,31 +55,14 @@ export default class NiceCommander {
   public DB_CONNECTION_NAME = `NiceCommander_${Math.random()
     .toString(36)
     .substring(2)}`;
+  private taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private connectionPromise!: Promise<Connection>;
   private logger = debug("nice-commander");
 
-  /**
-   * Read tasks definitions from a directory
-   * @param directory The path where tasks are stored at.
-   *
-   */
-  public static readTaskDefinitions(directory: string): TaskDefinition[] {
-    if (!directory.startsWith("/")) {
-      throw new Error("directory path must be absolute");
-    }
-
-    return fs.readdirSync(directory).map(file => {
-      const filePath = path.resolve(directory, file);
-      if (fs.statSync(filePath).isFile()) {
-        const taskDefinition = require(filePath).default;
-        validateTaskDefinition(taskDefinition);
-        return taskDefinition;
-      }
-    });
-  }
-
   constructor(private options: Options) {
-    // TODO: enforce task definition names are unique
+    this.taskDefinitionsFiles = this.readTaskDefinitions(
+      options.taskDefinitionsDirectory
+    );
 
     // Create the DB connection
     this.connectionPromise = createConnection({
@@ -99,6 +87,31 @@ export default class NiceCommander {
     const handle = app.getRequestHandler();
     await app.prepare();
     return handle;
+  }
+
+  /**
+   * Read tasks definitions from a directory
+   * @param directory The path where tasks are stored at.
+   *
+   */
+  private readTaskDefinitions(directory: string) {
+    if (!directory.startsWith("/")) {
+      throw new Error("directory path must be absolute");
+    }
+
+    return fs
+      .readdirSync(directory)
+      .map(file => path.resolve(directory, file))
+      .filter(filePath => fs.statSync(filePath).isFile())
+      .map(filePath => {
+        const taskDefinition = require(filePath).default;
+        validateTaskDefinition(taskDefinition);
+        const taskDefinitionFile: TaskDefinitionFile = {
+          filePath,
+          taskDefinition
+        };
+        return taskDefinitionFile;
+      });
   }
 
   private async getApolloServerMiddleware() {
@@ -153,8 +166,8 @@ export default class NiceCommander {
   }
 
   public async startTask(taskRun: TaskRun) {
-    const taskDefinition = this.options.taskDefinitions.find(
-      ({ name }) => name === taskRun.task.name
+    const taskDefinitionFile = this.taskDefinitionsFiles.find(
+      ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
     );
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
@@ -166,12 +179,12 @@ export default class NiceCommander {
       throw new Error("Can not find task model");
     }
 
-    if (!taskDefinition) {
+    if (!taskDefinitionFile) {
       throw new Error("Can not find task definition");
     }
 
     const forkedProcess = new ForkedProcess(
-      "/Users/mohsen_azimi/Code/nice-commander/examples/basic/tasks/simple.ts",
+      taskDefinitionFile.filePath,
       {},
       (logChunk: string) => {
         console.info("ForkedProcess Log:", logChunk);
@@ -202,7 +215,9 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
 
     // Sync task definitions
-    await this.sync(this.options.taskDefinitions);
+    await this.sync(
+      this.taskDefinitionsFiles.map(({ taskDefinition }) => taskDefinition)
+    );
 
     // Schedule tasks
     await this.schedule();

@@ -8,16 +8,20 @@ export default class ForkedProcess {
   constructor(
     private taskFilePath: string,
     private payload: object = {},
-    private logCollector: (logChuk: string) => void,
+    private logCollector: (logChunk: string) => void,
     private onExit: () => void,
     private onError: () => void
   ) {}
 
   public start() {
-    this.child = cp.fork(this.INVOKE_FILE, [
-      this.taskFilePath,
-      JSON.stringify(this.payload)
-    ]);
+    this.child = cp.fork(
+      this.INVOKE_FILE,
+      [this.taskFilePath, JSON.stringify(this.payload)],
+      {
+        silent: true
+        // stdio:
+      }
+    );
     this.child.on("message", this.logCollector);
     this.child.on("exit", this.onExit);
     this.child.on("error", this.onError);

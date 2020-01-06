@@ -24,9 +24,7 @@ async function main() {
       username: "root",
       database: "nicecommander"
     },
-    taskDefinitions: NiceCommander.readTaskDefinitions(
-      path.resolve(__dirname, "tasks")
-    )
+    taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
   });
   const middleware = await niceCommander.getExpressMiddleware();
   app.use(mountPath, middleware);
