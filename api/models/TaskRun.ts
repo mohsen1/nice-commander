@@ -24,6 +24,10 @@ export class TaskRun {
   @Column({ default: "" })
   logs!: string;
 
+  @Field(type => String, { description: "Payload" })
+  @Column({ default: "{}" })
+  payload!: string;
+
   @Field(type => Task, {
     description: "Task associated with this run"
   })

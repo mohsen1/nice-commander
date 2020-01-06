@@ -17,8 +17,12 @@ export interface TaskDefinition {
   /** Task name must be unique */
   name: string;
 
-  /** Run function. This function is asynchronous */
-  run: () => Promise<void>;
+  /**
+   * Run function. This function is asynchronous
+   *
+   * @param payload Task payload sent via manual task invocation
+   */
+  run: (payload: any) => Promise<void>;
 
   /** Maximum time this task can run */
   timeoutAfter: number;
@@ -173,12 +177,14 @@ export default class NiceCommander {
     const taskRunRepository = connection.getRepository(TaskRun);
 
     if (!taskRun) {
-      throw new Error("Can not find task model");
+      throw new Error("Can not find task run model");
     }
 
     if (!taskDefinitionFile) {
       throw new Error("Can not find task definition");
     }
+
+    const payload = JSON.parse(taskRun.payload);
 
     taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
 
@@ -186,7 +192,8 @@ export default class NiceCommander {
 
     const forkedProcess = new ForkedProcess({
       logKey: taskRun.logs,
-      taskFilePath: taskDefinitionFile.filePath
+      taskFilePath: taskDefinitionFile.filePath,
+      payload
     });
 
     forkedProcess.start();

@@ -28,8 +28,18 @@ export function getTasksRunResolver(
       @Arg("id", type => String, {
         description: "Task ID"
       })
-      id: string
+      id: string,
+      @Arg("payload", type => String, {
+        description:
+          "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
+        defaultValue: "{}"
+      })
+      payload: string
     ) {
+      if (payload.length > 1024) {
+        throw new RangeError("Payload is too big");
+      }
+
       const [task] = (await this.taskRepository.find({ where: { id } })) || [];
 
       if (!task) {
@@ -40,14 +50,13 @@ export function getTasksRunResolver(
       taskRun.task = task;
       taskRun.startTime = Date.now();
       taskRun.state = "RUNNING";
+      taskRun.payload = payload;
 
       // Save to DB
       await this.repository.save(taskRun);
 
       // start the task
       await niceCommander.startTask(taskRun);
-
-      console.log({ taskRun });
 
       return taskRun;
     }
