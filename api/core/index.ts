@@ -173,8 +173,6 @@ export default class NiceCommander {
     const taskDefinitionFile = this.taskDefinitionsFiles.find(
       ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
     );
-    const connection = await this.connectionPromise;
-    const taskRunRepository = connection.getRepository(TaskRun);
 
     if (!taskRun) {
       throw new Error("Can not find task run model");
@@ -187,8 +185,6 @@ export default class NiceCommander {
     const payload = JSON.parse(taskRun.payload);
 
     taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
-
-    await taskRunRepository.save(taskRun);
 
     const forkedProcess = new ForkedProcess({
       logKey: taskRun.logs,

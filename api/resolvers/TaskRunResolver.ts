@@ -52,11 +52,11 @@ export function getTasksRunResolver(
       taskRun.state = "RUNNING";
       taskRun.payload = payload;
 
-      // Save to DB
-      await this.repository.save(taskRun);
-
       // start the task
       await niceCommander.startTask(taskRun);
+
+      // Save to DB
+      await this.repository.save(taskRun);
 
       return taskRun;
     }
