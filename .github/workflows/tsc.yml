@@ -24,5 +24,5 @@ jobs:
         env:
           CI: true
       - name: UI tsc
-        working-directory: ui
-        run: ../node_modules/.bin/tsc
+        working-directory: src/ui
+        run: ../../node_modules/.bin/tsc
