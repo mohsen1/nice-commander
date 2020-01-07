@@ -89,6 +89,7 @@ This project is not ready for use yet.
 
 ### TODO List
 
+- [ ] Add bucket name config
 - [ ] Add streaming for logs
 - [ ] Add Redis locking to start TaskRuns
 - [ ] Add Styled Components
