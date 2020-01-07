@@ -14,5 +14,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "exclude": ["ui"]
+  "exclude": ["src/ui"]
 }
