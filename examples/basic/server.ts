@@ -17,6 +17,10 @@ async function main() {
   const mountPath = "/nice-commander";
   const niceCommander = new NiceCommander({
     mountPath,
+    redisConnectionOptions: {
+      host: "localhost",
+      port: 6379
+    },
     sqlConnectionOptions: {
       type: "mysql",
       host: "localhost",

@@ -1,4 +1,4 @@
-import { TaskDefinition } from "../../../api/core/index";
+import { TaskDefinition } from "../../../";
 
 // A simple scheduled task
 const task: TaskDefinition = {

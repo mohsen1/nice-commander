@@ -1,9 +1,19 @@
-import { Resolver, Query, Arg, Int, Mutation } from "type-graphql";
+import {
+  Resolver,
+  Query,
+  Arg,
+  Int,
+  Mutation,
+  Subscription,
+  PubSub,
+  Publisher,
+  Root
+} from "type-graphql";
 import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
-import NiceCommander, { TaskDefinition } from "../core";
+import NiceCommander from "../..";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 
@@ -34,7 +44,8 @@ export function getTasksRunResolver(
           "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
         defaultValue: "{}"
       })
-      payload: string
+      payload: string,
+      @PubSub("LOGS") publisher: Publisher<string>
     ) {
       if (payload.length > 1024) {
         throw new RangeError("Payload is too big");
@@ -53,7 +64,7 @@ export function getTasksRunResolver(
       taskRun.payload = payload;
 
       // start the task
-      await niceCommander.startTask(taskRun);
+      await niceCommander.startTask(taskRun, publisher);
 
       // Save to DB
       await this.repository.save(taskRun);
@@ -106,6 +117,17 @@ export function getTasksRunResolver(
         relations: ["task"]
       });
       return task;
+    }
+
+    @Subscription(returns => [TaskRun], { topics: "LOGS" })
+    async taskRunLogs(
+      @Arg("id", type => String, { description: "TaskRun ID" }) id: string,
+      @Root() logsPayload: {}
+    ) {
+      return {
+        ...logsPayload,
+        date: new Date()
+      };
     }
   }
 

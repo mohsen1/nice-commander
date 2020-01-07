@@ -38,6 +38,7 @@
     "debug": "^4.1.1",
     "express": "^4.17.1",
     "graphql": "^14.5.8",
+    "graphql-redis-subscriptions": "^2.1.2",
     "lodash": "^4.17.15",
     "mysql": "^2.17.1",
     "next": "^9.1.7",

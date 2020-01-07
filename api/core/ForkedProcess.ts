@@ -12,8 +12,9 @@ interface ForkedProcessOptions {
 
 export default class ForkedProcess {
   private INVOKE_FILE = path.resolve(__dirname, "./invoke");
-  private child?: cp.ChildProcess;
   private s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+
+  public child?: cp.ChildProcess;
 
   constructor(private options: ForkedProcessOptions) {}
 

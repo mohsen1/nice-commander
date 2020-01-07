@@ -1,37 +1,20 @@
 import "reflect-metadata";
 import path from "path";
 import { Router } from "express";
-import { buildSchema } from "type-graphql";
+import { buildSchema, Publisher, PubSubEngine } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
 import { ConnectionOptions, createConnection, Connection } from "typeorm";
 import debug from "debug";
 import fs from "fs";
+import { RedisPubSub } from "graphql-redis-subscriptions";
+import redis from "redis";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
 import { TaskRun } from "../models/TaskRun";
 import ForkedProcess from "./ForkedProcess";
-
-export interface TaskDefinition {
-  /** Task name must be unique */
-  name: string;
-
-  /**
-   * Run function. This function is asynchronous
-   *
-   * @param payload Task payload sent via manual task invocation
-   */
-  run: (payload: any) => Promise<void>;
-
-  /** Maximum time this task can run */
-  timeoutAfter: number;
-  /**
-   * Time string or "manual"
-   * @see https://www.npmjs.com/package/timestring
-   */
-  schedule: "manual" | string;
-}
+import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
@@ -53,6 +36,14 @@ export interface Options {
    * SQL connection configuration
    */
   sqlConnectionOptions: ConnectionOptions;
+
+  /**
+   * Redis connection configuration
+   */
+  redisConnectionOptions: {
+    host: string;
+    port: number;
+  };
 }
 
 export default class NiceCommander {
@@ -120,11 +111,22 @@ export default class NiceCommander {
 
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
+    const redisPubSub = new RedisPubSub({
+      publisher: redis.createClient({
+        host: this.options.redisConnectionOptions.host,
+        port: this.options.redisConnectionOptions.port
+      }),
+      subscriber: redis.createClient({
+        host: this.options.redisConnectionOptions.host,
+        port: this.options.redisConnectionOptions.port
+      })
+    });
     const schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this)
-      ]
+      ],
+      pubSub: redisPubSub
     });
     const server = new ApolloServer({ schema });
     return server.getMiddleware({ path: "/graphql" });
@@ -169,7 +171,7 @@ export default class NiceCommander {
     }
   }
 
-  public async startTask(taskRun: TaskRun) {
+  public async startTask(taskRun: TaskRun, publishLogs: Publisher<string>) {
     const taskDefinitionFile = this.taskDefinitionsFiles.find(
       ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
     );
@@ -191,6 +193,8 @@ export default class NiceCommander {
       taskFilePath: taskDefinitionFile.filePath,
       payload
     });
+
+    publishLogs(`${new Date()}`);
 
     forkedProcess.start();
   }
@@ -224,24 +228,4 @@ export default class NiceCommander {
 
     return router;
   }
-}
-
-export class TaskDefinitionValidationError extends Error {}
-
-export function validateTaskDefinition(
-  taskDefinition: Partial<TaskDefinition>
-): taskDefinition is TaskDefinition {
-  if (!taskDefinition.name) {
-    throw new TaskDefinitionValidationError("name is required");
-  }
-  if (typeof taskDefinition.name !== "string") {
-    throw new TaskDefinitionValidationError("name must be a string");
-  }
-  if (!taskDefinition.timeoutAfter) {
-    throw new TaskDefinitionValidationError("timeoutAfter is required");
-  }
-  if (typeof taskDefinition.run !== "function") {
-    throw new TaskDefinitionValidationError("run must be a function");
-  }
-  return true;
 }

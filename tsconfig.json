@@ -3,10 +3,7 @@
     "target": "es2016",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": [
-      "es2016",
-      "esnext.asynciterable"
-    ],
+    "lib": ["es2016", "esnext.asynciterable"],
     "outDir": "./dist",
     "importHelpers": true,
     "strict": true,
@@ -15,7 +12,6 @@
     "emitDecoratorMetadata": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true
+    "resolveJsonModule": true
   }
 }
