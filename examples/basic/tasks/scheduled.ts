@@ -1,4 +1,4 @@
-import { TaskDefinition } from "../../../";
+import { TaskDefinition } from "../../../src";
 
 // A simple scheduled task
 const task: TaskDefinition = {

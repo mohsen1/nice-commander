@@ -6,7 +6,7 @@
   "author": "Mohsen Azimi <me@azimi.me>",
   "license": "MIT",
   "scripts": {
-    "start": "DEBUG=nice-commander nodemon --watch api --watch examples -e ts ./node_modules/.bin/ts-node examples/basic/server.ts",
+    "start": "DEBUG=nice-commander nodemon --watch src/api --watch examples -e ts ./node_modules/.bin/ts-node examples/basic/server.ts",
     "fix": "prettier --write '**/*.{ts,tsx}'"
   },
   "devDependencies": {
