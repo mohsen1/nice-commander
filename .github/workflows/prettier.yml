@@ -1,4 +1,4 @@
-name: Check if code is pretty using Prettier
+name: Check Prettier
 
 on: [push]
 
@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: 12.x
 
     steps:
       - uses: actions/checkout@v1
