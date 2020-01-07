@@ -1,4 +1,4 @@
-import { TaskDefinition } from "../../../";
+import { TaskDefinition } from "../../../src";
 
 // A simple manual task
 const task: TaskDefinition = {

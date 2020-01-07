@@ -15,6 +15,7 @@ ui/out/
 # production
 /build
 /dist
+src/ui/.next
 
 # misc
 .DS_Store
