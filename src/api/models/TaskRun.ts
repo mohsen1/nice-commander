@@ -42,4 +42,9 @@ export class TaskRun {
   })
   @Column()
   state!: string;
+
+  /** A unique ID for this run and its related task */
+  get uniqueId() {
+    return `${this.task.id}-${this.id}`;
+  }
 }

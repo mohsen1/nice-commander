@@ -51,7 +51,7 @@ NiceCommander is an Express middleware. Create an instance of `NiceCommander` an
 import express from "express";
 import path from "path";
 
-import NiceCommander from "../..";
+import NiceCommander from "nice-commander";
 
 async function main() {
   const app = express();
