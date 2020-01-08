@@ -210,7 +210,7 @@ export default class NiceCommander {
     // Start a child process
     const passThrough = new PassThrough();
     const upload = this.s3.upload({
-      Bucket: "nice-commander",
+      Bucket: this.options.s3BucketName ?? "nice-commander",
       Key: taskRun.logs,
       Body: passThrough,
       ContentType: "text/plain"
