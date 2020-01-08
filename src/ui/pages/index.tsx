@@ -1,6 +1,8 @@
 import React from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
+import MainLayout from "../layouts/MainLayout";
+import TaskListItem from "../components/TaskListItem";
 
 const Index = () => {
   const query = gql`
@@ -13,13 +15,13 @@ const Index = () => {
   const { data } = useQuery(query);
 
   return (
-    <>
+    <MainLayout>
       <h1>Tasks:</h1>
       {data &&
         data.tasks.map((task: any) => (
-          <React.Fragment key={task.name}>Task: {task.name}</React.Fragment>
+          <TaskListItem key={task.name} name={task.name} />
         ))}
-    </>
+    </MainLayout>
   );
 };
 

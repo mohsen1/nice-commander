@@ -5,6 +5,11 @@ import ApolloClient from "apollo-client";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
+import { ThemeProvider } from "styled-components";
+import { Reset } from "styled-reset";
+
+import defaultTheme from "../themes/default";
+import GlobalStyles from "../themes/global";
 
 export default class NiceCommanderApp extends App {
   render() {
@@ -20,7 +25,11 @@ export default class NiceCommanderApp extends App {
 
     return (
       <ApolloProvider client={client}>
-        <Component {...pageProps} />
+        <ThemeProvider theme={defaultTheme}>
+          <Reset />
+          <GlobalStyles />
+          <Component {...pageProps} />
+        </ThemeProvider>
       </ApolloProvider>
     );
   }
