@@ -63,6 +63,9 @@ export function getTasksRunResolver(
       taskRun.state = "RUNNING";
       taskRun.payload = payload;
 
+      // Store initial states of the task run
+      await this.repository.save(taskRun);
+
       // start the task
       await niceCommander.startTask(taskRun, publisher);
 

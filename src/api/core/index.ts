@@ -1,60 +1,48 @@
 import "reflect-metadata";
 import path from "path";
 import { Router } from "express";
-import { buildSchema, Publisher, PubSubEngine } from "type-graphql";
+import { buildSchema, Publisher } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
-import { ConnectionOptions, createConnection, Connection } from "typeorm";
+import { createConnection, Connection } from "typeorm";
 import debug from "debug";
 import fs from "fs";
 import { RedisPubSub } from "graphql-redis-subscriptions";
 import redis from "redis";
+import cp from "child_process";
+import AWS from "aws-sdk";
+import { PassThrough } from "stream";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
 import { TaskRun } from "../models/TaskRun";
-import ForkedProcess from "./ForkedProcess";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
+import { Options } from "./Options";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
   filePath: string;
 }
 
-export interface Options {
-  /** Path to directory that contains all tasks. This path must be absolute */
-  taskDefinitionsDirectory: string;
-
-  /**
-   * At what point this middleware is mounted?
-   * This path can be relative but prefer absolute paths
-   * This is used to make URLs of static assets used in UI
-   */
-  mountPath: string;
-
-  /**
-   * SQL connection configuration
-   */
-  sqlConnectionOptions: ConnectionOptions;
-
-  /**
-   * Redis connection configuration
-   */
-  redisConnectionOptions: {
-    host: string;
-    port: number;
-  };
-}
-
+/**
+ * Nice Commander
+ *
+ * run scheduled and one-off tasks in your Node.js server with a nice UI
+ *
+ * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
+ */
 export default class NiceCommander {
-  public DB_CONNECTION_NAME = `NiceCommander_${Math.random()
+  public readonly DB_CONNECTION_NAME = `NiceCommander_${Math.random()
     .toString(36)
     .substring(2)}`;
-  private taskDefinitionsFiles: TaskDefinitionFile[] = [];
-  private connectionPromise!: Promise<Connection>;
-  private logger = debug("nice-commander");
+  private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
+  private readonly connectionPromise!: Promise<Connection>;
+  private readonly logger = debug("nice-commander");
+  private readonly invokeFile = path.resolve(__dirname, "./invoke");
+  private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+  private readonly childProcesses = new Map<string, cp.ChildProcess>();
 
-  constructor(private options: Options) {
+  public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
     );
@@ -128,12 +116,23 @@ export default class NiceCommander {
       ],
       pubSub: redisPubSub
     });
-    const server = new ApolloServer({ schema });
+    const server = new ApolloServer({
+      schema,
+      playground: true,
+      subscriptions: {
+        onConnect(connectionParams, webSocket) {
+          console.log({ connectionParams, webSocket });
+        },
+        path: path.join(this.options.mountPath, "/graphql/subscriptions")
+      }
+    });
     return server.getMiddleware({ path: "/graphql" });
   }
 
   /**
    * Here we manage schedules of each task
+   *
+   * @todo with Redis locking this will be very different
    */
   private async schedule() {
     const connection = await this.connectionPromise;
@@ -150,6 +149,13 @@ export default class NiceCommander {
     }
   }
 
+  /**
+   * Every time Nice Commander boots, it will read all of task definition files and updates models
+   * in the database accordingly . We rely on definition name to find corresponding model in our
+   * database
+   *
+   * @param taskDefinitions List of task definition files
+   */
   private async sync(taskDefinitions: TaskDefinition[]) {
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
@@ -171,6 +177,21 @@ export default class NiceCommander {
     }
   }
 
+  /** Do the business of ending life of a task run */
+  private async endTaskRun(state: "FINISHED" | "ERROR", taskRun: TaskRun) {
+    const connection = await this.connectionPromise;
+    const taskRunRepository = connection.getRepository(TaskRun);
+
+    taskRun.state = state;
+    await taskRunRepository.save(taskRun);
+    this.childProcesses.delete(taskRun.uniqueId);
+  }
+
+  /**
+   * Start a task with a given task run
+   * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
+   * @param publishLogs Logging pub-sub
+   */
   public async startTask(taskRun: TaskRun, publishLogs: Publisher<string>) {
     const taskDefinitionFile = this.taskDefinitionsFiles.find(
       ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
@@ -184,19 +205,41 @@ export default class NiceCommander {
       throw new Error("Can not find task definition");
     }
 
-    const payload = JSON.parse(taskRun.payload);
-
     taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
 
-    const forkedProcess = new ForkedProcess({
-      logKey: taskRun.logs,
-      taskFilePath: taskDefinitionFile.filePath,
-      payload
+    // Start a child process
+    const passThrough = new PassThrough();
+    const upload = this.s3.upload({
+      Bucket: this.options.s3BucketName ?? "nice-commander",
+      Key: taskRun.logs,
+      Body: passThrough,
+      ContentType: "text/plain"
     });
 
-    publishLogs(`${new Date()}`);
+    const child = cp.fork(
+      this.invokeFile,
+      [taskDefinitionFile.filePath, taskRun.payload],
+      {
+        stdio: "pipe"
+      }
+    );
 
-    forkedProcess.start();
+    child.stdout?.pipe(passThrough);
+    child.stderr?.pipe(passThrough);
+
+    if (this.options.logToStdout) {
+      child.stdout?.pipe(process.stdout);
+      child.stderr?.pipe(process.stderr);
+    }
+
+    this.childProcesses.set(taskRun.uniqueId, child);
+
+    child.on("close", () => this.endTaskRun("FINISHED", taskRun));
+    child.on("error", () => this.endTaskRun("ERROR", taskRun));
+
+    upload.send();
+
+    publishLogs(`${new Date()}`);
   }
 
   /**

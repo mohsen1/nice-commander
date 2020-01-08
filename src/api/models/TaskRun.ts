@@ -1,12 +1,6 @@
 import { ObjectType, ID, Field } from "type-graphql";
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  ManyToOne,
-  Double
-} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+
 import { Task } from "./Task";
 
 @Entity()
@@ -14,19 +8,19 @@ import { Task } from "./Task";
 export class TaskRun {
   @Field(type => ID)
   @PrimaryGeneratedColumn()
-  id!: string;
+  public id!: string;
 
   @Field(type => Number, { description: "Start time" })
   @Column({ type: "bigint" })
-  startTime!: number;
+  public startTime!: number;
 
   @Field(type => String, { description: "Logs" })
   @Column({ default: "" })
-  logs!: string;
+  public logs!: string;
 
   @Field(type => String, { description: "Payload" })
   @Column({ default: "{}" })
-  payload!: string;
+  public payload!: string;
 
   @Field(type => Task, {
     description: "Task associated with this run"
@@ -35,11 +29,16 @@ export class TaskRun {
     type => Task,
     task => task.runs
   )
-  task!: Task;
+  public task!: Task;
 
   @Field(type => String, {
     description: "State of the task run"
   })
   @Column()
-  state!: string;
+  public state!: string;
+
+  /** A unique ID for this run and its related task */
+  public get uniqueId() {
+    return `${this.task.id}-${this.id}`;
+  }
 }

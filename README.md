@@ -50,49 +50,25 @@ NiceCommander is an Express middleware. Create an instance of `NiceCommander` an
 ```javascript
 import express from "express";
 import path from "path";
+import NiceCommander from "nice-commander";
 
-import NiceCommander from "../..";
+const app = express();
 
-async function main() {
-  const app = express();
+const mountPath = "/nice-commander";
+const niceCommander = new NiceCommander({
+  taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
+  mountPath,
+  redisConnectionOptions: {/* Redis Config */ },
+  sqlConnectionOptions: {/* DB Config */ },
+});
+const middleware = await niceCommander.getExpressMiddleware();
+app.use(mountPath, middleware);
 
-  app.get("/foo", (req, res) => res.status(200).send("OK"));
-
-  const mountPath = "/nice-commander";
-  const niceCommander = new NiceCommander({
-    mountPath,
-    redisConnectionOptions: {
-      host: "localhost",
-      port: 6379
-    },
-    sqlConnectionOptions: {
-      type: "mysql",
-      host: "localhost",
-      port: 3306,
-      username: "root",
-      database: "nicecommander"
-    },
-    taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
-  });
-  const middleware = await niceCommander.getExpressMiddleware();
-  app.use(mountPath, middleware);
-
-  app.listen(3000);
-}
-
-main().catch(console.error);
+app.listen(3000);
 ```
 
 ## Work in progress
 
-This project is not ready for use yet.
+This project is not ready for any sort of use yet.
 
-### TODO List
-
-- [ ] Add bucket name config
-- [ ] Add streaming for logs
-- [ ] Add Redis locking to start TaskRuns
-- [ ] Add Styled Components
-- [ ] Build UI for list of tasks
-- [ ] Build UI for list of task runs
-- [ ] Enable SSR
+See Github Project for 1.0 for more information.
