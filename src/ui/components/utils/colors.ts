@@ -29,6 +29,14 @@ export function getForegroundColorForStatus(
       else return theme.colors.success.light;
     case "RUNNING":
       if (theme.name !== "dark") return theme.colors.progress.dark;
-      else return theme.colors.progress.light;
+      else return theme.colors.progress.normal;
   }
+}
+
+export function isDarkModeEnabled() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
 }

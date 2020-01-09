@@ -29,13 +29,13 @@ export default {
     },
 
     progress: {
-      dark: "yellow",
-      normal: "gold",
-      light: "lightyellow"
+      dark: "#9ea718",
+      normal: "#eaea1d",
+      light: "#fdfdcd"
     },
 
     warning: {
-      norma: "orange"
+      normal: "orange"
     }
   }
 };

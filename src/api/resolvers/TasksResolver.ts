@@ -30,12 +30,21 @@ export function getTasksResolver(connection: Connection) {
       assertNumberArgumentIsInRange("take", take, 1, 500);
       assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
 
-      return this.repository.find({ take, skip, relations: ["runs"] });
+      return this.repository.find({
+        take,
+        skip,
+        relations: ["runs"]
+      });
     }
 
     @Query(returns => Task, { description: "Get a single task" })
     async task(@Arg("name", { description: "Task unique name" }) name: string) {
-      return this.repository.findOne({ where: { name }, relations: ["runs"] });
+      return this.repository
+        .createQueryBuilder("task")
+        .where({ name })
+        .innerJoinAndSelect("task.runs", "runs")
+        .orderBy("runs.startTime", "DESC")
+        .getOne();
     }
   }
 

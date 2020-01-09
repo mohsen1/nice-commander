@@ -2,7 +2,9 @@ import React from "react";
 import styled from "styled-components";
 import Link from "next/link";
 
-const ItemRow = styled.a`
+import A from "./base/A";
+
+const ItemRow = styled(A)`
   border: 1px solid ${props => props.theme.colors.accent.light};
   margin: 1rem 0;
   padding: 0.5rem;

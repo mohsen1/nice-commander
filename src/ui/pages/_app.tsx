@@ -6,6 +6,7 @@ import { Reset } from "styled-reset";
 import defaultTheme from "../themes/default";
 import darkTheme from "../themes/dark";
 import GlobalStyles from "../themes/global";
+import { isDarkModeEnabled } from "../components/utils/colors";
 
 export default class NiceCommanderApp extends App {
   /**
@@ -14,11 +15,7 @@ export default class NiceCommanderApp extends App {
    * in subsequent requests to render with dark theme in server
    */
   private get theme() {
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
+    if (isDarkModeEnabled()) {
       return darkTheme;
     }
 

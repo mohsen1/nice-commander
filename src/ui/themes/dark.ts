@@ -37,7 +37,7 @@ const darkTheme: ThemeType = {
     },
 
     warning: {
-      norma: "orange"
+      normal: "orange"
     }
   }
 };

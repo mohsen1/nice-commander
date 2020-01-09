@@ -41,11 +41,14 @@ export default class NiceCommander {
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
   private readonly childProcesses = new Map<string, cp.ChildProcess>();
+  private readonly s3BucketName!: string;
 
   public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
     );
+
+    this.s3BucketName = options.s3BucketName ?? "nice-commander";
 
     // Create the DB connection
     this.connectionPromise = createConnection({
@@ -159,22 +162,23 @@ export default class NiceCommander {
    * in the database accordingly . We rely on definition name to find corresponding model in our
    * database
    *
-   * @param taskDefinitions List of task definition files
+   * @param taskDefinitionsFiles List of task definition files
    */
-  private async sync(taskDefinitions: TaskDefinition[]) {
+  private async sync(taskDefinitionsFiles: TaskDefinitionFile[]) {
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
 
     // Sync incoming task definitions to database
-    for (const taskDefinition of taskDefinitions) {
+    for (const taskDefinitionFile of taskDefinitionsFiles) {
       const existingTask = await taskRepository.findOne({
-        name: taskDefinition.name
+        name: taskDefinitionFile.taskDefinition.name
       });
 
       const task = existingTask || new Task();
-      task.name = taskDefinition.name;
-      task.timeoutAfter = taskDefinition.timeoutAfter;
-      task.schedule = taskDefinition.schedule;
+      task.name = taskDefinitionFile.taskDefinition.name;
+      task.timeoutAfter = taskDefinitionFile.taskDefinition.timeoutAfter;
+      task.schedule = taskDefinitionFile.taskDefinition.schedule;
+      task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 
       await taskRepository.save(task);
 
@@ -211,13 +215,15 @@ export default class NiceCommander {
       throw new Error("Can not find task definition");
     }
 
-    taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
+    taskRun.logsPath = `tasks/${taskRun.task.id}/${
+      taskRun.id
+    }_${Date.now()}.log`;
 
     // Start a child process
     const passThrough = new PassThrough();
     const upload = this.s3.upload({
-      Bucket: this.options.s3BucketName ?? "nice-commander",
-      Key: taskRun.logs,
+      Bucket: this.s3BucketName,
+      Key: taskRun.logsPath,
       Body: passThrough,
       ContentType: "text/plain"
     });
@@ -259,9 +265,7 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
 
     // Sync task definitions
-    await this.sync(
-      this.taskDefinitionsFiles.map(({ taskDefinition }) => taskDefinition)
-    );
+    await this.sync(this.taskDefinitionsFiles);
 
     // Schedule tasks
     await this.schedule();
@@ -276,5 +280,16 @@ export default class NiceCommander {
     router.all("*", (req, res) => handler(req, res));
 
     return router;
+  }
+
+  public async getLogsFromS3(logsPath: string) {
+    const { Body } = await this.s3
+      .getObject({
+        Key: logsPath,
+        Bucket: this.s3BucketName
+      })
+      .promise();
+
+    return Body?.toString();
   }
 }
