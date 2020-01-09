@@ -116,11 +116,22 @@ export function getTasksRunResolver(
 
     @Query(returns => TaskRun)
     async taskRun(@Arg("id", type => String) id: string) {
-      const task = this.repository.findOne({
+      const taskRun = await this.repository.findOne({
         where: { id },
         relations: ["task"]
       });
-      return task;
+      if (!taskRun) {
+        throw new NotFound(`TaskRun with id ${id} was not found`);
+      }
+
+      let logs = await niceCommander.getLogsFromS3(taskRun.logsPath);
+
+      if (!logs) {
+        logs = "Could not get the logs for this task run...";
+      }
+
+      taskRun.logs = logs;
+      return taskRun;
     }
 
     @Subscription(returns => [TaskRun], { topics: "LOGS" })

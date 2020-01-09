@@ -22,8 +22,10 @@ export class TaskRun {
   @Column({ type: "bigint", nullable: true })
   public endTime!: number;
 
-  @Field(type => String, { description: "Logs" })
   @Column({ default: "" })
+  public logsPath!: string;
+
+  @Field(type => String, { description: "Logs" })
   public logs!: string;
 
   @Field(type => String, { description: "Payload" })

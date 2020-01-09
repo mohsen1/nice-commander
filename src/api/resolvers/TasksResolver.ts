@@ -45,11 +45,6 @@ export function getTasksResolver(connection: Connection) {
         .innerJoinAndSelect("task.runs", "runs")
         .orderBy("runs.startTime", "DESC")
         .getOne();
-      return this.repository.findOne({
-        where: { name },
-        // TODO: sort runs DESC
-        relations: ["runs"]
-      });
     }
   }
 

@@ -41,11 +41,14 @@ export default class NiceCommander {
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
   private readonly childProcesses = new Map<string, cp.ChildProcess>();
+  private readonly s3BucketName!: string;
 
   public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
     );
+
+    this.s3BucketName = options.s3BucketName ?? "nice-commander";
 
     // Create the DB connection
     this.connectionPromise = createConnection({
@@ -212,13 +215,15 @@ export default class NiceCommander {
       throw new Error("Can not find task definition");
     }
 
-    taskRun.logs = `tasks/${taskRun.task.id}/${taskRun.id}_${Date.now()}.log`;
+    taskRun.logsPath = `tasks/${taskRun.task.id}/${
+      taskRun.id
+    }_${Date.now()}.log`;
 
     // Start a child process
     const passThrough = new PassThrough();
     const upload = this.s3.upload({
-      Bucket: this.options.s3BucketName ?? "nice-commander",
-      Key: taskRun.logs,
+      Bucket: this.s3BucketName,
+      Key: taskRun.logsPath,
       Body: passThrough,
       ContentType: "text/plain"
     });
@@ -275,5 +280,16 @@ export default class NiceCommander {
     router.all("*", (req, res) => handler(req, res));
 
     return router;
+  }
+
+  public async getLogsFromS3(logsPath: string) {
+    const { Body } = await this.s3
+      .getObject({
+        Key: logsPath,
+        Bucket: this.s3BucketName
+      })
+      .promise();
+
+    return Body?.toString();
   }
 }
