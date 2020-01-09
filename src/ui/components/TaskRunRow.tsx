@@ -1,25 +1,23 @@
 import styled from "styled-components";
+import Link from "next/link";
+
 import {
   getForegroundColorForStatus,
   getBackgroundColorForStatus
 } from "./utils/colors";
 import { displayTaskRunDuration } from "./utils/time";
-import Link from "next/link";
+import A from "./base/A";
 
 const Container = styled.div<{ state: "FINISHED" | "ERROR" | "RUNNING" }>`
   padding: 1rem;
   border: 1px solid
     ${({ theme, state }) => getForegroundColorForStatus(state, theme)};
+  color: ${({ theme, state }) => getForegroundColorForStatus(state, theme)};
   background-color: ${({ theme, state }) =>
     getBackgroundColorForStatus(state, theme)};
   margin: 1rem 0;
   display: flex;
   justify-content: space-between;
-`;
-
-const A = styled.a`
-  text-decoration: none;
-  cursor: pointer;
 `;
 
 interface TaskRun {

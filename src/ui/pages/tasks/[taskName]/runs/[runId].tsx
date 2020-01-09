@@ -9,6 +9,9 @@ import ErrorPresenter from "../../../../components/ErrorPresentor";
 import H1 from "../../../../components/titles/H1";
 import { withApollo } from "../../../../lib/apollo";
 import H2 from "../../../../components/titles/H2";
+import { isDarkModeEnabled } from "../../../../components/utils/colors";
+import Link from "next/link";
+import A from "../../../../components/base/A";
 
 const TaskRunPage: React.FC = () => {
   const router = useRouter();
@@ -37,7 +40,11 @@ const TaskRunPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <H1>{taskName}</H1>
+      <H1>
+        <Link href={`${process.env.mountPath}/tasks/${taskName}`}>
+          <A>{taskName}</A>
+        </Link>
+      </H1>
       <H2>Details</H2>
       <p>
         Status: <span>{data?.taskRun.state}</span>
@@ -45,17 +52,19 @@ const TaskRunPage: React.FC = () => {
       <p>Started at {new Date(data?.taskRun.startTime).toLocaleString()}</p>
       <H2>Payload</H2>
       <Editor
+        theme={isDarkModeEnabled() ? "dark" : "light"}
         value={data?.taskRun.payload}
         language="json"
         height="200px"
-        options={{ readonly: true, minimap: { enabled: false } }}
+        options={{ readOnly: true, minimap: { enabled: false } }}
       />
       <H2>Logs</H2>
       <Editor
+        theme={isDarkModeEnabled() ? "dark" : "light"}
         value={data?.taskRun.logs}
         language="log"
-        height="200px"
-        options={{ readonly: true, minimap: { enabled: false } }}
+        height="800px"
+        options={{ readOnly: true, minimap: { enabled: false } }}
       />
     </MainLayout>
   );

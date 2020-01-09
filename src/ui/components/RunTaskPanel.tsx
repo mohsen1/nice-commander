@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import styled from "styled-components";
+import Editor from "@monaco-editor/react";
 
 import Run from "./buttons/Run";
 import H2 from "./titles/H2";
+import { isDarkModeEnabled } from "./utils/colors";
 
 const Container = styled.div`
   display: flex;
@@ -12,50 +14,79 @@ const Container = styled.div`
   margin: 1rem 0;
 `;
 
+const InvalidJSONError = styled.p`
+  text-align: right;
+  padding: 1rem;
+  color: ${({ theme }) => theme.colors.fail.normal};
+`;
+
 const Buttons = styled.div`
   text-align: right;
 `;
 
-const Payload = styled.textarea`
-  padding: 0.5rem;
-  min-height: 4rem;
-  margin-bottom: 0.5rem;
-  font-family: monospace;
-  background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
+/** Default editor value. This has proper spacing and new lines */
+const defaultValue = `{
+  
+}
 `;
 
 const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
-  const [payload, setPayload] = useState("");
+  let getEditorValueRef = () => "";
+  const [isValidPayload, setIsValidPayload] = useState<boolean>(true);
   function getPayloadSafe() {
     try {
       // make sure input is valid JSON
-      return JSON.stringify(JSON.parse(payload));
-    } catch {}
-    return "{}";
+      const value = JSON.stringify(JSON.parse(getEditorValueRef()));
+      setIsValidPayload(true);
+      return value;
+    } catch (e) {
+      setIsValidPayload(false);
+      return "{}";
+    }
   }
   const [runTask] = useMutation(gql`
-    mutation Run {
-        runTask(id: "${taskId}", payload: "${getPayloadSafe()}") {
-          payload
-          id
-          logs
-          startTime
-          endTime
-        }
+    mutation Run($taskId: String!, $payload: String!) {
+      runTask(id: $taskId, payload: $payload) {
+        payload
+        id
+        logs
+        startTime
+        endTime
       }
-    `);
+    }
+  `);
 
   return (
     <Container>
       <H2>Run</H2>
-      <Payload
-        placeholder="Payload (JSON)"
-        value={payload}
-        onChange={e => setPayload(e.target.value)}
+      <p>Enter this run's payload:</p>
+      <Editor
+        theme={isDarkModeEnabled() ? "dark" : "light"}
+        value={defaultValue}
+        language="json"
+        options={{
+          readonly: true,
+          minimap: { enabled: false }
+        }}
+        height="200px"
+        editorDidMount={getEditorValue => (getEditorValueRef = getEditorValue)}
       />
+      <InvalidJSONError>
+        {!isValidPayload && "Invalid JSON in payload"}
+      </InvalidJSONError>
       <Buttons>
-        <Run onClick={runTask}>Run</Run>
+        <Run
+          onClick={() => {
+            runTask({
+              variables: {
+                payload: getPayloadSafe(),
+                taskId
+              }
+            });
+          }}
+        >
+          Run
+        </Run>
       </Buttons>
     </Container>
   );
