@@ -36,7 +36,7 @@
     "typescript": "^3.7.4"
   },
   "dependencies": {
-    "apollo-server-express": "^2.9.15",
+    "apollo-server-express": "^2.9.16",
     "aws-sdk": "^2.600.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",
