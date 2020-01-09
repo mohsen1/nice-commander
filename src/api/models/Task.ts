@@ -14,6 +14,10 @@ export class Task {
   @Column()
   public name!: string;
 
+  @Field({ description: "Task file code content" })
+  @Column({ type: "text" })
+  public code!: string;
+
   @Field(type => Number, { description: "Path of the task file." })
   @Column()
   public timeoutAfter!: number;

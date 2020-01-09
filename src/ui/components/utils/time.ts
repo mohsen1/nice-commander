@@ -5,12 +5,12 @@ export function displayTaskRunDuration(
   if (!endTime) {
     return "...";
   }
-  const diffSeconds = (endTime - startTime) / 1000;
+  const diffSeconds = Math.floor((endTime - startTime) / 1000);
   if (diffSeconds < 60) {
-    return `${diffSeconds} s`;
+    return `${diffSeconds}s`;
   }
 
-  const diffMinutes = Math.round(diffSeconds / 60);
+  const diffMinutes = Math.floor(Math.round(diffSeconds / 60));
 
-  return `${diffMinutes} m`;
+  return `${diffMinutes}m`;
 }

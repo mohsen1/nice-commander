@@ -107,7 +107,8 @@ export function getTasksRunResolver(
         take,
         skip,
         where: { task: { id: taskId } },
-        relations: ["task"]
+        relations: ["task"],
+        order: { startTime: "DESC" }
       });
 
       return taskRuns;

@@ -4,6 +4,7 @@ import gql from "graphql-tag";
 import styled from "styled-components";
 
 import Run from "./buttons/Run";
+import H2 from "./titles/H2";
 
 const Container = styled.div`
   display: flex;
@@ -20,9 +21,11 @@ const Payload = styled.textarea`
   min-height: 4rem;
   margin-bottom: 0.5rem;
   font-family: monospace;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
-const RunTaskButton: React.FC<{ taskId: string }> = ({ taskId }) => {
+const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
   const [payload, setPayload] = useState("");
   function getPayloadSafe() {
     try {
@@ -45,6 +48,7 @@ const RunTaskButton: React.FC<{ taskId: string }> = ({ taskId }) => {
 
   return (
     <Container>
+      <H2>Run</H2>
       <Payload
         placeholder="Payload (JSON)"
         value={payload}
@@ -57,4 +61,4 @@ const RunTaskButton: React.FC<{ taskId: string }> = ({ taskId }) => {
   );
 };
 
-export default RunTaskButton;
+export default RunTaskPanel;

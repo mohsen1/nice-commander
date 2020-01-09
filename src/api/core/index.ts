@@ -159,22 +159,23 @@ export default class NiceCommander {
    * in the database accordingly . We rely on definition name to find corresponding model in our
    * database
    *
-   * @param taskDefinitions List of task definition files
+   * @param taskDefinitionsFiles List of task definition files
    */
-  private async sync(taskDefinitions: TaskDefinition[]) {
+  private async sync(taskDefinitionsFiles: TaskDefinitionFile[]) {
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
 
     // Sync incoming task definitions to database
-    for (const taskDefinition of taskDefinitions) {
+    for (const taskDefinitionFile of taskDefinitionsFiles) {
       const existingTask = await taskRepository.findOne({
-        name: taskDefinition.name
+        name: taskDefinitionFile.taskDefinition.name
       });
 
       const task = existingTask || new Task();
-      task.name = taskDefinition.name;
-      task.timeoutAfter = taskDefinition.timeoutAfter;
-      task.schedule = taskDefinition.schedule;
+      task.name = taskDefinitionFile.taskDefinition.name;
+      task.timeoutAfter = taskDefinitionFile.taskDefinition.timeoutAfter;
+      task.schedule = taskDefinitionFile.taskDefinition.schedule;
+      task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 
       await taskRepository.save(task);
 
@@ -259,9 +260,7 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
 
     // Sync task definitions
-    await this.sync(
-      this.taskDefinitionsFiles.map(({ taskDefinition }) => taskDefinition)
-    );
+    await this.sync(this.taskDefinitionsFiles);
 
     // Schedule tasks
     await this.schedule();
