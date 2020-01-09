@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 const Title = styled.h1`
-  font-size: 2em;
+  font-size: 1.2em;
 `;
 
 const HeaderElement = styled.header`
