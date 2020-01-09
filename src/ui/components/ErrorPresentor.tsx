@@ -1,19 +1,21 @@
 import React from "react";
 import styled from "styled-components";
 
-const ErrorMessage = styled.div`
+const ErrorMessage = styled.pre`
+  padding: 1rem;
+  font-family: monospace;
   background: ${({ theme }) => {
     if (theme.name === "dark") {
-      return theme.colors.error.dark;
+      return theme.colors.fail.dark;
     }
-    return theme.colors.error.light;
+    return theme.colors.fail.light;
   }};
 
   color: ${({ theme }) => {
     if (theme.name === "dark") {
-      return theme.colors.error.light;
+      return theme.colors.fail.light;
     }
-    return theme.colors.error.dark;
+    return theme.colors.fail.dark;
   }};
 `;
 

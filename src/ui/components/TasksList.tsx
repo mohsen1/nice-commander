@@ -11,6 +11,11 @@ const TaskList = () => {
     query GetTasks {
       tasks {
         name
+        runs {
+          state
+          startTime
+          endTime
+        }
       }
     }
   `;
@@ -24,7 +29,7 @@ const TaskList = () => {
     <>
       <H1>Tasks</H1>
       {data?.tasks.map((task: any) => (
-        <TaskListItem key={task.name} name={task.name} />
+        <TaskListItem key={task.name} name={task.name} runs={task.runs} />
       ))}
     </>
   );

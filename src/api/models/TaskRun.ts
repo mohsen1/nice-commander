@@ -14,6 +14,14 @@ export class TaskRun {
   @Column({ type: "bigint" })
   public startTime!: number;
 
+  @Field(type => Number, {
+    description: "End time",
+    nullable: true,
+    defaultValue: null
+  })
+  @Column({ type: "bigint", nullable: true })
+  public endTime!: number;
+
   @Field(type => String, { description: "Logs" })
   @Column({ default: "" })
   public logs!: string;

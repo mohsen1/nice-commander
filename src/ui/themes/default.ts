@@ -1,4 +1,5 @@
 export default {
+  name: "light",
   colors: {
     background: "white",
     text: "black",

@@ -60,12 +60,17 @@ export default class NiceCommander {
     });
   }
 
-  private async getNextJsRequestHandler(assetPrefix: string) {
+  private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.NODE_ENV !== "production";
     const app = next({
       dev,
       dir: path.resolve(__dirname, "../../ui"),
-      conf: { assetPrefix }
+      conf: {
+        assetPrefix: mountPath,
+        env: {
+          mountPath
+        }
+      }
     });
     const handle = app.getRequestHandler();
     await app.prepare();
@@ -183,6 +188,7 @@ export default class NiceCommander {
     const taskRunRepository = connection.getRepository(TaskRun);
 
     taskRun.state = state;
+    taskRun.endTime = Date.now();
     await taskRunRepository.save(taskRun);
     this.childProcesses.delete(taskRun.uniqueId);
   }
