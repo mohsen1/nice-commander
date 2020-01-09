@@ -1,8 +1,15 @@
 import React from "react";
 import styled from "styled-components";
+import Link from "next/link";
 
 const Title = styled.h1`
-  font-size: 2em;
+  font-size: 1.2em;
+`;
+
+const A = styled.a`
+  text-decoration: none;
+  color: white;
+  cursor: pointer;
 `;
 
 const HeaderElement = styled.header`
@@ -12,7 +19,11 @@ const HeaderElement = styled.header`
 
 const Header: React.FC = () => (
   <HeaderElement>
-    <Title>Nice Commander</Title>
+    <Title>
+      <Link href={process.env.mountPath}>
+        <A>Nice Commander</A>
+      </Link>
+    </Title>
   </HeaderElement>
 );
 

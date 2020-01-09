@@ -34,8 +34,8 @@ export function getTasksResolver(connection: Connection) {
     }
 
     @Query(returns => Task, { description: "Get a single task" })
-    async task(@Arg("id") id: string) {
-      return this.repository.findOne({ where: { id }, relations: ["runs"] });
+    async task(@Arg("name", { description: "Task unique name" }) name: string) {
+      return this.repository.findOne({ where: { name }, relations: ["runs"] });
     }
   }
 

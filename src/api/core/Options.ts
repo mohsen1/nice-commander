@@ -10,8 +10,7 @@ export interface Options {
   taskDefinitionsDirectory: string;
 
   /**
-   * At what point this middleware is mounted?
-   * This path can be relative but prefer absolute paths
+   * At what path this middleware is mounted?
    * This is used to make URLs of static assets used in UI
    */
   mountPath: string;
