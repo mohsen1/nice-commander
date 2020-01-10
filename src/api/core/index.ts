@@ -38,6 +38,8 @@ export default class NiceCommander {
     .toString(36)
     .substring(2)}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
+  private readonly REDIS_TASK_RUN_TIMEOUT_PREFIX =
+    "NiceCommander:taskRun:schedule:";
   private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@0__:expired";
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
@@ -72,9 +74,7 @@ export default class NiceCommander {
     }
 
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
-    this.redisSubscriber.on("message", (channel, message) =>
-      this.onTaskScheduleKeyExpired(channel, message)
-    );
+    this.redisSubscriber.on("message", this.onRedisMessage);
 
     this.redLock = new Redlock([this.redisClient], { retryCount: 0 });
 
@@ -220,8 +220,16 @@ export default class NiceCommander {
     );
   }
 
-  private async onTaskScheduleKeyExpired(channel: string, message: string) {
-    if (channel !== this.REDIS_KEY_EXPIRED_CHANNEL) return;
+  private onRedisMessage(channel: string, message: string) {
+    if (message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) {
+      this.onTaskScheduleKeyExpired(message);
+    }
+    if (message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) {
+      this.onTaskRunTimeout(message);
+    }
+  }
+
+  private async onTaskScheduleKeyExpired(message: string) {
     if (!message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) return;
 
     const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
@@ -243,6 +251,10 @@ export default class NiceCommander {
       // Schedule the next run
       this.scheduleTask(task, timestring(task.schedule, "ms"));
     }
+  }
+
+  private async onTaskRunTimeout(message: string) {
+    // TODO
   }
 
   /**
@@ -330,6 +342,14 @@ export default class NiceCommander {
         Body: passThrough,
         ContentType: "text/plain"
       });
+
+      // Add a Redis key for noticing when task run is timed out
+      this.redisClient.set(
+        `${this.REDIS_TASK_RUN_TIMEOUT_PREFIX}${taskRun.id}`,
+        taskRun.id,
+        "PX",
+        taskRun.task.timeoutAfter
+      );
 
       const child = cp.fork(
         this.invokeFile,

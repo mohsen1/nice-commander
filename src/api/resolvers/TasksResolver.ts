@@ -37,8 +37,18 @@ export function getTasksResolver(connection: Connection) {
       });
     }
 
-    @Query(returns => Task, { description: "Get a single task" })
+    @Query(returns => Task, {
+      description: "Get a single task",
+      nullable: true
+    })
     async task(@Arg("name", { description: "Task unique name" }) name: string) {
+      const task = await this.repository.findOne({ where: { name } });
+
+      // Avoid joint if not necessary
+      if (task && !task.runs) {
+        return task;
+      }
+
       return this.repository
         .createQueryBuilder("task")
         .where({ name })
