@@ -17,7 +17,7 @@ import timestring from "timestring";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
-import { TaskRun, InvocationType } from "../models/TaskRun";
+import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 
@@ -171,7 +171,7 @@ export default class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Not(InvocationType.MANUAL)
+        schedule: Not(TaskRun.InvocationType.MANUAL)
       }
     });
     const now = Date.now();
@@ -236,7 +236,7 @@ export default class NiceCommander {
       taskRun.task = task;
       taskRun.startTime = Date.now();
       taskRun.state = "RUNNING";
-      taskRun.invocationType = InvocationType.SCHEDULED;
+      taskRun.invocationType = TaskRun.InvocationType.SCHEDULED;
       await taskRunRepository.save(taskRun);
       this.startTask(taskRun);
 

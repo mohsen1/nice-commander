@@ -3,7 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 import { Task } from "./Task";
 
-export enum InvocationType {
+enum InvocationType {
   MANUAL,
   SCHEDULED
 }
@@ -16,6 +16,8 @@ registerEnumType(InvocationType, {
 @Entity()
 @ObjectType()
 export class TaskRun {
+  static InvocationType = InvocationType;
+
   @Field(type => ID)
   @PrimaryGeneratedColumn()
   public id!: string;

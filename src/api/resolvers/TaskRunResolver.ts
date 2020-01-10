@@ -11,7 +11,7 @@ import {
 } from "type-graphql";
 import { Connection } from "typeorm";
 
-import { TaskRun, InvocationType } from "../models/TaskRun";
+import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
 import NiceCommander from "../..";
 import { assertNumberArgumentIsInRange } from "./util";
@@ -60,7 +60,7 @@ export function getTasksRunResolver(
       const taskRun = new TaskRun();
       taskRun.task = task;
       taskRun.startTime = Date.now();
-      taskRun.invocationType = InvocationType.MANUAL;
+      taskRun.invocationType = TaskRun.InvocationType.MANUAL;
       taskRun.state = "RUNNING";
       taskRun.payload = payload;
 
