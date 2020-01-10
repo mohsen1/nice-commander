@@ -51,12 +51,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
           : `Runs every ${data?.task?.schedule}`}
       </p>
       <H2>Code</H2>
-      <Editor
-        readonly
-        value={data?.task?.code}
-        height={"300px"}
-        language="typescript"
-      />
+      <Editor readonly value={data?.task?.code} language="typescript" />
 
       <div>
         <RunTaskPanel taskId={data?.task?.id} />

@@ -3,7 +3,17 @@ import MonacoEditor, { EditorProps } from "@monaco-editor/react";
 
 import { isDarkModeEnabled } from "./utils/colors";
 
-const Editor: React.FC<EditorProps & { readonly?: boolean }> = props => (
+function getHeight(value?: string, maxHeight: number = 25) {
+  if (!value) return "200px";
+  const lines = value.split("\n").length;
+
+  return `${Math.min(lines, maxHeight)}em`;
+}
+
+const Editor: React.FC<EditorProps & {
+  readonly?: boolean;
+  maxHeight?: number;
+}> = props => (
   <MonacoEditor
     theme={isDarkModeEnabled() ? "dark" : "light"}
     language="json"
@@ -19,7 +29,7 @@ const Editor: React.FC<EditorProps & { readonly?: boolean }> = props => (
       ...(props.options ?? {}),
       readOnly: props.readonly ?? false
     }}
-    height="200px"
+    height={getHeight(props.value, props.maxHeight)}
     {...props}
   />
 );

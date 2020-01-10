@@ -62,6 +62,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       <p>Enter this run's payload:</p>
       <Editor
         value={defaultValue}
+        height="150px"
         editorDidMount={getEditorValue => (getEditorValueRef = getEditorValue)}
       />
       <InvalidJSONError>

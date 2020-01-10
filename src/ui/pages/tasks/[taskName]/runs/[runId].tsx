@@ -50,13 +50,13 @@ const TaskRunPage: React.FC = () => {
       </p>
       <p>Started at {new Date(data?.taskRun.startTime).toLocaleString()}</p>
       <H2>Payload</H2>
-      <Editor readonly value={data?.taskRun.payload} />
+      <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>
       <Editor
         readonly
+        maxHeight={25}
         value={data?.taskRun.logs}
         language="log"
-        height="800px"
       />
     </MainLayout>
   );
