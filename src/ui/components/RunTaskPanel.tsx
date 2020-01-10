@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import styled from "styled-components";
-import Editor from "@monaco-editor/react";
 
+import Editor from "./Editor";
 import Run from "./buttons/Run";
 import H2 from "./titles/H2";
 import { isDarkModeEnabled } from "./utils/colors";
@@ -61,14 +61,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       <H2>Run</H2>
       <p>Enter this run's payload:</p>
       <Editor
-        theme={isDarkModeEnabled() ? "dark" : "light"}
         value={defaultValue}
-        language="json"
-        options={{
-          readonly: true,
-          minimap: { enabled: false }
-        }}
-        height="200px"
         editorDidMount={getEditorValue => (getEditorValueRef = getEditorValue)}
       />
       <InvalidJSONError>
