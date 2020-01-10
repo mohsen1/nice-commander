@@ -30,9 +30,10 @@ const TaskRunPage: React.FC = () => {
           logs
           payload
           id
+          invocationType
           task {
-          name
-          id
+            name
+            id
           }
       }
     }`;
@@ -58,6 +59,7 @@ const TaskRunPage: React.FC = () => {
         Runtime:{" "}
         {displayTaskRunDuration(data?.taskRun.startTime, data?.taskRun.endTime)}
       </DetailsRow>
+      <DetailsRow>Invocation Type {data?.taskRun.invocationType}</DetailsRow>
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>

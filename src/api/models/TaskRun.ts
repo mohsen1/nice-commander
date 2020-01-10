@@ -1,7 +1,17 @@
-import { ObjectType, ID, Field } from "type-graphql";
+import { ObjectType, ID, Field, registerEnumType } from "type-graphql";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 import { Task } from "./Task";
+
+export enum InvocationType {
+  MANUAL,
+  SCHEDULED
+}
+
+registerEnumType(InvocationType, {
+  name: "InvocationType",
+  description: "Task Run invocation type"
+});
 
 @Entity()
 @ObjectType()
@@ -20,7 +30,7 @@ export class TaskRun {
     defaultValue: null
   })
   @Column({ type: "bigint", nullable: true })
-  public endTime!: number;
+  public endTime!: string;
 
   @Column({ default: "" })
   public logsPath!: string;
@@ -46,6 +56,15 @@ export class TaskRun {
   })
   @Column()
   public state!: string;
+
+  @Field(type => InvocationType, {
+    description: "Invocation Type"
+  })
+  @Column({
+    enum: InvocationType,
+    type: "enum"
+  })
+  public invocationType!: InvocationType;
 
   /** A unique ID for this run and its related task */
   public get uniqueId() {

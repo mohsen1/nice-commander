@@ -4,7 +4,10 @@
     },
     "editor.formatOnSave": true,
     "cSpell.words": [
+        "Keyspace",
         "Redlock",
+        "keyevent",
+        "timestring",
         "typeorm"
     ]
 }
