@@ -42,5 +42,14 @@ export interface Options {
   redisConnectionOptions: {
     host: string;
     port: number;
+    /**
+     * Use the config method to set `'notify-keyspace-events'` to `'Ex'`
+     * This configuration is useful for subscribing to key expired events
+     * which Nice Commander rely on for scheduling tasks. If you set this
+     * value to false, you need to configure your Redis instance to have
+     * `notify-keyspace-events` set to `Ex`
+     * @default true
+     */
+    setNotifyKeyspaceEvents?: boolean;
   };
 }

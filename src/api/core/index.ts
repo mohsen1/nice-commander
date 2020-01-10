@@ -4,7 +4,7 @@ import { Router } from "express";
 import { buildSchema, Publisher } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
-import { createConnection, Connection } from "typeorm";
+import { createConnection, Connection, Not, IsNull } from "typeorm";
 import debug from "debug";
 import fs from "fs";
 import { RedisPubSub } from "graphql-redis-subscriptions";
@@ -13,6 +13,7 @@ import cp from "child_process";
 import AWS from "aws-sdk";
 import { PassThrough } from "stream";
 import Redlock from "redlock";
+import timestring from "timestring";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
@@ -33,17 +34,20 @@ interface TaskDefinitionFile {
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
 export default class NiceCommander {
-  public readonly DB_CONNECTION_NAME = `NiceCommander_${Math.random()
+  private readonly DB_CONNECTION_NAME = `NiceCommander_${Math.random()
     .toString(36)
     .substring(2)}`;
+  private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
+  private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@0__:expired";
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
-  private readonly logger = debug("nice-commander");
+  private readonly debug = debug("nice-commander");
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
   private readonly childProcesses = new Map<string, cp.ChildProcess>();
   private readonly s3BucketName!: string;
   private readonly redisClient!: RedisClient;
+  private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
 
   public constructor(private options: Options) {
@@ -58,6 +62,20 @@ export default class NiceCommander {
       port: options.redisConnectionOptions.port
     });
 
+    this.redisSubscriber = redis.createClient({
+      host: options.redisConnectionOptions.host,
+      port: options.redisConnectionOptions.port
+    });
+
+    if (options.redisConnectionOptions.setNotifyKeyspaceEvents !== false) {
+      this.redisSubscriber.config("SET", "notify-keyspace-events", "Ex");
+    }
+
+    this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
+    this.redisSubscriber.on("message", (channel, message) =>
+      this.onTaskScheduleKeyExpired(channel, message)
+    );
+
     this.redLock = new Redlock([this.redisClient], { retryCount: 0 });
 
     // Create the DB connection
@@ -68,7 +86,7 @@ export default class NiceCommander {
       logging: false,
       entities: [path.resolve(__dirname, "../models/*.ts")]
     }).then(connection => {
-      this.logger(`Connection ${connection.name} is created successfully.`);
+      this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
     });
   }
@@ -143,21 +161,87 @@ export default class NiceCommander {
 
   /**
    * Here we manage schedules of each task
-   *
-   * @todo with Redis locking this will be very different
    */
   private async schedule() {
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
 
-    const allTasks = await taskRepository.find({
+    const scheduledTasks = await taskRepository.find({
       // TODO: paginate
-      take: Number.MAX_SAFE_INTEGER
-    });
-    for (const task of allTasks) {
-      if (task.schedule !== "manual") {
-        // Redis stuff here
+      take: Number.MAX_SAFE_INTEGER,
+      where: {
+        schedule: Not(TaskRun.InvocationType.MANUAL)
       }
+    });
+    const now = Date.now();
+    for (const task of scheduledTasks) {
+      const [lastTaskRun] = await taskRunRepository.find({
+        where: { task, endTime: Not(IsNull()) },
+        order: {
+          endTime: "ASC"
+        },
+        take: 1
+      });
+
+      const scheduleMs = timestring(task.schedule, "ms");
+
+      // Default to scheduling next run immoderately after now
+      let expires = scheduleMs;
+
+      // In case we found the last run, schedule after last run's end time to keep on schedule
+      if (lastTaskRun) {
+        const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
+
+        if (nextRun < now) {
+          // We are past due, schedule for immediate invocation
+          expires = 1;
+        } else {
+          expires = nextRun - now;
+        }
+      }
+
+      this.scheduleTask(task, expires);
+    }
+  }
+
+  /**
+   * Schedule a task to run in X milliseconds
+   * @param task Task
+   * @param inMs Time in milliseconds
+   */
+  private async scheduleTask(task: Task, inMs: number) {
+    // fire and forget
+    this.redisClient.set(
+      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+      task.id,
+      "PX",
+      inMs
+    );
+  }
+
+  private async onTaskScheduleKeyExpired(channel: string, message: string) {
+    if (channel !== this.REDIS_KEY_EXPIRED_CHANNEL) return;
+    if (!message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) return;
+
+    const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const [task] = await taskRepository.findByIds([taskId]);
+
+    if (task) {
+      this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
+      const taskRun = new TaskRun();
+      taskRun.task = task;
+      taskRun.startTime = Date.now();
+      taskRun.state = "RUNNING";
+      taskRun.invocationType = TaskRun.InvocationType.SCHEDULED;
+      await taskRunRepository.save(taskRun);
+      this.startTask(taskRun);
+
+      // Schedule the next run
+      this.scheduleTask(task, timestring(task.schedule, "ms"));
     }
   }
 
@@ -200,7 +284,7 @@ export default class NiceCommander {
     const taskRunRepository = connection.getRepository(TaskRun);
 
     taskRun.state = state;
-    taskRun.endTime = Date.now();
+    taskRun.endTime = Date.now().toString();
     try {
       await lock.unlock();
     } catch (e) {
@@ -215,7 +299,7 @@ export default class NiceCommander {
    * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
    * @param publishLogs Logging pub-sub
    */
-  public async startTask(taskRun: TaskRun, publishLogs: Publisher<string>) {
+  public async startTask(taskRun: TaskRun) {
     const taskDefinitionFile = this.taskDefinitionsFiles.find(
       ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
     );
@@ -270,7 +354,7 @@ export default class NiceCommander {
 
       upload.send();
 
-      publishLogs(`${new Date()}`);
+      // publishLogs(`${new Date()}`);
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host
     }

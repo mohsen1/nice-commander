@@ -44,8 +44,8 @@ export function getTasksRunResolver(
           "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
         defaultValue: "{}"
       })
-      payload: string,
-      @PubSub("LOGS") publisher: Publisher<string>
+      payload: string
+      // @PubSub("LOGS") publisher: Publisher<string>
     ) {
       if (payload.length > 1024) {
         throw new RangeError("Payload is too big");
@@ -60,6 +60,7 @@ export function getTasksRunResolver(
       const taskRun = new TaskRun();
       taskRun.task = task;
       taskRun.startTime = Date.now();
+      taskRun.invocationType = TaskRun.InvocationType.MANUAL;
       taskRun.state = "RUNNING";
       taskRun.payload = payload;
 
@@ -67,7 +68,7 @@ export function getTasksRunResolver(
       await this.repository.save(taskRun);
 
       // start the task
-      await niceCommander.startTask(taskRun, publisher);
+      await niceCommander.startTask(taskRun);
 
       // Save to DB
       await this.repository.save(taskRun);
