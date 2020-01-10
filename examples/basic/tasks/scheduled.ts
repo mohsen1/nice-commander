@@ -12,7 +12,7 @@ const task: TaskDefinition = {
       console.log(`Scheduled Sample Tak log ${i}`);
     }
   },
-  timeoutAfter: 100,
+  timeoutAfter: 5000,
   schedule: "2 minute"
 };
 

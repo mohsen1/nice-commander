@@ -2,6 +2,7 @@ import React from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
 import { useQuery } from "react-apollo";
+import styled from "styled-components";
 
 import Editor from "../../../../components/Editor";
 import MainLayout from "../../../../layouts/MainLayout";
@@ -11,6 +12,11 @@ import { withApollo } from "../../../../lib/apollo";
 import H2 from "../../../../components/titles/H2";
 import Link from "next/link";
 import A from "../../../../components/base/A";
+import { displayTaskRunDuration } from "../../../../components/utils/time";
+
+const DetailsRow = styled.p`
+  padding: 0.5rem 0;
+`;
 
 const TaskRunPage: React.FC = () => {
   const router = useRouter();
@@ -45,10 +51,16 @@ const TaskRunPage: React.FC = () => {
         </Link>
       </H1>
       <H2>Details</H2>
-      <p>
+      <DetailsRow>
         Status: <span>{data?.taskRun.state}</span>
-      </p>
-      <p>Started at {new Date(data?.taskRun.startTime).toLocaleString()}</p>
+      </DetailsRow>
+      <DetailsRow>
+        Runtime:{" "}
+        {displayTaskRunDuration(data?.taskRun.startTime, data?.taskRun.endTime)}
+      </DetailsRow>
+      <DetailsRow>
+        Started at {new Date(data?.taskRun.startTime).toLocaleString()}
+      </DetailsRow>
       <H2>Payload</H2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>
