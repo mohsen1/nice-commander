@@ -8,10 +8,11 @@ import { createConnection, Connection } from "typeorm";
 import debug from "debug";
 import fs from "fs";
 import { RedisPubSub } from "graphql-redis-subscriptions";
-import redis from "redis";
+import redis, { RedisClient } from "redis";
 import cp from "child_process";
 import AWS from "aws-sdk";
 import { PassThrough } from "stream";
+import Redlock from "redlock";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
@@ -42,6 +43,8 @@ export default class NiceCommander {
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
   private readonly childProcesses = new Map<string, cp.ChildProcess>();
   private readonly s3BucketName!: string;
+  private readonly redisClient!: RedisClient;
+  private readonly redLock!: Redlock;
 
   public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
@@ -49,6 +52,13 @@ export default class NiceCommander {
     );
 
     this.s3BucketName = options.s3BucketName ?? "nice-commander";
+
+    this.redisClient = redis.createClient({
+      host: options.redisConnectionOptions.host,
+      port: options.redisConnectionOptions.port
+    });
+
+    this.redLock = new Redlock([this.redisClient], { retryCount: 0 });
 
     // Create the DB connection
     this.connectionPromise = createConnection({
@@ -108,14 +118,8 @@ export default class NiceCommander {
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
     const redisPubSub = new RedisPubSub({
-      publisher: redis.createClient({
-        host: this.options.redisConnectionOptions.host,
-        port: this.options.redisConnectionOptions.port
-      }),
-      subscriber: redis.createClient({
-        host: this.options.redisConnectionOptions.host,
-        port: this.options.redisConnectionOptions.port
-      })
+      publisher: this.redisClient,
+      subscriber: this.redisClient
     });
     const schema = await buildSchema({
       resolvers: [
@@ -187,12 +191,21 @@ export default class NiceCommander {
   }
 
   /** Do the business of ending life of a task run */
-  private async endTaskRun(state: "FINISHED" | "ERROR", taskRun: TaskRun) {
+  private async endTaskRun(
+    state: "FINISHED" | "ERROR",
+    taskRun: TaskRun,
+    lock: Redlock.Lock
+  ) {
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
 
     taskRun.state = state;
     taskRun.endTime = Date.now();
+    try {
+      await lock.unlock();
+    } catch (e) {
+      console.error(e);
+    }
     await taskRunRepository.save(taskRun);
     this.childProcesses.delete(taskRun.uniqueId);
   }
@@ -215,43 +228,52 @@ export default class NiceCommander {
       throw new Error("Can not find task definition");
     }
 
-    taskRun.logsPath = `tasks/${taskRun.task.id}/${
-      taskRun.id
-    }_${Date.now()}.log`;
+    // Try to get a lock for this task run
+    try {
+      // Add one second to task timeout for safety
+      const lockTTL = taskRun.task.timeoutAfter + 1000;
+      const lock = await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
-    // Start a child process
-    const passThrough = new PassThrough();
-    const upload = this.s3.upload({
-      Bucket: this.s3BucketName,
-      Key: taskRun.logsPath,
-      Body: passThrough,
-      ContentType: "text/plain"
-    });
+      taskRun.logsPath = `tasks/${taskRun.task.id}/${
+        taskRun.id
+      }_${Date.now()}.log`;
 
-    const child = cp.fork(
-      this.invokeFile,
-      [taskDefinitionFile.filePath, taskRun.payload],
-      {
-        stdio: "pipe"
+      // Start a child process
+      const passThrough = new PassThrough();
+      const upload = this.s3.upload({
+        Bucket: this.s3BucketName,
+        Key: taskRun.logsPath,
+        Body: passThrough,
+        ContentType: "text/plain"
+      });
+
+      const child = cp.fork(
+        this.invokeFile,
+        [taskDefinitionFile.filePath, taskRun.payload],
+        {
+          stdio: "pipe"
+        }
+      );
+
+      child.stdout?.pipe(passThrough);
+      child.stderr?.pipe(passThrough);
+
+      if (this.options.logToStdout) {
+        child.stdout?.pipe(process.stdout);
+        child.stderr?.pipe(process.stderr);
       }
-    );
 
-    child.stdout?.pipe(passThrough);
-    child.stderr?.pipe(passThrough);
+      this.childProcesses.set(taskRun.uniqueId, child);
 
-    if (this.options.logToStdout) {
-      child.stdout?.pipe(process.stdout);
-      child.stderr?.pipe(process.stderr);
+      child.on("close", () => this.endTaskRun("FINISHED", taskRun, lock));
+      child.on("error", () => this.endTaskRun("ERROR", taskRun, lock));
+
+      upload.send();
+
+      publishLogs(`${new Date()}`);
+    } catch {
+      // ignore failing to acquire a lock, this is task run is probably run by another host
     }
-
-    this.childProcesses.set(taskRun.uniqueId, child);
-
-    child.on("close", () => this.endTaskRun("FINISHED", taskRun));
-    child.on("error", () => this.endTaskRun("ERROR", taskRun));
-
-    upload.send();
-
-    publishLogs(`${new Date()}`);
   }
 
   /**
