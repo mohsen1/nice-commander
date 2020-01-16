@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "apollo-server-express": "^2.9.16",
-    "aws-sdk": "^2.602.0",
+    "aws-sdk": "^2.605.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",
     "graphql": "^14.5.8",
