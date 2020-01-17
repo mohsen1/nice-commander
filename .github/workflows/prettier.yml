@@ -11,8 +11,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "10.x"
-      - uses: borales/actions-yarn@v2.0.0
-        with:
-          cmd: install
+      - run: yarn
       - name: Check prettier
         run: yarn prettier --list-different  '**/*.{ts,tsx}'
