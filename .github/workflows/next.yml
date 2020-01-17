@@ -16,9 +16,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: borales/actions-yarn@v2.0.0
-        with:
-          cmd: install
       - name: Build Next.js
         working-directory: src/ui
         run: ../../node_modules/.bin/next build
