@@ -11,5 +11,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "10.x"
+      - run: yarn
       - name: Check prettier
         run: yarn prettier --list-different  '**/*.{ts,tsx}'
