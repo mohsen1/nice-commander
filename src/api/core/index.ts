@@ -20,6 +20,7 @@ import { Task } from "../models/Task";
 import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
+import { rand } from "../resolvers/util";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
@@ -34,12 +35,9 @@ interface TaskDefinitionFile {
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
 export default class NiceCommander {
-  private readonly DB_CONNECTION_NAME = `NiceCommander${Math.random()
-    .toString(36)
-    .substring(2)}`;
-  private readonly REDIS_TASK_PREFIX = `NiceCommander:task`;
-  private readonly REDIS_TASK_SCHEDULE_PREFIX = `${this.REDIS_TASK_PREFIX}:schedule:`;
-  private readonly REDIS_TASK_RUN_TIMEOUT_PREFIX = `${this.REDIS_TASK_PREFIX}:timeout:`;
+  private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
+  private readonly REDIS_TASK_TIMEOUT_PREFIX = `NiceCommander:task:timeout`;
+  private readonly REDIS_TASK_SCHEDULE_PREFIX = `NiceCommander:task:schedule:`;
   private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@0__:expired";
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
@@ -47,7 +45,7 @@ export default class NiceCommander {
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
   private readonly s3BucketName!: string;
-  private readonly redisScheduleClient!: RedisClient;
+  // private readonly redisScheduleClient!: RedisClient;
   private readonly redisTimeoutClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
@@ -59,10 +57,10 @@ export default class NiceCommander {
 
     this.s3BucketName = options.s3BucketName ?? "nice-commander";
 
-    this.redisScheduleClient = redis.createClient({
-      host: options.redisConnectionOptions.host,
-      port: options.redisConnectionOptions.port
-    });
+    // this.redisScheduleClient = redis.createClient({
+    //   host: options.redisConnectionOptions.host,
+    //   port: options.redisConnectionOptions.port
+    // });
 
     this.redisTimeoutClient = redis.createClient({
       host: options.redisConnectionOptions.host,
@@ -148,16 +146,16 @@ export default class NiceCommander {
 
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
-    const redisPubSub = new RedisPubSub({
-      publisher: this.redisScheduleClient,
-      subscriber: this.redisScheduleClient
-    });
+    // const redisPubSub = new RedisPubSub({
+    //   publisher: this.redisScheduleClient,
+    //   subscriber: this.redisScheduleClient
+    // });
     const schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this)
-      ],
-      pubSub: redisPubSub
+      ]
+      // pubSub: redisPubSub
     });
     const server = new ApolloServer({
       schema,
@@ -225,22 +223,24 @@ export default class NiceCommander {
    */
   private async scheduleTask(task: Task, inMs: number) {
     // fire and forget
-    this.redisScheduleClient.set(
-      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-      task.id,
-      "PX",
-      inMs
-    );
+    // this.redisScheduleClient.set(
+    //   `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+    //   task.id,
+    //   "PX",
+    //   inMs
+    // );
   }
 
   private onRedisKeyExpiredMessage(channel: string, message: string) {
-    this.debug(`onRedisMessage channel=${channel} message=${message}`);
-    if (message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) {
-      this.onTaskScheduleKeyExpired(message);
-    }
-    if (message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) {
-      this.onTaskRunTimeout(message);
-    }
+    this.debug(
+      `onRedisKeyExpiredMessage channel=${channel} message=${message}`
+    );
+    // if (message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) {
+    //   this.onTaskScheduleKeyExpired(message);
+    // }
+    // if (message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) {
+    //   this.onTaskRunTimeout(message);
+    // }
   }
 
   private async onTaskScheduleKeyExpired(message: string) {
@@ -273,17 +273,15 @@ export default class NiceCommander {
    * @param message
    */
   private async onTaskRunTimeout(message: string) {
-    if (!message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) return;
-    this.debug("onTaskRunTimeout");
-    const taskRunId = message.replace(this.REDIS_TASK_RUN_TIMEOUT_PREFIX, "");
-    const connection = await this.connectionPromise;
-    const taskRunRepository = connection.getRepository(TaskRun);
-
-    const [taskRun] = await taskRunRepository.findByIds([taskRunId]);
-
-    if (taskRun) {
-      this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun);
-    }
+    // if (!message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) return;
+    // this.debug("onTaskRunTimeout");
+    // const taskRunId = message.replace(this.REDIS_TASK_RUN_TIMEOUT_PREFIX, "");
+    // const connection = await this.connectionPromise;
+    // const taskRunRepository = connection.getRepository(TaskRun);
+    // const [taskRun] = await taskRunRepository.findByIds([taskRunId]);
+    // if (taskRun) {
+    //   this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun);
+    // }
   }
 
   /**
@@ -377,7 +375,7 @@ export default class NiceCommander {
 
       // Add a Redis key for noticing when task run is timed out
       this.redisTimeoutClient.set(
-        `${this.REDIS_TASK_RUN_TIMEOUT_PREFIX}${taskRun.id}`,
+        `${this.REDIS_TASK_TIMEOUT_PREFIX}:${taskRun.id}`,
         taskRun.id,
         "PX",
         taskRun.task.timeoutAfter

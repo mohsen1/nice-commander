@@ -1,6 +1,6 @@
 import { TaskDefinition } from "../../../src";
 
-// A simple manual task that times out
+// A simple manual task that errors out
 const task: TaskDefinition = {
   name: "Errors Out",
   async run(payload) {
