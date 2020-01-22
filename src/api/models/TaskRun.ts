@@ -1,4 +1,4 @@
-import { ObjectType, ID, Field, registerEnumType } from "type-graphql";
+import { ObjectType, ID, Field, registerEnumType, Int } from "type-graphql";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 import { Task } from "./Task";
@@ -8,15 +8,27 @@ enum InvocationType {
   SCHEDULED
 }
 
+enum State {
+  RUNNING,
+  FINISHED,
+  ERROR,
+  TIMED_OUT
+}
+
 registerEnumType(InvocationType, {
   name: "InvocationType",
   description: "Task Run invocation type"
+});
+registerEnumType(State, {
+  name: "State",
+  description: "State TaskRun is at right now"
 });
 
 @Entity()
 @ObjectType()
 export class TaskRun {
   static InvocationType = InvocationType;
+  static State = State;
 
   @Field(type => ID)
   @PrimaryGeneratedColumn()
@@ -44,6 +56,14 @@ export class TaskRun {
   @Column({ default: "{}" })
   public payload!: string;
 
+  @Field(type => Int, { description: "Exit Code", nullable: true })
+  @Column({ nullable: true, type: "int" })
+  public exitCode!: number | null;
+
+  @Field(type => String, { description: "Exit Signal", nullable: true })
+  @Column({ nullable: true, type: "text" })
+  public exitSignal!: string | null;
+
   @Field(type => Task, {
     description: "Task associated with this run"
   })
@@ -53,11 +73,14 @@ export class TaskRun {
   )
   public task!: Task;
 
-  @Field(type => String, {
-    description: "State of the task run"
+  @Field(type => State, {
+    description: "State of the TaskRun"
   })
-  @Column()
-  public state!: string;
+  @Column({
+    enum: State,
+    type: "enum"
+  })
+  public state!: State;
 
   @Field(type => InvocationType, {
     description: "Invocation Type"

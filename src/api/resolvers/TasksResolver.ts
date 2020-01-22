@@ -42,10 +42,13 @@ export function getTasksResolver(connection: Connection) {
       nullable: true
     })
     async task(@Arg("name", { description: "Task unique name" }) name: string) {
-      const task = await this.repository.findOne({ where: { name } });
+      const task = await this.repository.findOne({
+        where: { name },
+        relations: ["runs"]
+      });
 
       // Avoid joint if not necessary
-      if (task && !task.runs) {
+      if (task && !task.runs.length) {
         return task;
       }
 
