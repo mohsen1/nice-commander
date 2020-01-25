@@ -1,13 +1,12 @@
 import "reflect-metadata";
 import path from "path";
 import { Router } from "express";
-import { buildSchema, Publisher } from "type-graphql";
+import { buildSchema } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
 import { createConnection, Connection, Not, IsNull } from "typeorm";
 import debug from "debug";
 import fs from "fs";
-import { RedisPubSub } from "graphql-redis-subscriptions";
 import redis, { RedisClient } from "redis";
 import cp from "child_process";
 import AWS from "aws-sdk";
@@ -36,17 +35,16 @@ interface TaskDefinitionFile {
  */
 export default class NiceCommander {
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
-  private readonly REDIS_TASK_TIMEOUT_PREFIX = `NiceCommander:task:timeout`;
-  private readonly REDIS_TASK_SCHEDULE_PREFIX = `NiceCommander:task:schedule:`;
-  private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@0__:expired";
+  private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
+  private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@1__:expired";
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
   private readonly debug = debug("nice-commander");
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
   private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+  private readonly childProcesses = new Map<string, cp.ChildProcess>();
   private readonly s3BucketName!: string;
-  // private readonly redisScheduleClient!: RedisClient;
-  private readonly redisTimeoutClient!: RedisClient;
+  private readonly redisClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
 
@@ -57,19 +55,16 @@ export default class NiceCommander {
 
     this.s3BucketName = options.s3BucketName ?? "nice-commander";
 
-    // this.redisScheduleClient = redis.createClient({
-    //   host: options.redisConnectionOptions.host,
-    //   port: options.redisConnectionOptions.port
-    // });
-
-    this.redisTimeoutClient = redis.createClient({
+    this.redisClient = redis.createClient({
       host: options.redisConnectionOptions.host,
-      port: options.redisConnectionOptions.port
+      port: options.redisConnectionOptions.port,
+      db: 1
     });
 
     this.redisSubscriber = redis.createClient({
       host: options.redisConnectionOptions.host,
-      port: options.redisConnectionOptions.port
+      port: options.redisConnectionOptions.port,
+      db: 1
     });
 
     if (options.redisConnectionOptions.setNotifyKeyspaceEvents !== false) {
@@ -77,13 +72,17 @@ export default class NiceCommander {
     }
 
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
-    this.redisSubscriber.on("message", this.onRedisKeyExpiredMessage);
+    this.redisSubscriber.on("message", (channel, message) => {
+      console.log({ channel, message, now: Date.now() });
+      this.onTaskScheduleKeyExpired(channel, message);
+    });
 
     this.redLock = new Redlock(
       [
         redis.createClient({
           host: options.redisConnectionOptions.host,
-          port: options.redisConnectionOptions.port
+          port: options.redisConnectionOptions.port,
+          db: 2
         })
       ],
       { retryCount: 0 }
@@ -147,8 +146,8 @@ export default class NiceCommander {
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
     // const redisPubSub = new RedisPubSub({
-    //   publisher: this.redisScheduleClient,
-    //   subscriber: this.redisScheduleClient
+    //   publisher: this.redisClient,
+    //   subscriber: this.redisClient
     // });
     const schema = await buildSchema({
       resolvers: [
@@ -223,27 +222,16 @@ export default class NiceCommander {
    */
   private async scheduleTask(task: Task, inMs: number) {
     // fire and forget
-    // this.redisScheduleClient.set(
-    //   `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-    //   task.id,
-    //   "PX",
-    //   inMs
-    // );
-  }
-
-  private onRedisKeyExpiredMessage(channel: string, message: string) {
-    this.debug(
-      `onRedisKeyExpiredMessage channel=${channel} message=${message}`
+    this.redisClient.set(
+      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+      task.id,
+      "PX",
+      inMs
     );
-    // if (message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) {
-    //   this.onTaskScheduleKeyExpired(message);
-    // }
-    // if (message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) {
-    //   this.onTaskRunTimeout(message);
-    // }
   }
 
-  private async onTaskScheduleKeyExpired(message: string) {
+  private async onTaskScheduleKeyExpired(channel: string, message: string) {
+    if (channel !== this.REDIS_KEY_EXPIRED_CHANNEL) return;
     if (!message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) return;
 
     const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
@@ -265,23 +253,6 @@ export default class NiceCommander {
       // Schedule the next run
       this.scheduleTask(task, timestring(task.schedule, "ms"));
     }
-  }
-
-  /**
-   * When this method is invoked, the TaskRun *should* be in ERROR or FINISHED states
-   * but if it wasn't it should be timed out.
-   * @param message
-   */
-  private async onTaskRunTimeout(message: string) {
-    // if (!message.startsWith(this.REDIS_TASK_RUN_TIMEOUT_PREFIX)) return;
-    // this.debug("onTaskRunTimeout");
-    // const taskRunId = message.replace(this.REDIS_TASK_RUN_TIMEOUT_PREFIX, "");
-    // const connection = await this.connectionPromise;
-    // const taskRunRepository = connection.getRepository(TaskRun);
-    // const [taskRun] = await taskRunRepository.findByIds([taskRunId]);
-    // if (taskRun) {
-    //   this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun);
-    // }
   }
 
   /**
@@ -334,6 +305,7 @@ export default class NiceCommander {
       console.error(e);
     }
     await taskRunRepository.save(taskRun);
+    this.childProcesses.delete(taskRun.uniqueId);
   }
 
   /**
@@ -373,9 +345,15 @@ export default class NiceCommander {
         ContentType: "text/plain"
       });
 
+      console.log(
+        "setting timeout key now=",
+        Date.now(),
+        "Timeout=",
+        taskRun.task.timeoutAfter
+      );
       // Add a Redis key for noticing when task run is timed out
-      this.redisTimeoutClient.set(
-        `${this.REDIS_TASK_TIMEOUT_PREFIX}:${taskRun.id}`,
+      this.redisClient.set(
+        `NiceCommander:task:timeout:${taskRun.id}`,
         taskRun.id,
         "PX",
         taskRun.task.timeoutAfter
@@ -397,6 +375,8 @@ export default class NiceCommander {
         child.stderr?.pipe(process.stderr);
       }
 
+      this.childProcesses.set(taskRun.uniqueId, child);
+
       child.on("exit", (code, signal) => {
         if (code === 0) {
           this.endTaskRun(TaskRun.State.FINISHED, taskRun, lock, code, signal);
@@ -405,15 +385,9 @@ export default class NiceCommander {
         }
       });
 
-      // set timeout for killing the process if it times out
-      setTimeout(async () => {
-        this.debug(
-          `TaskRun "${taskRun.task.name}" id=${taskRun.id} is timed out. Killing the child process with pid=${child.pid}`
-        );
-        if (!child.killed) child.kill("SIGTERM");
-      }, taskRun.task.timeoutAfter);
-
       upload.send();
+
+      // publishLogs(`${new Date()}`);
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host
     }
