@@ -97,6 +97,6 @@ export class TaskRun {
   }
 
   public get redisLockKey() {
-    return `NiceCommander:lock:taskRun:${this.uniqueId}`;
+    return `NiceCommander:lock:taskRun:${this.id}`;
   }
 }
