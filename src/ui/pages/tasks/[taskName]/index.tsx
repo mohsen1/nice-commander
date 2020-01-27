@@ -57,7 +57,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
         <RunTaskPanel taskId={data?.task?.id} />
       </div>
       <H2>Latest Runs</H2>
-      {data?.task?.runs.map(run => (
+      {data?.task?.runs?.map(run => (
         <TaskRunRow key={run.startTime} taskName={data?.task?.name} {...run} />
       ))}
     </MainLayout>

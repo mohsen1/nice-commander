@@ -61,7 +61,7 @@ export function getTasksRunResolver(
       taskRun.task = task;
       taskRun.startTime = Date.now();
       taskRun.invocationType = TaskRun.InvocationType.MANUAL;
-      taskRun.state = "RUNNING";
+      taskRun.state = TaskRun.State.RUNNING;
       taskRun.payload = payload;
 
       // Store initial states of the task run

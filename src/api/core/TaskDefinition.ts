@@ -1,3 +1,5 @@
+import timestring from "timestring";
+
 /**
  * A NiceCommander task definition
  *
@@ -44,6 +46,9 @@ export function validateTaskDefinition(
   }
   if (typeof taskDefinition.run !== "function") {
     throw new TaskDefinitionValidationError("run must be a function");
+  }
+  if (taskDefinition.schedule && taskDefinition.schedule !== "manual") {
+    timestring(taskDefinition.schedule);
   }
   return true;
 }

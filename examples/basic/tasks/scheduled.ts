@@ -13,7 +13,7 @@ const task: TaskDefinition = {
     }
   },
   timeoutAfter: 5000,
-  schedule: "2 minute"
+  schedule: "20 minute"
 };
 
 export default task;
