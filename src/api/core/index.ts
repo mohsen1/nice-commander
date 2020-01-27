@@ -263,7 +263,7 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
-    if (taskRun) {
+    if (taskRun && taskRun.state === TaskRun.State.RUNNING) {
       this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun, undefined);
     }
   }
@@ -304,6 +304,7 @@ export default class NiceCommander {
     exitCode: number | null = null,
     exitSignal: string | null = null
   ) {
+    console.log("ending task run with state", state);
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
 
