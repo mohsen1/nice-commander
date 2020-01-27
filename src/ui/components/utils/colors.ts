@@ -34,11 +34,3 @@ export function getForegroundColorForStatus(status: Status, theme: ThemeType) {
       else return theme.colors.gray.dark;
   }
 }
-
-export function isDarkModeEnabled() {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-}

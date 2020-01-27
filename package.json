@@ -46,6 +46,7 @@
     "lodash": "^4.17.15",
     "mysql": "^2.18.1",
     "next": "^9.2.1",
+    "nookies": "^2.0.8",
     "redis": "^2.8.0",
     "redlock": "^4.1.0",
     "reflect-metadata": "^0.1.13",

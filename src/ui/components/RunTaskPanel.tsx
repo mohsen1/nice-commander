@@ -6,7 +6,6 @@ import styled from "styled-components";
 import Editor from "./Editor";
 import Run from "./buttons/Run";
 import H2 from "./titles/H2";
-import { isDarkModeEnabled } from "./utils/colors";
 
 const Container = styled.div`
   display: flex;
