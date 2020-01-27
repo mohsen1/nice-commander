@@ -41,7 +41,7 @@
     "aws-sdk": "^2.605.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",
-    "graphql": "^14.5.8",
+    "graphql": "^14.6.0",
     "graphql-redis-subscriptions": "^2.1.2",
     "lodash": "^4.17.15",
     "mysql": "^2.18.0",
