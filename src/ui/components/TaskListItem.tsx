@@ -6,6 +6,8 @@ import A from "./base/A";
 
 const ItemRow = styled(A)`
   border: 1px solid ${props => props.theme.colors.accent.light};
+  color: ${props => props.theme.colors.text};
+  background-color: ${props => props.theme.colors.background};
   margin: 1rem 0;
   padding: 0.5rem;
   display: block;

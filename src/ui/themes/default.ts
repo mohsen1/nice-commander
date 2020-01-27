@@ -25,7 +25,7 @@ export default {
     fail: {
       dark: "darkred",
       normal: "red",
-      light: "lightred"
+      light: "#f9b8b8"
     },
 
     progress: {
