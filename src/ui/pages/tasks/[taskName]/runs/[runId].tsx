@@ -31,6 +31,8 @@ const TaskRunPage: React.FC = () => {
           payload
           id
           invocationType
+          exitSignal
+          exitCode
           task {
             name
             id
@@ -63,6 +65,12 @@ const TaskRunPage: React.FC = () => {
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>
+      {data?.taskRun.exitCode ?? (
+        <DetailsRow>Exit Code: {data?.taskRun.exitCode}</DetailsRow>
+      )}
+      {data?.taskRun.exitSignal ?? (
+        <DetailsRow>Exit Signal: {data?.taskRun.exitSignal}</DetailsRow>
+      )}
       <H2>Payload</H2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>

@@ -379,7 +379,14 @@ export default class NiceCommander {
         if (code === 0 && taskRun.state !== TaskRun.State.TIMED_OUT) {
           this.endTaskRun(TaskRun.State.FINISHED, taskRun, code, signal);
         } else {
-          this.endTaskRun(TaskRun.State.ERROR, taskRun, code, signal);
+          this.endTaskRun(
+            signal === "SIGABRT"
+              ? TaskRun.State.TIMED_OUT
+              : TaskRun.State.ERROR,
+            taskRun,
+            code,
+            signal
+          );
         }
       });
 

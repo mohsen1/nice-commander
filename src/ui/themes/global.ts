@@ -1,10 +1,6 @@
 import { createGlobalStyle } from "styled-components";
 
 export default createGlobalStyle`
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    }
-
     :root {
         --color-background: white;
         --color-text: black;
@@ -52,8 +48,18 @@ export default createGlobalStyle`
     }
 
     body {
-            color: var(--color-text);
-            background: var(--color-background);
-        }
-
+        font-family:
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Helvetica,
+            Arial,
+            sans-serif,
+            "Apple Color Emoji",
+            "Segoe UI Emoji",
+            "Segoe UI Symbol";
+        color: var(--color-text);
+        background: var(--color-background);
+    }
 `;
