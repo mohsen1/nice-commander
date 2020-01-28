@@ -7,7 +7,8 @@ import {
   Subscription,
   PubSub,
   Publisher,
-  Root
+  Root,
+  FieldResolver
 } from "type-graphql";
 import { Connection } from "typeorm";
 
@@ -51,7 +52,7 @@ export function getTasksRunResolver(
         throw new RangeError("Payload is too big");
       }
 
-      const [task] = (await this.taskRepository.find({ where: { id } })) || [];
+      const task = await this.taskRepository.findOne(id);
 
       if (!task) {
         throw new Error(`Task with ID ${id} was not found`);
@@ -144,6 +145,11 @@ export function getTasksRunResolver(
         ...logsPayload,
         date: new Date()
       };
+    }
+
+    @FieldResolver()
+    async logs(@Root() taskRun: TaskRun) {
+      return niceCommander.getLogsFromS3(taskRun.logsPath);
     }
   }
 

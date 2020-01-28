@@ -65,10 +65,10 @@ const TaskRunPage: React.FC = () => {
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>
-      {data?.taskRun.exitCode ?? (
+      {data?.taskRun.exitCode && (
         <DetailsRow>Exit Code: {data?.taskRun.exitCode}</DetailsRow>
       )}
-      {data?.taskRun.exitSignal ?? (
+      {data?.taskRun.exitSignal && (
         <DetailsRow>Exit Signal: {data?.taskRun.exitSignal}</DetailsRow>
       )}
       <H2>Payload</H2>

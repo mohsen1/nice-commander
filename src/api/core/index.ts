@@ -390,16 +390,18 @@ export default class NiceCommander {
         }
       });
 
+      upload.send(err => {
+        if (err) {
+          console.error(err);
+        }
+      });
+
       // Kill the child process if it takes more time than timeout to exit
       setTimeout(() => {
         if (!child.killed) {
           child.kill("SIGABRT");
         }
       }, taskRun.task.timeoutAfter);
-
-      upload.send();
-
-      // publishLogs(`${new Date()}`);
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host
     }
@@ -434,13 +436,16 @@ export default class NiceCommander {
   }
 
   public async getLogsFromS3(logsPath: string) {
-    const { Body } = await this.s3
-      .getObject({
-        Key: logsPath,
-        Bucket: this.s3BucketName
-      })
-      .promise();
+    try {
+      const { Body } = await this.s3
+        .getObject({
+          Key: logsPath,
+          Bucket: this.s3BucketName
+        })
+        .promise();
 
-    return Body?.toString();
+      return Body?.toString();
+    } catch {}
+    return `Logs are not found or not ready...\nlogs path: ${logsPath}`;
   }
 }

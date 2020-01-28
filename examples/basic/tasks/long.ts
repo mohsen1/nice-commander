@@ -18,7 +18,7 @@ const task: TaskDefinition = {
     console.log("Done in ", Date.now());
   },
   // Add a little more for the timeout because console.log is sync
-  timeoutAfter: 3 * 60 * 1000 + 200,
+  timeoutAfter: 3 * 60 * 1000 + 2000,
   schedule: "manual"
 };
 
