@@ -1,5 +1,5 @@
 import React from "react";
-import App from "next/app";
+import App, { AppInitialProps } from "next/app";
 import { ThemeProvider } from "styled-components";
 import { Reset } from "styled-reset";
 
