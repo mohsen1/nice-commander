@@ -1,8 +1,6 @@
 import React from "react";
 import MonacoEditor, { EditorProps } from "@monaco-editor/react";
 
-import { isDarkModeEnabled } from "./utils/colors";
-
 function getHeight(value?: string, maxHeight: number = 25) {
   if (!value) return "200px";
   const lines = value.split("\n").length;
@@ -15,7 +13,7 @@ const Editor: React.FC<EditorProps & {
   maxHeight?: number;
 }> = props => (
   <MonacoEditor
-    theme={isDarkModeEnabled() ? "dark" : "light"}
+    theme={"dark"}
     language="json"
     options={{
       minimap: { enabled: false },
