@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import styled from "styled-components";
+import Router from "next/router";
+import path from "path";
 
 import Editor from "./Editor";
 import Run from "./buttons/Run";
@@ -24,10 +26,7 @@ const Buttons = styled.div`
 `;
 
 /** Default editor value. This has proper spacing and new lines */
-const defaultValue = `{
-  
-}
-`;
+const defaultValue = "{\n  \n}\n";
 
 const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
   let getEditorValueRef = () => "";
@@ -55,6 +54,20 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
     }
   `);
 
+  const onClick = async () => {
+    const { data } = await runTask({
+      variables: {
+        payload: getPayloadSafe(),
+        taskId
+      }
+    });
+
+    const id = data?.runTask?.id;
+    if (id) {
+      Router.push(path.join(window.location.pathname, "runs", id));
+    }
+  };
+
   return (
     <Container>
       <H2>Run</H2>
@@ -68,18 +81,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
         {!isValidPayload && "Invalid JSON in payload"}
       </InvalidJSONError>
       <Buttons>
-        <Run
-          onClick={() => {
-            runTask({
-              variables: {
-                payload: getPayloadSafe(),
-                taskId
-              }
-            });
-          }}
-        >
-          Run
-        </Run>
+        <Run onClick={onClick}>Run</Run>
       </Buttons>
     </Container>
   );

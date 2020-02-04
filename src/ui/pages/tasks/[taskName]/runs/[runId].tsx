@@ -1,7 +1,7 @@
 import React from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
-import { useQuery } from "react-apollo";
+import { useQuery, useSubscription } from "react-apollo";
 import styled from "styled-components";
 
 import Editor from "../../../../components/Editor";
@@ -22,25 +22,35 @@ const TaskRunPage: React.FC = () => {
   const router = useRouter();
   const { taskName, runId } = router.query;
   const query = gql`
-    query GetTaskRun {
-      taskRun(id: "${runId}") {
-          endTime
-          startTime
-          state
-          logs
-          payload
+    query GetTaskRun($runId: String!) {
+      taskRun(id: $runId) {
+        endTime
+        startTime
+        state
+        logs
+        payload
+        id
+        invocationType
+        exitSignal
+        exitCode
+        task {
+          name
           id
-          invocationType
-          exitSignal
-          exitCode
-          task {
-            name
-            id
-          }
+        }
       }
-    }`;
+    }
+  `;
 
-  const { data, error } = useQuery(query);
+  const { data, error } = useQuery(query, { variables: { runId } });
+
+  const { data: subscriptionData } = useSubscription(
+    gql`
+      subscription TaskRunLogs($Id: String!) {
+        taskRunLogs(id: $id)
+      }
+    `,
+    { variables: { id: runId } }
+  );
 
   if (error) {
     return <ErrorPresenter error={error} />;
@@ -74,12 +84,7 @@ const TaskRunPage: React.FC = () => {
       <H2>Payload</H2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>
-      <Editor
-        readonly
-        maxHeight={25}
-        value={data?.taskRun.logs}
-        language="log"
-      />
+      <Editor readonly maxHeight={25} value={subscriptionData} language="log" />
     </MainLayout>
   );
 };

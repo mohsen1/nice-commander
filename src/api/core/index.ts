@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import path from "path";
 import { Router } from "express";
-import { buildSchema } from "type-graphql";
+import { buildSchema, Publisher } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import next from "next";
 import { createConnection, Connection, Not, IsNull } from "typeorm";
@@ -34,6 +34,7 @@ interface TaskDefinitionFile {
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
 export default class NiceCommander {
+  public server?: ApolloServer;
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
@@ -162,7 +163,7 @@ export default class NiceCommander {
       ]
       // pubSub: redisPubSub
     });
-    const server = new ApolloServer({
+    this.server = new ApolloServer({
       schema,
       playground: true,
       subscriptions: {
@@ -172,7 +173,7 @@ export default class NiceCommander {
         path: path.join(this.options.mountPath, "/graphql/subscriptions")
       }
     });
-    return server.getMiddleware({ path: "/graphql" });
+    return this.server.getMiddleware({ path: "/graphql" });
   }
 
   /**
@@ -319,7 +320,7 @@ export default class NiceCommander {
    * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
    * @param publishLogs Logging pub-sub
    */
-  public async startTask(taskRun: TaskRun) {
+  public async startTask(taskRun: TaskRun, publishLogs?: Publisher<string>) {
     const taskDefinitionFile = this.taskDefinitionsFiles.find(
       ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
     );
@@ -338,19 +339,6 @@ export default class NiceCommander {
       const lockTTL = taskRun.task.timeoutAfter + 1000;
       await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
-      taskRun.logsPath = `tasks/${taskRun.task.id}/${
-        taskRun.id
-      }_${Date.now()}.log`;
-
-      // Start a child process
-      const passThrough = new PassThrough();
-      const upload = this.s3.upload({
-        Bucket: this.s3BucketName,
-        Key: taskRun.logsPath,
-        Body: passThrough,
-        ContentType: "text/plain"
-      });
-
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
         `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
@@ -358,6 +346,13 @@ export default class NiceCommander {
         "PX",
         taskRun.task.timeoutAfter
       );
+
+      taskRun.logsPath = `tasks/${taskRun.task.id}/${
+        taskRun.id
+      }_${Date.now()}.log`;
+
+      // Start a child process
+      const passThrough = new PassThrough();
 
       const child = cp.fork(
         this.invokeFile,
@@ -367,12 +362,12 @@ export default class NiceCommander {
         }
       );
 
-      child.stdout?.pipe(passThrough);
-      child.stderr?.pipe(passThrough);
-
       if (this.options.logToStdout) {
-        child.stdout?.pipe(process.stdout);
-        child.stderr?.pipe(process.stderr);
+        child.stdout?.pipe(passThrough).pipe(process.stdout);
+        child.stderr?.pipe(passThrough).pipe(process.stderr);
+      } else {
+        child.stdout?.pipe(passThrough);
+        child.stderr?.pipe(passThrough);
       }
 
       child.on("exit", (code, signal) => {
@@ -390,7 +385,23 @@ export default class NiceCommander {
         }
       });
 
-      upload.send(err => {
+      child.stdout?.on("data", chunk => {
+        publishLogs?.(String(chunk));
+      });
+
+      const managedUpload = new AWS.S3.ManagedUpload({
+        partSize: AWS.S3.ManagedUpload.minPartSize,
+        queueSize: 1,
+        service: this.s3,
+        params: {
+          Bucket: this.s3BucketName,
+          Key: taskRun.logsPath,
+          Body: passThrough,
+          ContentType: "text/plain"
+        }
+      });
+
+      managedUpload.send(err => {
         if (err) {
           console.error(err);
         }

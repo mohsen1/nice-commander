@@ -4,6 +4,7 @@
  * This file is just to try out the middleware
  */
 
+import http from "http";
 import express from "express";
 import path from "path";
 
@@ -11,6 +12,7 @@ import NiceCommander from "../../src";
 
 async function main() {
   const app = express();
+  const httpServer = http.createServer(app);
 
   app.get("/foo", (req, res) => res.status(200).send("OK"));
 
@@ -28,12 +30,15 @@ async function main() {
       username: "root",
       database: "nicecommander"
     },
-    taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
+    taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
+    logToStdout: false
   });
   const middleware = await niceCommander.getExpressMiddleware();
   app.use(mountPath, middleware);
 
-  app.listen(3000);
+  niceCommander.server?.installSubscriptionHandlers(httpServer);
+
+  httpServer.listen(3000);
 }
 
 main().catch(console.error);

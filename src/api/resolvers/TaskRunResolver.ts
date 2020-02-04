@@ -45,8 +45,8 @@ export function getTasksRunResolver(
           "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
         defaultValue: "{}"
       })
-      payload: string
-      // @PubSub("LOGS") publisher: Publisher<string>
+      payload: string,
+      @PubSub("LOGS") publisher: Publisher<string>
     ) {
       if (payload.length > 1024) {
         throw new RangeError("Payload is too big");
@@ -69,7 +69,7 @@ export function getTasksRunResolver(
       await this.repository.save(taskRun);
 
       // start the task
-      await niceCommander.startTask(taskRun);
+      await niceCommander.startTask(taskRun, publisher);
 
       // Save to DB
       await this.repository.save(taskRun);
@@ -136,15 +136,24 @@ export function getTasksRunResolver(
       return taskRun;
     }
 
-    @Subscription(returns => [TaskRun], { topics: "LOGS" })
+    @Subscription(returns => [String], { topics: "LOGS" })
     async taskRunLogs(
       @Arg("id", type => String, { description: "TaskRun ID" }) id: string,
-      @Root() logsPayload: {}
+      @Root() logsPayload: string[]
     ) {
-      return {
-        ...logsPayload,
-        date: new Date()
-      };
+      const taskRun = await this.repository.findOne({
+        where: { id },
+        relations: ["task"]
+      });
+
+      if (!taskRun) {
+        throw new NotFound(`TaskRun with id ${id} not found`);
+      }
+
+      return logsPayload;
+      // if (taskRun.state === TaskRun.State.RUNNING) {
+      // }
+      // return [taskRun.logs];
     }
 
     @FieldResolver()
