@@ -1,41 +1,41 @@
 export default {
   name: "light",
   colors: {
-    background: "white",
-    text: "black",
+    background: "var(--color-background)",
+    text: "var(--color-text)",
 
     accent: {
-      dark: "#1252bd",
-      normal: "#4771b7",
-      light: "#96b9f3"
+      dark: "var(--color-accent-dark)",
+      normal: "var(--color-accent-normal)",
+      light: "var(--color-accent-light)"
     },
 
     gray: {
-      light: "#efefef",
-      normal: "#888",
-      dark: "#333"
+      light: "var(--color-gray-light)",
+      normal: "var(--color-gray-normal)",
+      dark: "var(--color-gray-dark)"
     },
 
     success: {
-      dark: "darkgreen",
-      normal: "green",
-      light: "lightgreen"
+      dark: "var(--color-success-dark)",
+      normal: "var(--color-success-normal)",
+      light: "var(--color-success-light)"
     },
 
     fail: {
-      dark: "darkred",
-      normal: "red",
-      light: "#f9b8b8"
+      dark: "var(--color-fail-dark)",
+      normal: "var(--color-fail-normal)",
+      light: "var(--color-fail-light)"
     },
 
     progress: {
-      dark: "#9ea718",
-      normal: "#eaea1d",
-      light: "#fdfdcd"
+      dark: "var(--color-progress-dark)",
+      normal: "var(--color-progress-normal)",
+      light: "var(--color-progress-light)"
     },
 
     warning: {
-      normal: "orange"
+      normal: "var(-color-warning-normal)"
     }
   }
 };
