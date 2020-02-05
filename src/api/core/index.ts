@@ -195,7 +195,7 @@ export default class NiceCommander {
       const [lastTaskRun] = await taskRunRepository.find({
         where: { task, endTime: Not(IsNull()) },
         order: {
-          endTime: "ASC"
+          endTime: "DESC"
         },
         take: 1
       });
@@ -207,13 +207,18 @@ export default class NiceCommander {
 
       // In case we found the last run, schedule after last run's end time to keep on schedule
       if (lastTaskRun) {
-        const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
-
-        if (nextRun < now) {
-          // We are past due, schedule for immediate invocation
+        if (lastTaskRun.state !== TaskRun.State.FINISHED) {
+          // Invoke immediately if last run was not successful
           expires = 1;
         } else {
-          expires = nextRun - now;
+          const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
+
+          if (nextRun < now) {
+            // We are past due, schedule for immediate invocation
+            expires = 1;
+          } else {
+            expires = nextRun - now;
+          }
         }
       }
 
