@@ -50,7 +50,10 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const apolloClient = (ctx.apolloClient = initApolloClient());
+      const apolloClient = (ctx.apolloClient = initApolloClient(
+        {},
+        ctx?.req?.baseUrl
+      ));
 
       // Run wrapped getInitialProps methods
       let pageProps = {};
@@ -97,6 +100,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       return {
         ...pageProps,
+        baseUrl: ctx?.req?.baseUrl,
         apolloState
       };
     };
@@ -110,16 +114,16 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
  * Creates or reuses apollo client in the browser.
  * @param  {Object} initialState
  */
-function initApolloClient(initialState) {
+function initApolloClient(initialState: object, baseUrl: string) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
   if (typeof window === "undefined") {
-    return createApolloClient(initialState);
+    return createApolloClient(initialState, baseUrl);
   }
 
   // Reuse client on the client-side
   if (!globalApolloClient) {
-    globalApolloClient = createApolloClient(initialState);
+    globalApolloClient = createApolloClient(initialState, baseUrl);
   }
 
   return globalApolloClient;
@@ -129,13 +133,13 @@ function initApolloClient(initialState) {
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-function createApolloClient(initialState = {}) {
+function createApolloClient(initialState = {}, baseUrl: string) {
   // Check out https://github.com/zeit/next.js/pull/4611 if you want to use the AWSAppSyncClient
   return new ApolloClient({
     ssrMode: typeof window === "undefined", // Disables forceFetch on the server (so queries are only run once)
     link: new HttpLink({
       // TODO: figure out how to get the host and scheme dynamically from request object
-      uri: `http://localhost:3000${process.env.mountPath}/graphql`, // Server URL (must be absolute)
+      uri: `http://localhost:3000${baseUrl}/graphql`, // Server URL (must be absolute)
       credentials: "same-origin", // Additional fetch() options like `credentials` or `headers`
       fetch
     }),

@@ -113,15 +113,12 @@ export default class NiceCommander {
   private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.NODE_ENV !== "production";
     const dir = path.resolve(__dirname, "../../../../src/ui");
-    process.env.mountPath = mountPath;
+
     const app = next({
       dev,
       dir,
       conf: {
-        assetPrefix: mountPath,
-        env: {
-          mountPath
-        }
+        assetPrefix: mountPath
       }
     });
     const handle = app.getRequestHandler();

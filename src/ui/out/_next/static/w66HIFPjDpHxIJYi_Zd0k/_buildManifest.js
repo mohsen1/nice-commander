@@ -1,1 +1,0 @@
-self.__BUILD_MANIFEST = (function(a,b){return {"/":[a],"/index":[a],"/tasks/[taskName]":[a,b],"/tasks/[taskName]/runs/[runId]":[a,b]}}("static\u002Fchunks\u002F30b652efcb5fc690ba9d014fe6ba1e4238b0d843.cacdf0ece0854936b052.js","static\u002Fchunks\u002F0309557542fc867d70999be7f0737be51bfcb18c.3547698751ffbff7dc31.js"));self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()
