@@ -12,9 +12,10 @@ import NiceCommander from "../../src";
 async function main() {
   const app = express();
 
-  app.get("/foo", (req, res) => res.status(200).send("OK"));
-
   const mountPath = "/nice-commander";
+
+  app.get("/", (req, res) => res.status(200).send(`Go to ${mountPath}`));
+
   const niceCommander = new NiceCommander({
     mountPath,
     redisConnectionOptions: {
@@ -36,4 +37,6 @@ async function main() {
   app.listen(3000);
 }
 
-main().catch(console.error);
+main()
+  .catch(console.error)
+  .then(() => console.info("Server is listening on http://localhost:3000"));

@@ -1,13 +1,17 @@
 {
-    "files.exclude": {
-        "node_modules": true
-    },
-    "editor.formatOnSave": true,
-    "cSpell.words": [
-        "Keyspace",
-        "Redlock",
-        "keyevent",
-        "timestring",
-        "typeorm"
-    ]
+  "files.exclude": {
+    "node_modules": true
+  },
+  "editor.formatOnSave": true,
+  "cSpell.words": ["Keyspace", "Redlock", "keyevent", "timestring", "typeorm"],
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist/**": true
+  }
 }

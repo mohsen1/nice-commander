@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 
 import A from "./base/A";
+import { AppContext } from "../context/AppContext";
 
 const Title = styled.h1`
   font-size: 1.2em;
@@ -12,14 +13,17 @@ const HeaderElement = styled.header`
   background-color: ${props => props.theme.colors.accent.normal};
 `;
 
-const Header: React.FC = () => (
-  <HeaderElement>
-    <Title>
-      <Link href={process.env.mountPath}>
-        <A>Nice Commander</A>
-      </Link>
-    </Title>
-  </HeaderElement>
-);
+const Header: React.FC = () => {
+  const { baseUrl } = useContext(AppContext);
 
+  return (
+    <HeaderElement>
+      <Title>
+        <Link href={baseUrl || ""}>
+          <A>Nice Commander</A>
+        </Link>
+      </Title>
+    </HeaderElement>
+  );
+};
 export default Header;

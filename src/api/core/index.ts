@@ -100,7 +100,10 @@ export default class NiceCommander {
       name: this.DB_CONNECTION_NAME,
       synchronize: true,
       logging: false,
-      entities: [path.resolve(__dirname, "../models/*.ts")]
+      entities: [
+        path.resolve(__dirname, "../models/Task.js"),
+        path.resolve(__dirname, "../models/TaskRun.js")
+      ]
     }).then(connection => {
       this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
@@ -109,14 +112,13 @@ export default class NiceCommander {
 
   private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.NODE_ENV !== "production";
+    const dir = path.resolve(__dirname, "../../../../src/ui");
+
     const app = next({
       dev,
-      dir: path.resolve(__dirname, "../../ui"),
+      dir,
       conf: {
-        assetPrefix: mountPath,
-        env: {
-          mountPath
-        }
+        assetPrefix: mountPath
       }
     });
     const handle = app.getRequestHandler();
@@ -138,6 +140,7 @@ export default class NiceCommander {
       .readdirSync(directory)
       .map(file => path.resolve(directory, file))
       .filter(filePath => fs.statSync(filePath).isFile())
+      .filter(filePath => filePath.endsWith(".js"))
       .map(filePath => {
         const taskDefinition = require(filePath).default;
         validateTaskDefinition(taskDefinition);

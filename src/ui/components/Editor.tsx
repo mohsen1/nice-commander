@@ -18,7 +18,7 @@ const Editor: React.FC<EditorProps & {
     options={{
       minimap: { enabled: false },
       scrollBeyondLastColumn: 0,
-      scrollBeyondLastLine: 0,
+      scrollBeyondLastLine: false,
       scrollbar: {
         alwaysConsumeMouseWheel: false,
         handleMouseWheel: false,
