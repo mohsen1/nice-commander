@@ -14,7 +14,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "sourceMap": false,
-    "declaration": false
+    "declaration": false,
+    "preserveWatchOutput": true
   },
   "exclude": ["src/ui", "dist"]
 }

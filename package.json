@@ -6,7 +6,9 @@
   "author": "Mohsen Azimi <me@azimi.me>",
   "license": "MIT",
   "scripts": {
-    "start": "DEBUG=nice-commander nodemon --watch src/api --watch examples -e ts ./node_modules/.bin/ts-node --files examples/basic/server.ts",
+    "tsc-watch": "tsc --watch",
+    "example-server": "DEBUG=nice-commander nodemon --watch dist dist/examples/basic/server.js",
+    "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx}'",
     "build": "yarn tsc && NODE_ENV=production yarn next build src/ui"
   },
@@ -24,6 +26,7 @@
     "apollo-cache-inmemory": "^1.6.5",
     "apollo-client": "^2.6.8",
     "apollo-link-http": "^1.5.16",
+    "concurrently": "^5.1.0",
     "graphql-tag": "^2.10.3",
     "isomorphic-unfetch": "^3.0.0",
     "nodemon": "^2.0.2",
@@ -33,7 +36,6 @@
     "react-dom": "^16.12.0",
     "styled-components": "^4.4.1",
     "styled-reset": "^4.1.0",
-    "ts-node": "^8.6.2",
     "tslib": "^1.10.0",
     "typescript": "^3.7.5"
   },
