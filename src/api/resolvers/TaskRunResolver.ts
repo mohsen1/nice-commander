@@ -136,10 +136,15 @@ export function getTasksRunResolver(
       return taskRun;
     }
 
-    @Subscription(returns => [String], { topics: "LOGS" })
+    @Subscription(returns => [String], {
+      topics: "LOGS",
+      nullable: true,
+      filter: ({ payload, args }) => !!payload
+    })
     async taskRunLogs(
       @Arg("id", type => String, { description: "TaskRun ID" }) id: string,
-      @Root() logsPayload: string[]
+      @Root() logsPayload: string[],
+      @PubSub("LOGS") publisher: Publisher<string>
     ) {
       const taskRun = await this.repository.findOne({
         where: { id },
@@ -150,10 +155,21 @@ export function getTasksRunResolver(
         throw new NotFound(`TaskRun with id ${id} not found`);
       }
 
-      return logsPayload;
-      // if (taskRun.state === TaskRun.State.RUNNING) {
+      // if (taskRun.state !== TaskRun.State.RUNNING) {
+      //   const logs = await niceCommander.getLogsFromS3(taskRun.logsPath);
+      //   if (logs) {
+      //     publisher(logs);
+      //     if (!logsPayload) {
+      //       return ["Getting logs..."];
+      //     }
+      //   }
       // }
-      // return [taskRun.logs];
+
+      if (!logsPayload) {
+        return null;
+      }
+
+      return logsPayload;
     }
 
     @FieldResolver()
