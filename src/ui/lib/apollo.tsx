@@ -139,7 +139,8 @@ function createApolloClient(initialState = {}, baseUrl: string) {
     ssrMode: typeof window === "undefined", // Disables forceFetch on the server (so queries are only run once)
     link: new HttpLink({
       // TODO: figure out how to get the host and scheme dynamically from request object
-      uri: `http://localhost:3000${baseUrl}/graphql`, // Server URL (must be absolute)
+      uri: `${process.env.NICE_COMMANDER_HOST ||
+        "http://localhost:3000"}${baseUrl}/graphql`, // Server URL (must be absolute)
       credentials: "same-origin", // Additional fetch() options like `credentials` or `headers`
       fetch
     }),

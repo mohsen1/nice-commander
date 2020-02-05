@@ -6,11 +6,13 @@
   "author": "Mohsen Azimi <me@azimi.me>",
   "license": "MIT",
   "scripts": {
+    "preprod": "yarn build",
+    "prod": "NODE_ENV=production node dist/examples/basic/server.js",
     "tsc-watch": "tsc --watch",
     "example-server": "DEBUG=nice-commander nodemon --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx}'",
-    "build": "yarn tsc && NODE_ENV=production yarn next build src/ui"
+    "build": "yarn tsc"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.12.1",
