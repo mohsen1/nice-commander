@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2015",
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["es2016", "esnext.asynciterable"],
@@ -12,7 +12,9 @@
     "emitDecoratorMetadata": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "sourceMap": false,
+    "declaration": false
   },
-  "exclude": ["src/ui"]
+  "exclude": ["src/ui", "dist"]
 }
