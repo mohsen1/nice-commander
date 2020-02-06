@@ -12,7 +12,7 @@
     "example-server": "DEBUG=nice-commander nodemon --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx}'",
-    "build": "yarn tsc"
+    "prepublish": "rm -rf src/ui/.next && next build src/ui && tsc"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.12.1",
