@@ -56,10 +56,14 @@ const app = express();
 
 const mountPath = "/nice-commander";
 const niceCommander = new NiceCommander({
-  taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
+  taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   mountPath,
-  redisConnectionOptions: {/* Redis Config */ },
-  sqlConnectionOptions: {/* DB Config */ },
+  redisConnectionOptions: {
+    /* Redis Config */
+  },
+  sqlConnectionOptions: {
+    /* DB Config */
+  }
 });
 const middleware = await niceCommander.getExpressMiddleware();
 app.use(mountPath, middleware);
