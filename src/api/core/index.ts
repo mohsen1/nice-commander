@@ -167,7 +167,8 @@ export default class NiceCommander {
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this)
-      ]
+      ],
+      emitSchemaFile: true
       // pubSub: redisPubSub
     });
     const server = new ApolloServer({
