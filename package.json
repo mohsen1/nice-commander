@@ -39,7 +39,7 @@
     "styled-components": "^4.4.1",
     "styled-reset": "^4.1.0",
     "tslib": "^1.10.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.0-beta"
   },
   "dependencies": {
     "@types/graphql": "^14.0.7",
