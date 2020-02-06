@@ -11,6 +11,7 @@ import { ApolloClient } from "apollo-client";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
+import getConfig from "next/config";
 
 let globalApolloClient = null;
 
@@ -65,7 +66,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
       if (typeof window === "undefined") {
         // When redirecting, the response is finished.
         // No point in continuing to render
-        if (ctx.res && ctx.res.finished) {
+        if (ctx?.res?.finished) {
           return pageProps;
         }
 
@@ -134,16 +135,29 @@ function initApolloClient(initialState: object, baseUrl: string) {
  * @param  {Object} [initialState={}]
  */
 function createApolloClient(initialState = {}, baseUrl: string) {
-  // Check out https://github.com/zeit/next.js/pull/4611 if you want to use the AWSAppSyncClient
+  const isBrowser = typeof window !== "undefined";
+
   return new ApolloClient({
-    ssrMode: typeof window === "undefined", // Disables forceFetch on the server (so queries are only run once)
-    link: new HttpLink({
-      // TODO: figure out how to get the host and scheme dynamically from request object
-      uri: `${process.env.NICE_COMMANDER_HOST ||
-        "http://localhost:3000"}${baseUrl}/graphql`, // Server URL (must be absolute)
-      credentials: "same-origin", // Additional fetch() options like `credentials` or `headers`
-      fetch
-    }),
+    // Disables forceFetch on the server (so queries are only run once)
+    ssrMode: !isBrowser,
+    link: createIsomorphLink(baseUrl),
     cache: new InMemoryCache().restore(initialState)
   });
+}
+
+function createIsomorphLink(baseUrl: string) {
+  const isBrowser = typeof window !== "undefined";
+
+  if (isBrowser) {
+    return new HttpLink({
+      uri: `${window.location.origin}${baseUrl}/graphql`,
+      credentials: "same-origin",
+      fetch
+    });
+  }
+
+  const { publicRuntimeConfig } = getConfig();
+  const { SchemaLink } = require("apollo-link-schema");
+
+  return new SchemaLink({ schema: publicRuntimeConfig.schema });
 }

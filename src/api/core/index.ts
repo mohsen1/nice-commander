@@ -20,6 +20,7 @@ import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
+import { GraphQLSchema } from "graphql";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
@@ -47,6 +48,7 @@ export default class NiceCommander {
   private readonly redisClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
+  private schema?: GraphQLSchema;
 
   public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
@@ -118,11 +120,14 @@ export default class NiceCommander {
       dev,
       dir,
       conf: {
-        assetPrefix: mountPath
+        assetPrefix: mountPath,
+        publicRuntimeConfig: {
+          schema: this.schema
+        }
       }
     });
-    const handle = app.getRequestHandler();
     await app.prepare();
+    const handle = app.getRequestHandler();
     return handle;
   }
 
@@ -158,7 +163,7 @@ export default class NiceCommander {
     //   publisher: this.redisClient,
     //   subscriber: this.redisClient
     // });
-    const schema = await buildSchema({
+    this.schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this)
@@ -166,7 +171,7 @@ export default class NiceCommander {
       // pubSub: redisPubSub
     });
     const server = new ApolloServer({
-      schema,
+      schema: this.schema,
       playground: true,
       subscriptions: {
         onConnect(connectionParams, webSocket) {
