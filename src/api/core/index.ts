@@ -113,7 +113,7 @@ export default class NiceCommander {
   }
 
   private async getNextJsRequestHandler(mountPath: string) {
-    const dev = process.env.NODE_ENV !== "production";
+    const dev = process.env.DEBUG?.includes("nice-commander");
     const dir = path.resolve(__dirname, "../../../../src/ui");
 
     const app = next({

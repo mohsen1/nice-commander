@@ -7,7 +7,7 @@
 import express from "express";
 import path from "path";
 
-import NiceCommander from "../../src";
+import NiceCommander from "../../src/api/core";
 
 async function main() {
   const app = express();

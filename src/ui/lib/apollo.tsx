@@ -4,7 +4,7 @@
  */
 // @ts-nocheck
 
-import React from "react";
+import React, { useContext } from "react";
 import Head from "next/head";
 import { ApolloProvider } from "@apollo/react-hooks";
 import { ApolloClient } from "apollo-client";
@@ -12,6 +12,7 @@ import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
 import getConfig from "next/config";
+import { AppContext } from "../context/AppContext";
 
 let globalApolloClient = null;
 
@@ -25,7 +26,8 @@ let globalApolloClient = null;
  */
 export function withApollo(PageComponent, { ssr = true } = {}) {
   const WithApollo = ({ apolloClient, apolloState, ...pageProps }) => {
-    const client = apolloClient || initApolloClient(apolloState);
+    const { baseUrl } = useContext(AppContext);
+    const client = apolloClient || initApolloClient(apolloState, baseUrl);
     return (
       <ApolloProvider client={client}>
         <PageComponent {...pageProps} />

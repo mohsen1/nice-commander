@@ -48,7 +48,7 @@ const TaskRunPage: React.FC = () => {
   return (
     <MainLayout>
       <H1>
-        <Link href={`${baseUrl}/tasks/${taskName}`}>
+        <Link prefetch={false} href={`${baseUrl}/tasks/${taskName}`}>
           <A>{taskName}</A>
         </Link>
       </H1>
