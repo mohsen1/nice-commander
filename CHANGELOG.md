@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.3
+
+Fix the `main` field in `package.json`
+
 ## 0.0.2
 
 Publishing to try out the new package in Airbnb environment

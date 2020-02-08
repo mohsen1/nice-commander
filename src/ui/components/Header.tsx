@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   return (
     <HeaderElement>
       <Title>
-        <Link href={baseUrl || ""}>
+        <Link prefetch={false} href={baseUrl}>
           <A>Nice Commander</A>
         </Link>
       </Title>
