@@ -2,7 +2,7 @@
   "name": "nice-commander",
   "version": "0.0.2",
   "description": "Nice Commander",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "author": "Mohsen Azimi <me@azimi.me>",
   "license": "MIT",
   "scripts": {
