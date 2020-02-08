@@ -12,6 +12,7 @@ import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
 import getConfig from "next/config";
+
 import { AppContext } from "../context/AppContext";
 
 let globalApolloClient = null;
