@@ -1,6 +1,6 @@
 {
   "name": "nice-commander",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Nice Commander",
   "main": "dist/src/index.js",
   "author": "Mohsen Azimi <me@azimi.me>",
