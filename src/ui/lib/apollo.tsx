@@ -4,13 +4,16 @@
  */
 // @ts-nocheck
 
-import React from "react";
+import React, { useContext } from "react";
 import Head from "next/head";
 import { ApolloProvider } from "@apollo/react-hooks";
 import { ApolloClient } from "apollo-client";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
+import getConfig from "next/config";
+
+import { AppContext } from "../context/AppContext";
 
 let globalApolloClient = null;
 
@@ -24,7 +27,8 @@ let globalApolloClient = null;
  */
 export function withApollo(PageComponent, { ssr = true } = {}) {
   const WithApollo = ({ apolloClient, apolloState, ...pageProps }) => {
-    const client = apolloClient || initApolloClient(apolloState);
+    const { baseUrl } = useContext(AppContext);
+    const client = apolloClient || initApolloClient(apolloState, baseUrl);
     return (
       <ApolloProvider client={client}>
         <PageComponent {...pageProps} />
@@ -50,7 +54,10 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const apolloClient = (ctx.apolloClient = initApolloClient());
+      const apolloClient = (ctx.apolloClient = initApolloClient(
+        {},
+        ctx?.req?.baseUrl
+      ));
 
       // Run wrapped getInitialProps methods
       let pageProps = {};
@@ -62,7 +69,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
       if (typeof window === "undefined") {
         // When redirecting, the response is finished.
         // No point in continuing to render
-        if (ctx.res && ctx.res.finished) {
+        if (ctx?.res?.finished) {
           return pageProps;
         }
 
@@ -97,6 +104,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       return {
         ...pageProps,
+        baseUrl: ctx?.req?.baseUrl,
         apolloState
       };
     };
@@ -110,16 +118,16 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
  * Creates or reuses apollo client in the browser.
  * @param  {Object} initialState
  */
-function initApolloClient(initialState) {
+function initApolloClient(initialState: object, baseUrl: string) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
   if (typeof window === "undefined") {
-    return createApolloClient(initialState);
+    return createApolloClient(initialState, baseUrl);
   }
 
   // Reuse client on the client-side
   if (!globalApolloClient) {
-    globalApolloClient = createApolloClient(initialState);
+    globalApolloClient = createApolloClient(initialState, baseUrl);
   }
 
   return globalApolloClient;
@@ -129,16 +137,30 @@ function initApolloClient(initialState) {
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-function createApolloClient(initialState = {}) {
-  // Check out https://github.com/zeit/next.js/pull/4611 if you want to use the AWSAppSyncClient
+function createApolloClient(initialState = {}, baseUrl: string) {
+  const isBrowser = typeof window !== "undefined";
+
   return new ApolloClient({
-    ssrMode: typeof window === "undefined", // Disables forceFetch on the server (so queries are only run once)
-    link: new HttpLink({
-      // TODO: figure out how to get the host and scheme dynamically from request object
-      uri: `http://localhost:3000${process.env.mountPath}/graphql`, // Server URL (must be absolute)
-      credentials: "same-origin", // Additional fetch() options like `credentials` or `headers`
-      fetch
-    }),
+    // Disables forceFetch on the server (so queries are only run once)
+    ssrMode: !isBrowser,
+    link: createIsomorphLink(baseUrl),
     cache: new InMemoryCache().restore(initialState)
   });
+}
+
+function createIsomorphLink(baseUrl: string) {
+  const isBrowser = typeof window !== "undefined";
+
+  if (isBrowser) {
+    return new HttpLink({
+      uri: `${window.location.origin}${baseUrl}/graphql`,
+      credentials: "same-origin",
+      fetch
+    });
+  }
+
+  const { publicRuntimeConfig } = getConfig();
+  const { SchemaLink } = require("apollo-link-schema");
+
+  return new SchemaLink({ schema: publicRuntimeConfig.schema });
 }

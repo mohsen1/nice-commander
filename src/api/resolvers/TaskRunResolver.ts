@@ -14,7 +14,7 @@ import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
-import NiceCommander from "../..";
+import NiceCommander from "../../api/core";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 
@@ -70,6 +70,16 @@ export function getTasksRunResolver(
 
       // start the task
       await niceCommander.startTask(taskRun, publisher);
+
+      // Assign logs
+      try {
+        const logs = await niceCommander.getLogsFromS3(taskRun.logsPath);
+        if (logs) {
+          taskRun.logs = logs;
+        }
+      } catch {
+        taskRun.logs = "logs are not available yet";
+      }
 
       // Save to DB
       await this.repository.save(taskRun);

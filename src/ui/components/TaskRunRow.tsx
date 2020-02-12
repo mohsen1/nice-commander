@@ -7,6 +7,9 @@ import {
 } from "./utils/colors";
 import { displayTaskRunDuration } from "./utils/time";
 import A from "./base/A";
+import { useRouter } from "next/router";
+import { AppContext } from "../context/AppContext";
+import { useContext } from "react";
 
 const Container = styled.div<{ state: "FINISHED" | "ERROR" | "RUNNING" }>`
   padding: 1rem;
@@ -35,21 +38,27 @@ const TaskRunRow: React.FC<TaskRun> = ({
   startTime,
   endTime,
   id: taskRunId
-}) => (
-  <Link href={`${process.env.mountPath}/tasks/${taskName}/runs/${taskRunId}`}>
-    <A>
-      <Container state={state}>
-        <span>
-          {new Date(startTime).toLocaleDateString("en-US", {})}
-          {" - "}
-          {new Date(startTime).toLocaleTimeString()}
-          {" · "}
-          {state}
-        </span>
-        <span>{displayTaskRunDuration(startTime, endTime)}</span>
-      </Container>
-    </A>
-  </Link>
-);
+}) => {
+  const { baseUrl } = useContext(AppContext);
+  return (
+    <Link
+      prefetch={false}
+      href={`${baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
+    >
+      <A>
+        <Container state={state}>
+          <span>
+            {new Date(startTime).toLocaleDateString("en-US", {})}
+            {" - "}
+            {new Date(startTime).toLocaleTimeString()}
+            {" · "}
+            {state}
+          </span>
+          <span>{displayTaskRunDuration(startTime, endTime)}</span>
+        </Container>
+      </A>
+    </Link>
+  );
+};
 
 export default TaskRunRow;

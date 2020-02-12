@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 
 import A from "./base/A";
+import { AppContext } from "../context/AppContext";
 
 const ItemRow = styled(A)`
   border: 1px solid ${props => props.theme.colors.accent.light};
@@ -18,10 +19,13 @@ interface Task {
   runs: { state: string; startTime: number; endTime: number | null }[];
 }
 
-const TaskListItem: React.FC<Task> = ({ name }) => (
-  <Link href={`${process.env.mountPath}/tasks/${name}`}>
-    <ItemRow>{name}</ItemRow>
-  </Link>
-);
+const TaskListItem: React.FC<Task> = ({ name }) => {
+  const { baseUrl } = useContext(AppContext);
+  return (
+    <Link prefetch={false} href={`${baseUrl}/tasks/${name}`}>
+      <ItemRow>{name}</ItemRow>
+    </Link>
+  );
+};
 
 export default TaskListItem;

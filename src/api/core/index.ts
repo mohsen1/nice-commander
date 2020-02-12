@@ -20,6 +20,7 @@ import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
+import { GraphQLSchema } from "graphql";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
@@ -48,6 +49,7 @@ export default class NiceCommander {
   private readonly redisClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
+  private schema?: GraphQLSchema;
 
   public constructor(private options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
@@ -101,7 +103,10 @@ export default class NiceCommander {
       name: this.DB_CONNECTION_NAME,
       synchronize: true,
       logging: false,
-      entities: [path.resolve(__dirname, "../models/*.ts")]
+      entities: [
+        path.resolve(__dirname, "../models/Task.js"),
+        path.resolve(__dirname, "../models/TaskRun.js")
+      ]
     }).then(connection => {
       this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
@@ -109,19 +114,21 @@ export default class NiceCommander {
   }
 
   private async getNextJsRequestHandler(mountPath: string) {
-    const dev = process.env.NODE_ENV !== "production";
+    const dev = process.env.DEBUG?.includes("nice-commander");
+    const dir = path.resolve(__dirname, "../../../../src/ui");
+
     const app = next({
       dev,
-      dir: path.resolve(__dirname, "../../ui"),
+      dir,
       conf: {
         assetPrefix: mountPath,
-        env: {
-          mountPath
+        publicRuntimeConfig: {
+          schema: this.schema
         }
       }
     });
-    const handle = app.getRequestHandler();
     await app.prepare();
+    const handle = app.getRequestHandler();
     return handle;
   }
 
@@ -139,6 +146,7 @@ export default class NiceCommander {
       .readdirSync(directory)
       .map(file => path.resolve(directory, file))
       .filter(filePath => fs.statSync(filePath).isFile())
+      .filter(filePath => filePath.endsWith(".js"))
       .map(filePath => {
         const taskDefinition = require(filePath).default;
         validateTaskDefinition(taskDefinition);
@@ -156,15 +164,16 @@ export default class NiceCommander {
     //   publisher: this.redisClient,
     //   subscriber: this.redisClient
     // });
-    const schema = await buildSchema({
+    this.schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this)
-      ]
+      ],
+      emitSchemaFile: true
       // pubSub: redisPubSub
     });
     this.server = new ApolloServer({
-      schema,
+      schema: this.schema,
       playground: true,
       subscriptions: {
         onConnect(connectionParams, webSocket) {
@@ -196,7 +205,7 @@ export default class NiceCommander {
       const [lastTaskRun] = await taskRunRepository.find({
         where: { task, endTime: Not(IsNull()) },
         order: {
-          endTime: "ASC"
+          endTime: "DESC"
         },
         take: 1
       });
@@ -208,13 +217,18 @@ export default class NiceCommander {
 
       // In case we found the last run, schedule after last run's end time to keep on schedule
       if (lastTaskRun) {
-        const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
-
-        if (nextRun < now) {
-          // We are past due, schedule for immediate invocation
+        if (lastTaskRun.state !== TaskRun.State.FINISHED) {
+          // Invoke immediately if last run was not successful
           expires = 1;
         } else {
-          expires = nextRun - now;
+          const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
+
+          if (nextRun < now) {
+            // We are past due, schedule for immediate invocation
+            expires = 1;
+          } else {
+            expires = nextRun - now;
+          }
         }
       }
 

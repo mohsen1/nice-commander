@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
 import { useQuery, useSubscription } from "react-apollo";
@@ -13,6 +13,7 @@ import H2 from "../../../../components/titles/H2";
 import Link from "next/link";
 import A from "../../../../components/base/A";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
+import { AppContext } from "../../../../context/AppContext";
 
 const DetailsRow = styled.p`
   padding: 0.5rem 0;
@@ -59,11 +60,11 @@ const TaskRunPage: React.FC = () => {
   if (error) {
     return <ErrorPresenter error={error} />;
   }
-
+  const { baseUrl } = useContext(AppContext);
   return (
     <MainLayout>
       <H1>
-        <Link href={`${process.env.mountPath}/tasks/${taskName}`}>
+        <Link prefetch={false} href={`${baseUrl}/tasks/${taskName}`}>
           <A>{taskName}</A>
         </Link>
       </H1>

@@ -6,23 +6,11 @@ NiceCommander run scheduled and one-off tasks in your Node.js server with a nice
 
 ### Requirements
 
-NiceCommander requires:
-
 - **Redis Server** for distributed locking
 - **MySQL Server** for its task and task-run database
 - **Amazon S3 Access** to store logs
 
-### Installation
-
-Install NiceCommander via npm or Yarn
-
-```bash
-npm install nice-commander
-```
-
-### Usage
-
-#### Define your tasks
+### Define your tasks
 
 Create a directory dedicated to your tasks. Create one or many files that export task definitions. Task definitions must conform to the `TaskDefinition` TypeScript interface.
 
@@ -43,7 +31,7 @@ module.exports.default = {
 
 > If you are using TypeScript you can import the `TaskDefinition` interface and type your task default export with it.
 
-#### Add NiceCommander to your server
+### Add NiceCommander to your Express server
 
 NiceCommander is an Express middleware. Create an instance of `NiceCommander` and pass required configurations for MySQL and Redis as well as the path you want the UI to be accessible from under `mountPath`.
 
@@ -56,10 +44,14 @@ const app = express();
 
 const mountPath = "/nice-commander";
 const niceCommander = new NiceCommander({
-  taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
+  taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   mountPath,
-  redisConnectionOptions: {/* Redis Config */ },
-  sqlConnectionOptions: {/* DB Config */ },
+  redisConnectionOptions: {
+    /* Redis Config */
+  },
+  sqlConnectionOptions: {
+    /* DB Config */
+  }
 });
 const middleware = await niceCommander.getExpressMiddleware();
 app.use(mountPath, middleware);
