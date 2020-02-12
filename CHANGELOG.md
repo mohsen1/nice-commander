@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.5
+
+Export TypeScript declarations
+
 ## 0.0.4
 
 Fix automatic publishing yarn install in npm-publish Github Action
