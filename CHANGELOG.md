@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.6
+
+Run `prepublish` in CI
+
 ## 0.0.5
 
 Export TypeScript declarations
