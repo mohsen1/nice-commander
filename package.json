@@ -1,6 +1,6 @@
 {
   "name": "nice-commander",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Nice Commander",
   "main": "dist/src/index.js",
   "author": "Mohsen Azimi <me@azimi.me>",
@@ -12,7 +12,7 @@
     "example-server": "DEBUG=nice-commander nodemon --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx}'",
-    "prepublish": "rm -rf src/ui/.next && next build src/ui && tsc"
+    "prepare": "rm -rf src/ui/.next && next build src/ui && tsc"
   },
   "dependencies": {
     "apollo-cache": "^1.3.2",
