@@ -20,16 +20,16 @@ async function main() {
     mountPath,
     redisConnectionOptions: {
       host: "localhost",
-      port: 6379
+      port: 6379,
     },
     sqlConnectionOptions: {
       type: "mysql",
       host: "localhost",
       port: 3306,
       username: "root",
-      database: "nicecommander"
+      database: "nicecommander",
     },
-    taskDefinitionsDirectory: path.resolve(__dirname, "tasks")
+    taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   });
   const middleware = await niceCommander.getExpressMiddleware();
   app.use(mountPath, middleware);

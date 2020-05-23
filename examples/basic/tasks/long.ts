@@ -5,7 +5,7 @@ const task: TaskDefinition = {
   name: "Long Running Task",
   async run(payload) {
     const wait = (amount: number) =>
-      new Promise(resolve => setTimeout(resolve, amount));
+      new Promise((resolve) => setTimeout(resolve, amount));
 
     const start = Date.now();
     const end = start + 3 * 60 * 1000;
@@ -19,7 +19,7 @@ const task: TaskDefinition = {
   },
   // Add a little more for the timeout because console.log is sync
   timeoutAfter: 3 * 60 * 1000 + 200,
-  schedule: "manual"
+  schedule: "manual",
 };
 
 export default task;

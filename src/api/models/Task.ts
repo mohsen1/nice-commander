@@ -6,7 +6,7 @@ import { TaskRun } from "./TaskRun";
 @Entity()
 @ObjectType()
 export class Task {
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryGeneratedColumn()
   public id!: string;
 
@@ -18,21 +18,18 @@ export class Task {
   @Column({ type: "text" })
   public code!: string;
 
-  @Field(type => Number, { description: "Path of the task file." })
+  @Field((type) => Number, { description: "Path of the task file." })
   @Column()
   public timeoutAfter!: number;
 
-  @Field(type => [TaskRun], {
+  @Field((type) => [TaskRun], {
     description: "List of task runs",
-    defaultValue: []
+    defaultValue: [],
   })
-  @OneToMany(
-    type => TaskRun,
-    taskRun => taskRun.task
-  )
+  @OneToMany((type) => TaskRun, (taskRun) => taskRun.task)
   public runs!: TaskRun[];
 
-  @Field(type => String)
+  @Field((type) => String)
   @Column()
   public schedule!: string;
 }

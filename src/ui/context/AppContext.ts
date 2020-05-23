@@ -5,5 +5,5 @@ interface AppContextType {
 }
 
 export const AppContext = React.createContext<AppContextType>({
-  baseUrl: null
+  baseUrl: null,
 });

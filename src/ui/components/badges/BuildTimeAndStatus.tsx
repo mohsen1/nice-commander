@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import {
   getBackgroundColorForStatus,
-  getForegroundColorForStatus
+  getForegroundColorForStatus,
 } from "../utils/colors";
 
 interface BuildTimeAndStatusProps {

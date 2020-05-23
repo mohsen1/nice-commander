@@ -8,10 +8,12 @@ function getHeight(value?: string, maxHeight: number = 25) {
   return `${Math.min(lines, maxHeight)}em`;
 }
 
-const Editor: React.FC<EditorProps & {
-  readonly?: boolean;
-  maxHeight?: number;
-}> = props => (
+const Editor: React.FC<
+  EditorProps & {
+    readonly?: boolean;
+    maxHeight?: number;
+  }
+> = (props) => (
   <MonacoEditor
     theme={"dark"}
     language="json"
@@ -22,10 +24,10 @@ const Editor: React.FC<EditorProps & {
       scrollbar: {
         alwaysConsumeMouseWheel: false,
         handleMouseWheel: false,
-        ...(props?.options?.scrollbar ?? {})
+        ...(props?.options?.scrollbar ?? {}),
       },
       ...(props.options ?? {}),
-      readOnly: props.readonly ?? false
+      readOnly: props.readonly ?? false,
     }}
     height={getHeight(props.value, props.maxHeight)}
     {...props}

@@ -5,23 +5,23 @@ import { Task } from "./Task";
 
 enum InvocationType {
   MANUAL,
-  SCHEDULED
+  SCHEDULED,
 }
 
 enum State {
   RUNNING,
   FINISHED,
   ERROR,
-  TIMED_OUT
+  TIMED_OUT,
 }
 
 registerEnumType(InvocationType, {
   name: "InvocationType",
-  description: "Task Run invocation type"
+  description: "Task Run invocation type",
 });
 registerEnumType(State, {
   name: "State",
-  description: "State TaskRun is at right now"
+  description: "State TaskRun is at right now",
 });
 
 @Entity()
@@ -30,18 +30,18 @@ export class TaskRun {
   static InvocationType = InvocationType;
   static State = State;
 
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryGeneratedColumn()
   public id!: string;
 
-  @Field(type => Number, { description: "Start time" })
+  @Field((type) => Number, { description: "Start time" })
   @Column({ type: "bigint" })
   public startTime!: number;
 
-  @Field(type => Number, {
+  @Field((type) => Number, {
     description: "End time",
     nullable: true,
-    defaultValue: null
+    defaultValue: null,
   })
   @Column({ type: "bigint", nullable: true })
   public endTime!: string;
@@ -49,45 +49,42 @@ export class TaskRun {
   @Column({ default: "" })
   public logsPath!: string;
 
-  @Field(type => String, { description: "Logs" })
+  @Field((type) => String, { description: "Logs" })
   public logs!: string;
 
-  @Field(type => String, { description: "Payload" })
+  @Field((type) => String, { description: "Payload" })
   @Column({ default: "{}" })
   public payload!: string;
 
-  @Field(type => Int, { description: "Exit Code", nullable: true })
+  @Field((type) => Int, { description: "Exit Code", nullable: true })
   @Column({ nullable: true, type: "int" })
   public exitCode!: number | null;
 
-  @Field(type => String, { description: "Exit Signal", nullable: true })
+  @Field((type) => String, { description: "Exit Signal", nullable: true })
   @Column({ nullable: true, type: "text" })
   public exitSignal!: string | null;
 
-  @Field(type => Task, {
-    description: "Task associated with this run"
+  @Field((type) => Task, {
+    description: "Task associated with this run",
   })
-  @ManyToOne(
-    type => Task,
-    task => task.runs
-  )
+  @ManyToOne((type) => Task, (task) => task.runs)
   public task!: Task;
 
-  @Field(type => State, {
-    description: "State of the TaskRun"
+  @Field((type) => State, {
+    description: "State of the TaskRun",
   })
   @Column({
     enum: State,
-    type: "enum"
+    type: "enum",
   })
   public state!: State;
 
-  @Field(type => InvocationType, {
-    description: "Invocation Type"
+  @Field((type) => InvocationType, {
+    description: "Invocation Type",
   })
   @Column({
     enum: InvocationType,
-    type: "enum"
+    type: "enum",
   })
   public invocationType!: InvocationType;
 
