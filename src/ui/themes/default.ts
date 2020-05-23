@@ -7,35 +7,35 @@ export default {
     accent: {
       dark: "var(--color-accent-dark)",
       normal: "var(--color-accent-normal)",
-      light: "var(--color-accent-light)"
+      light: "var(--color-accent-light)",
     },
 
     gray: {
       light: "var(--color-gray-light)",
       normal: "var(--color-gray-normal)",
-      dark: "var(--color-gray-dark)"
+      dark: "var(--color-gray-dark)",
     },
 
     success: {
       dark: "var(--color-success-dark)",
       normal: "var(--color-success-normal)",
-      light: "var(--color-success-light)"
+      light: "var(--color-success-light)",
     },
 
     fail: {
       dark: "var(--color-fail-dark)",
       normal: "var(--color-fail-normal)",
-      light: "var(--color-fail-light)"
+      light: "var(--color-fail-light)",
     },
 
     progress: {
       dark: "var(--color-progress-dark)",
       normal: "var(--color-progress-normal)",
-      light: "var(--color-progress-light)"
+      light: "var(--color-progress-light)",
     },
 
     warning: {
-      normal: "var(-color-warning-normal)"
-    }
-  }
+      normal: "var(-color-warning-normal)",
+    },
+  },
 };

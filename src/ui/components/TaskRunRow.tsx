@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import {
   getForegroundColorForStatus,
-  getBackgroundColorForStatus
+  getBackgroundColorForStatus,
 } from "./utils/colors";
 import { displayTaskRunDuration } from "./utils/time";
 import A from "./base/A";
@@ -37,7 +37,7 @@ const TaskRunRow: React.FC<TaskRun> = ({
   state,
   startTime,
   endTime,
-  id: taskRunId
+  id: taskRunId,
 }) => {
   const { baseUrl } = useContext(AppContext);
   return (

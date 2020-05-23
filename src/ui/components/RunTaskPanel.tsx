@@ -62,7 +62,9 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       <Editor
         value={defaultValue}
         height="150px"
-        editorDidMount={getEditorValue => (getEditorValueRef = getEditorValue)}
+        editorDidMount={(getEditorValue) =>
+          (getEditorValueRef = getEditorValue)
+        }
       />
       <InvalidJSONError>
         {!isValidPayload && "Invalid JSON in payload"}
@@ -73,8 +75,8 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
             runTask({
               variables: {
                 payload: getPayloadSafe(),
-                taskId
-              }
+                taskId,
+              },
             });
           }}
         >

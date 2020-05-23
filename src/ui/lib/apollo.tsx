@@ -49,7 +49,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
   }
 
   if (ssr || PageComponent.getInitialProps) {
-    WithApollo.getInitialProps = async ctx => {
+    WithApollo.getInitialProps = async (ctx) => {
       const { AppTree } = ctx;
 
       // Initialize ApolloClient, add it to the ctx object so
@@ -82,7 +82,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
               <AppTree
                 pageProps={{
                   ...pageProps,
-                  apolloClient
+                  apolloClient,
                 }}
               />
             );
@@ -105,7 +105,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
       return {
         ...pageProps,
         baseUrl: ctx?.req?.baseUrl,
-        apolloState
+        apolloState,
       };
     };
   }
@@ -144,7 +144,7 @@ function createApolloClient(initialState = {}, baseUrl: string) {
     // Disables forceFetch on the server (so queries are only run once)
     ssrMode: !isBrowser,
     link: createIsomorphLink(baseUrl),
-    cache: new InMemoryCache().restore(initialState)
+    cache: new InMemoryCache().restore(initialState),
   });
 }
 
@@ -155,7 +155,7 @@ function createIsomorphLink(baseUrl: string) {
     return new HttpLink({
       uri: `${window.location.origin}${baseUrl}/graphql`,
       credentials: "same-origin",
-      fetch
+      fetch,
     });
   }
 

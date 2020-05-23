@@ -5,7 +5,7 @@ const task: TaskDefinition = {
   name: "Scheduled Sample Task",
   async run() {
     const wait = (amount: number) =>
-      new Promise(resolve => setTimeout(resolve, amount));
+      new Promise((resolve) => setTimeout(resolve, amount));
 
     for (let i of Array.from({ length: 10 }, (_, ii) => ii)) {
       await wait(5);
@@ -13,7 +13,7 @@ const task: TaskDefinition = {
     }
   },
   timeoutAfter: 5000,
-  schedule: "20 minute"
+  schedule: "20 minute",
 };
 
 export default task;

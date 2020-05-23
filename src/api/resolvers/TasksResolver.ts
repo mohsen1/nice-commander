@@ -12,18 +12,18 @@ export function getTasksResolver(connection: Connection) {
       return taskRepository;
     }
 
-    @Query(returns => [Task], { description: "Get a list of tasks" })
+    @Query((returns) => [Task], { description: "Get a list of tasks" })
     async tasks(
-      @Arg("take", type => Int, {
+      @Arg("take", (type) => Int, {
         defaultValue: 10,
         nullable: true,
-        description: "How many to take"
+        description: "How many to take",
       })
       take: number,
-      @Arg("skip", type => Int, {
+      @Arg("skip", (type) => Int, {
         defaultValue: 0,
         nullable: true,
-        description: "How many to skip"
+        description: "How many to skip",
       })
       skip: number
     ) {
@@ -33,18 +33,18 @@ export function getTasksResolver(connection: Connection) {
       return this.repository.find({
         take,
         skip,
-        relations: ["runs"]
+        relations: ["runs"],
       });
     }
 
-    @Query(returns => Task, {
+    @Query((returns) => Task, {
       description: "Get a single task",
-      nullable: true
+      nullable: true,
     })
     async task(@Arg("name", { description: "Task unique name" }) name: string) {
       const task = await this.repository.findOne({
         where: { name },
-        relations: ["runs"]
+        relations: ["runs"],
       });
 
       // Avoid joint if not necessary

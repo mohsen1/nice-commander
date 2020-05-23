@@ -5,7 +5,7 @@ const task: TaskDefinition = {
   name: "Times Out",
   async run(payload) {
     const wait = (amount: number) =>
-      new Promise(resolve => setTimeout(resolve, amount));
+      new Promise((resolve) => setTimeout(resolve, amount));
 
     console.log("This task will time out before finishing");
     console.log("Date and time is", new Date());
@@ -14,7 +14,7 @@ const task: TaskDefinition = {
     console.log("Task finished -- this should never happen!");
   },
   timeoutAfter: 1000,
-  schedule: "manual"
+  schedule: "manual",
 };
 
 export default task;

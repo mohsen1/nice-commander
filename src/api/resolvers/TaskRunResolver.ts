@@ -7,7 +7,7 @@ import {
   Subscription,
   PubSub,
   Publisher,
-  Root
+  Root,
 } from "type-graphql";
 import { Connection } from "typeorm";
 
@@ -33,16 +33,16 @@ export function getTasksRunResolver(
       return taskRepository;
     }
 
-    @Mutation(returns => TaskRun)
+    @Mutation((returns) => TaskRun)
     async runTask(
-      @Arg("id", type => String, {
-        description: "Task ID"
+      @Arg("id", (type) => String, {
+        description: "Task ID",
       })
       id: string,
-      @Arg("payload", type => String, {
+      @Arg("payload", (type) => String, {
         description:
           "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
-        defaultValue: "{}"
+        defaultValue: "{}",
       })
       payload: string
       // @PubSub("LOGS") publisher: Publisher<string>
@@ -86,23 +86,23 @@ export function getTasksRunResolver(
       return taskRun;
     }
 
-    @Query(returns => [TaskRun])
+    @Query((returns) => [TaskRun])
     async taskRuns(
-      @Arg("taskId", type => String, {
+      @Arg("taskId", (type) => String, {
         description: "Task ID to get TaskRuns for",
-        nullable: false
+        nullable: false,
       })
       taskId: string,
-      @Arg("take", type => Int, {
+      @Arg("take", (type) => Int, {
         defaultValue: 10,
         nullable: true,
-        description: "How many to take"
+        description: "How many to take",
       })
       take: number,
-      @Arg("skip", type => Int, {
+      @Arg("skip", (type) => Int, {
         defaultValue: 0,
         nullable: true,
-        description: "How many to skip"
+        description: "How many to skip",
       })
       skip: number
     ) {
@@ -119,17 +119,17 @@ export function getTasksRunResolver(
         skip,
         where: { task: { id: taskId } },
         relations: ["task"],
-        order: { startTime: "DESC" }
+        order: { startTime: "DESC" },
       });
 
       return taskRuns;
     }
 
-    @Query(returns => TaskRun)
-    async taskRun(@Arg("id", type => String) id: string) {
+    @Query((returns) => TaskRun)
+    async taskRun(@Arg("id", (type) => String) id: string) {
       const taskRun = await this.repository.findOne({
         where: { id },
-        relations: ["task"]
+        relations: ["task"],
       });
       if (!taskRun) {
         throw new NotFound(`TaskRun with id ${id} was not found`);
@@ -145,14 +145,14 @@ export function getTasksRunResolver(
       return taskRun;
     }
 
-    @Subscription(returns => [TaskRun], { topics: "LOGS" })
+    @Subscription((returns) => [TaskRun], { topics: "LOGS" })
     async taskRunLogs(
-      @Arg("id", type => String, { description: "TaskRun ID" }) id: string,
+      @Arg("id", (type) => String, { description: "TaskRun ID" }) id: string,
       @Root() logsPayload: {}
     ) {
       return {
         ...logsPayload,
-        date: new Date()
+        date: new Date(),
       };
     }
   }
