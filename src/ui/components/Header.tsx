@@ -11,7 +11,7 @@ const Title = styled.h1`
 
 const HeaderElement = styled.header`
   padding: 0.5rem 1rem;
-  background-color: ${(props) => props.theme.colors.accent.normal};
+  background-color: ${props => props.theme.colors.accent.normal};
 `;
 
 const Header: React.FC = () => {

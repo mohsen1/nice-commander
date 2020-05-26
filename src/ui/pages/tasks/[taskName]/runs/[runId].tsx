@@ -39,12 +39,14 @@ const TaskRunPage: React.FC = () => {
       }
     }`;
 
-  const { data, error } = useQuery(query);
+  const { data, error, refetch } = useQuery(query);
 
   if (error) {
     return <ErrorPresenter error={error} />;
   }
+
   const { baseUrl } = useContext(AppContext);
+
   return (
     <MainLayout>
       <H1>
@@ -60,14 +62,19 @@ const TaskRunPage: React.FC = () => {
         Runtime:{" "}
         {displayTaskRunDuration(data?.taskRun.startTime, data?.taskRun.endTime)}
       </DetailsRow>
-      <DetailsRow>Invocation Type {data?.taskRun.invocationSource}</DetailsRow>
+      <DetailsRow>
+        Invocation source: {data?.taskRun.invocationSource}
+      </DetailsRow>
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>
       <H2>Payload</H2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>
-      <LogViewer taskRunId={runId as string} />
+      <LogViewer
+        taskRunId={runId as string}
+        isRunning={data?.taskRun.state === "RUNNING"}
+      />
     </MainLayout>
   );
 };

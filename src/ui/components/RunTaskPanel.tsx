@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import styled from "styled-components";
+import Router from "next/router";
 
 import Editor from "./Editor";
 import Run from "./buttons/Run";
@@ -61,22 +62,23 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       <Editor
         value={defaultValue}
         height="150px"
-        editorDidMount={(getEditorValue) =>
-          (getEditorValueRef = getEditorValue)
-        }
+        editorDidMount={getEditorValue => (getEditorValueRef = getEditorValue)}
       />
       <InvalidJSONError>
         {!isValidPayload && "Invalid JSON in payload"}
       </InvalidJSONError>
       <Buttons>
         <Run
-          onClick={() => {
-            runTask({
+          onClick={async () => {
+            const { data } = await runTask({
               variables: {
                 payload: getPayloadSafe(),
-                taskId,
-              },
+                taskId
+              }
             });
+            Router.push(
+              window.location.pathname + "/runs/" + data?.runTask?.id
+            );
           }}
         >
           Run
