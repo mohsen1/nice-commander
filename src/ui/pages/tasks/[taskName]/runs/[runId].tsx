@@ -60,7 +60,7 @@ const TaskRunPage: React.FC = () => {
         Runtime:{" "}
         {displayTaskRunDuration(data?.taskRun.startTime, data?.taskRun.endTime)}
       </DetailsRow>
-      <DetailsRow>Invocation Type {data?.taskRun.invocationType}</DetailsRow>
+      <DetailsRow>Invocation Type {data?.taskRun.invocationSource}</DetailsRow>
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>

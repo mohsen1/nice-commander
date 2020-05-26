@@ -201,7 +201,7 @@ export default class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Not(TaskRun.InvocationType.MANUAL)
+        schedule: Not(TaskRun.InvocationSource.MANUAL)
       }
     });
     const now = Date.now();
@@ -221,7 +221,7 @@ export default class NiceCommander {
 
       // In case we found the last run, schedule after last run's end time to keep on schedule
       if (lastTaskRun) {
-        if (lastTaskRun.state !== TaskRun.State.FINISHED) {
+        if (lastTaskRun.state !== TaskRun.TaskRunState.FINISHED) {
           // Invoke immediately if last run was not successful
           expires = 1;
         } else {
@@ -267,8 +267,8 @@ export default class NiceCommander {
       const taskRun = new TaskRun();
       taskRun.task = task;
       taskRun.startTime = Date.now();
-      taskRun.state = TaskRun.State.RUNNING;
-      taskRun.invocationSource = TaskRun.InvocationType.SCHEDULED;
+      taskRun.state = TaskRun.TaskRunState.RUNNING;
+      taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
       await taskRunRepository.save(taskRun);
       this.startTask(taskRun);
 
@@ -282,8 +282,8 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
-    if (taskRun && taskRun.state === TaskRun.State.RUNNING) {
-      this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun, undefined);
+    if (taskRun && taskRun.state === TaskRun.TaskRunState.RUNNING) {
+      this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
     }
   }
 
@@ -430,10 +430,10 @@ export default class NiceCommander {
       }
 
       child.on("exit", (code, signal) => {
-        if (code === 0 && taskRun.state !== TaskRun.State.TIMED_OUT) {
-          this.endTaskRun(TaskRun.State.FINISHED, taskRun, code, signal);
+        if (code === 0 && taskRun.state !== TaskRun.TaskRunState.TIMED_OUT) {
+          this.endTaskRun(TaskRun.TaskRunState.FINISHED, taskRun, code, signal);
         } else {
-          this.endTaskRun(TaskRun.State.ERROR, taskRun, code, signal);
+          this.endTaskRun(TaskRun.TaskRunState.ERROR, taskRun, code, signal);
         }
       });
 

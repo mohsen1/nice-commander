@@ -3,8 +3,8 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-"""Task Run invocation type"""
-enum InvocationType {
+"""Task Run invocation source. This indicates how this task is invoked """
+enum InvocationSource {
   MANUAL
   SCHEDULED
 }
@@ -68,14 +68,6 @@ type Query {
   ): LogEventsResponse!
 }
 
-"""State TaskRun is at right now"""
-enum State {
-  RUNNING
-  FINISHED
-  ERROR
-  TIMED_OUT
-}
-
 type Task {
   id: ID!
 
@@ -115,8 +107,16 @@ type TaskRun {
   task: Task!
 
   """State of the TaskRun"""
-  state: State!
+  state: TaskRunState!
 
   """Invocation Type"""
-  invocationSource: InvocationType!
+  invocationSource: InvocationSource!
+}
+
+"""State TaskRun is at right now"""
+enum TaskRunState {
+  RUNNING
+  FINISHED
+  ERROR
+  TIMED_OUT
 }
