@@ -9,6 +9,12 @@ enum InvocationType {
   SCHEDULED
 }
 
+type LogEventsResponse {
+  nextForwardToken: String
+  nextBackwardToken: String
+  events: [OutputLogEvent!]!
+}
+
 type Mutation {
   runTask(
     """
@@ -19,6 +25,12 @@ type Mutation {
     """Task ID"""
     id: String!
   ): TaskRun!
+}
+
+type OutputLogEvent {
+  timestamp: Float!
+  ingestionTime: Float!
+  message: String!
 }
 
 type Query {
@@ -47,6 +59,13 @@ type Query {
     taskId: String!
   ): [TaskRun!]!
   taskRun(id: String!): TaskRun!
+  taskRunLogs(
+    """Next token"""
+    nextToken: String
+
+    """TaskRun ID"""
+    id: String!
+  ): LogEventsResponse!
 }
 
 """State TaskRun is at right now"""
@@ -55,13 +74,6 @@ enum State {
   FINISHED
   ERROR
   TIMED_OUT
-}
-
-type Subscription {
-  taskRunLogs(
-    """TaskRun ID"""
-    id: String!
-  ): [TaskRun!]!
 }
 
 type Task {
@@ -90,9 +102,6 @@ type TaskRun {
   """End time"""
   endTime: Float
 
-  """Logs"""
-  logs: String!
-
   """Payload"""
   payload: String!
 
@@ -109,5 +118,5 @@ type TaskRun {
   state: State!
 
   """Invocation Type"""
-  invocationType: InvocationType!
+  invocationSource: InvocationType!
 }

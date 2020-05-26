@@ -1,0 +1,22 @@
+/* 
+
+This is a template for setting up your local development.
+
+Create a new file named "development.json" with this file's contents next to this file and replace the template values.
+
+*/
+{
+  // MySQL Database configuration
+  db: {
+    host: "xxx",
+    port: 3306,
+    username: "admin",
+    password: "xxx",
+    database: "nice-commander"
+  },
+  // Redis Database configuration
+  redis: {
+    host: "xxx",
+    port: 6379
+  }
+}

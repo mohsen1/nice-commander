@@ -48,7 +48,6 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       runTask(id: $taskId, payload: $payload) {
         payload
         id
-        logs
         startTime
         endTime
       }

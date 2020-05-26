@@ -14,6 +14,7 @@ import Link from "next/link";
 import A from "../../../../components/base/A";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
 import { AppContext } from "../../../../context/AppContext";
+import LogViewer from "../../../../components/LogViewer";
 
 const DetailsRow = styled.p`
   padding: 0.5rem 0;
@@ -28,10 +29,9 @@ const TaskRunPage: React.FC = () => {
           endTime
           startTime
           state
-          logs
           payload
           id
-          invocationType
+          invocationSource
           task {
             name
             id
@@ -67,12 +67,7 @@ const TaskRunPage: React.FC = () => {
       <H2>Payload</H2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
       <H2>Logs</H2>
-      <Editor
-        readonly
-        maxHeight={25}
-        value={data?.taskRun.logs}
-        language="log"
-      />
+      <LogViewer taskRunId={runId as string} />
     </MainLayout>
   );
 };

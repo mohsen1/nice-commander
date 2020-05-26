@@ -3,8 +3,11 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 import { Task } from "./Task";
 
-enum InvocationType {
+/** How a task is invoked */
+enum InvocationSource {
+  /** Manually using the dashboard */
   MANUAL,
+  /** Using a schedule */
   SCHEDULED,
 }
 
@@ -15,7 +18,7 @@ enum State {
   TIMED_OUT,
 }
 
-registerEnumType(InvocationType, {
+registerEnumType(InvocationSource, {
   name: "InvocationType",
   description: "Task Run invocation type",
 });
@@ -27,7 +30,7 @@ registerEnumType(State, {
 @Entity()
 @ObjectType()
 export class TaskRun {
-  static InvocationType = InvocationType;
+  static InvocationType = InvocationSource;
   static State = State;
 
   @Field((type) => ID)
@@ -45,12 +48,6 @@ export class TaskRun {
   })
   @Column({ type: "bigint", nullable: true })
   public endTime!: string;
-
-  @Column({ default: "" })
-  public logsPath!: string;
-
-  @Field((type) => String, { description: "Logs" })
-  public logs!: string;
 
   @Field((type) => String, { description: "Payload" })
   @Column({ default: "{}" })
@@ -79,14 +76,14 @@ export class TaskRun {
   })
   public state!: State;
 
-  @Field((type) => InvocationType, {
+  @Field((type) => InvocationSource, {
     description: "Invocation Type",
   })
   @Column({
-    enum: InvocationType,
+    enum: InvocationSource,
     type: "enum",
   })
-  public invocationType!: InvocationType;
+  public invocationSource!: InvocationSource;
 
   /** A unique ID for this run and its related task */
   public get uniqueId() {
