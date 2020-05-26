@@ -57,7 +57,7 @@ export default class NiceCommander {
 
     this.cloudWatchLogs = new AWS.CloudWatchLogs({
       region: options.awsRegion,
-      credentials: options.awsCredentials
+      credentials: options.awsCredentials,
     });
 
     this.taskDefinitionsFiles = this.readTaskDefinitions(
@@ -67,13 +67,13 @@ export default class NiceCommander {
     this.redisClient = redis.createClient({
       host: options.redisConnectionOptions.host,
       port: options.redisConnectionOptions.port,
-      db: 1
+      db: 1,
     });
 
     this.redisSubscriber = redis.createClient({
       host: options.redisConnectionOptions.host,
       port: options.redisConnectionOptions.port,
-      db: 1
+      db: 1,
     });
 
     if (options.redisConnectionOptions.setNotifyKeyspaceEvents !== false) {
@@ -97,8 +97,8 @@ export default class NiceCommander {
         redis.createClient({
           host: options.redisConnectionOptions.host,
           port: options.redisConnectionOptions.port,
-          db: 2
-        })
+          db: 2,
+        }),
       ],
       { retryCount: 0 }
     );
@@ -111,9 +111,9 @@ export default class NiceCommander {
       logging: false,
       entities: [
         path.resolve(__dirname, "../models/Task.js"),
-        path.resolve(__dirname, "../models/TaskRun.js")
-      ]
-    }).then(connection => {
+        path.resolve(__dirname, "../models/TaskRun.js"),
+      ],
+    }).then((connection) => {
       this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
     });
@@ -129,9 +129,9 @@ export default class NiceCommander {
       conf: {
         assetPrefix: mountPath,
         publicRuntimeConfig: {
-          schema: this.schema
-        }
-      }
+          schema: this.schema,
+        },
+      },
     });
     await app.prepare();
     const handle = app.getRequestHandler();
@@ -150,16 +150,16 @@ export default class NiceCommander {
 
     return fs
       .readdirSync(directory)
-      .map(file => path.resolve(directory, file))
-      .filter(filePath => fs.statSync(filePath).isFile())
-      .filter(filePath => filePath.endsWith(".js"))
-      .map(filePath => {
+      .map((file) => path.resolve(directory, file))
+      .filter((filePath) => fs.statSync(filePath).isFile())
+      .filter((filePath) => filePath.endsWith(".js"))
+      .map((filePath) => {
         const taskDefinition = require(filePath).default;
 
         validateTaskDefinition(taskDefinition);
         const taskDefinitionFile: TaskDefinitionFile = {
           filePath,
-          taskDefinition
+          taskDefinition,
         };
         return taskDefinitionFile;
       });
@@ -171,9 +171,9 @@ export default class NiceCommander {
     this.schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
-        getTasksRunResolver(connection, this)
+        getTasksRunResolver(connection, this),
       ],
-      emitSchemaFile: true
+      emitSchemaFile: true,
     });
 
     const server = new ApolloServer({
@@ -183,8 +183,8 @@ export default class NiceCommander {
         onConnect(connectionParams, webSocket) {
           console.log({ connectionParams, webSocket });
         },
-        path: path.join(this.options.mountPath, "/graphql/subscriptions")
-      }
+        path: path.join(this.options.mountPath, "/graphql/subscriptions"),
+      },
     });
     return server.getMiddleware({ path: "/graphql" });
   }
@@ -201,17 +201,17 @@ export default class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Not(TaskRun.InvocationSource.MANUAL)
-      }
+        schedule: Not(TaskRun.InvocationSource.MANUAL),
+      },
     });
     const now = Date.now();
     for (const task of scheduledTasks) {
       const [lastTaskRun] = await taskRunRepository.find({
         where: { task, endTime: Not(IsNull()) },
         order: {
-          endTime: "DESC"
+          endTime: "DESC",
         },
-        take: 1
+        take: 1,
       });
 
       const scheduleMs = timestring(task.schedule, "ms");
@@ -301,7 +301,7 @@ export default class NiceCommander {
     // Sync incoming task definitions to database
     for (const taskDefinitionFile of taskDefinitionsFiles) {
       const existingTask = await taskRepository.findOne({
-        name: taskDefinitionFile.taskDefinition.name
+        name: taskDefinitionFile.taskDefinition.name,
       });
 
       const task = existingTask || new Task();
@@ -368,7 +368,7 @@ export default class NiceCommander {
       await this.cloudWatchLogs
         .createLogStream({
           logGroupName: this.logGroupName,
-          logStreamName: taskRun.uniqueId
+          logStreamName: taskRun.uniqueId,
         })
         .promise();
 
@@ -377,7 +377,7 @@ export default class NiceCommander {
         this.invokeFile,
         [taskDefinitionFile.filePath, taskRun.payload],
         {
-          stdio: "pipe"
+          stdio: "pipe",
         }
       );
 
@@ -402,7 +402,7 @@ export default class NiceCommander {
               sequenceToken,
               logGroupName: this.logGroupName,
               logStreamName: taskRun.uniqueId,
-              logEvents
+              logEvents,
             })
             .promise();
 
@@ -418,7 +418,7 @@ export default class NiceCommander {
         }
       };
 
-      child.stdout?.on("data", async chunk => {
+      child.stdout?.on("data", async (chunk) => {
         eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
         submitLogs();
       });

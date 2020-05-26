@@ -6,8 +6,9 @@ import A from "./base/A";
 import { AppContext } from "../context/AppContext";
 
 const Title = styled.h1`
-  font-size: 1.2em;
+  font-size: 1.2rem;
 `;
+
 const HeaderElement = styled.header`
   padding: 0.5rem 1rem;
   background-color: ${(props) => props.theme.colors.accent.normal};
@@ -19,7 +20,7 @@ const Header: React.FC = () => {
   return (
     <HeaderElement>
       <Title>
-        <Link prefetch={false} href={baseUrl}>
+        <Link prefetch={false} href={baseUrl || "/"}>
           <A>Nice Commander</A>
         </Link>
       </Title>

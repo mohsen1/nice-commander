@@ -28,7 +28,7 @@ export default createGlobalStyle`
 
     @media (prefers-color-scheme: dark) {
         :root {
-            /* Absolute black nad white is too harsh */
+            /* Absolute black and white is too harsh */
             --color-background: #202020;
             --color-text: #d6d6d6;;
 
