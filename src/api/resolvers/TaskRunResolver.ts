@@ -3,7 +3,7 @@ import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
-import NiceCommander from "../../api/core";
+import { NiceCommander } from "../../api/core";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 import LogEventsResponse from "./LogEventsResponse";
