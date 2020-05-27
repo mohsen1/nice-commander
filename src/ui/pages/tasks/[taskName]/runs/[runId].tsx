@@ -32,6 +32,8 @@ const TaskRunPage: React.FC = () => {
           payload
           id
           invocationSource
+          runnerName
+          runnerEmail
           task {
             name
             id
@@ -61,6 +63,12 @@ const TaskRunPage: React.FC = () => {
           <A>{taskName}</A>
         </Link>
       </H1>
+      <DetailsRow>
+        Started by:{" "}
+        <a href={`mailto://${data?.taskRun.runnerEmail}`}>
+          {data?.taskRun.runnerName}{" "}
+        </a>
+      </DetailsRow>
       <DetailsRow>
         Status: <span>{data?.taskRun.state}</span>
       </DetailsRow>

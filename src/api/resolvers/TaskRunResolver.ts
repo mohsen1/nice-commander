@@ -1,9 +1,9 @@
-import { Resolver, Query, Arg, Int, Mutation, Root } from "type-graphql";
+import { Resolver, Query, Arg, Int, Mutation, Ctx } from "type-graphql";
 import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
-import { NiceCommander } from "../../api/core";
+import { NiceCommander, NiceCommanderContext } from "../../api/core";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 import LogEventsResponse from "./LogEventsResponse";
@@ -35,7 +35,8 @@ export function getTasksRunResolver(
           "Task payload. This value must be a valid JSON string. Should not be bigger than 1kB",
         defaultValue: "{}",
       })
-      payload: string
+      payload: string,
+      @Ctx() ctx: NiceCommanderContext
     ) {
       if (payload.length > 1024) {
         throw new RangeError("Payload is too big");
@@ -53,6 +54,8 @@ export function getTasksRunResolver(
       taskRun.invocationSource = TaskRun.InvocationSource.MANUAL;
       taskRun.state = TaskRun.TaskRunState.RUNNING;
       taskRun.payload = payload;
+      taskRun.runnerEmail = ctx.viewer.email;
+      taskRun.runnerName = ctx.viewer.name;
 
       // Store initial states of the task run
       await this.repository.save(taskRun);

@@ -34,6 +34,9 @@ type OutputLogEvent {
 }
 
 type Query {
+  """Get current viewer"""
+  viewer: Viewer!
+
   """Get a list of tasks"""
   tasks(
     """How many to skip"""
@@ -94,6 +97,12 @@ type TaskRun {
   """End time"""
   endTime: Float
 
+  """Runner email"""
+  runnerEmail: String!
+
+  """Runner name"""
+  runnerName: String!
+
   """Payload"""
   payload: String!
 
@@ -119,4 +128,12 @@ enum TaskRunState {
   FINISHED
   ERROR
   TIMED_OUT
+}
+
+type Viewer {
+  """viewer name"""
+  name: String
+
+  """viewer email"""
+  email: String
 }
