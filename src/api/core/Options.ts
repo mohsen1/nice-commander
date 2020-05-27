@@ -6,7 +6,7 @@ import { ConnectionOptions } from "typeorm";
  */
 export interface Options {
   /** AWS Credentials */
-  awsCredentials: Credentials;
+  awsCredentials?: Credentials;
 
   /** AWS CloudWatch Log Log Group Name */
   awsCloudWatchLogsLogGroupName?: string;
