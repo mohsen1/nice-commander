@@ -13,32 +13,29 @@ const awsCredentials = new AWS.SharedIniFileCredentials({
   profile: config.get("aws-profile"),
 });
 
-import NiceCommander from "../../src/api/core";
+import { createMiddleware } from "../../src/api/core";
 
-async function main() {
-  const app = express();
+const app = express();
 
-  const mountPath = "/nice-commander";
+app.get("/", (_, res) =>
+  res.status(200).send(`Go to <a href="${mountPath}">${mountPath}</a>`)
+);
 
-  app.get("/", (req, res) => res.status(200).send(`Go to ${mountPath}`));
+const mountPath = "/nice-commander";
+const middleware = createMiddleware({
+  awsRegion: "us-east-2",
+  awsCredentials,
+  mountPath,
+  redisConnectionOptions: config.get("redis"),
+  sqlConnectionOptions: {
+    type: "mysql",
+    ...config.get<object>("db"),
+  },
+  taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
+});
 
-  const niceCommander = new NiceCommander({
-    awsRegion: "us-east-2",
-    awsCredentials,
-    mountPath,
-    redisConnectionOptions: config.get("redis"),
-    sqlConnectionOptions: {
-      type: "mysql",
-      ...config.get("db"),
-    },
-    taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
-  });
-  const middleware = await niceCommander.getExpressMiddleware();
-  app.use(mountPath, middleware);
+app.use(mountPath, middleware);
 
-  app.listen(3000);
-}
-
-main()
-  .catch(console.error)
-  .then(() => console.info("Server is listening on http://localhost:3000"));
+app.listen(3000, () =>
+  console.info("Server is listening on http://localhost:3000")
+);

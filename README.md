@@ -39,12 +39,12 @@ NiceCommander is an Express middleware. Create an instance of `NiceCommander` an
 import express from "express";
 import path from "path";
 import AWS from "aws-sdk";
-import NiceCommander from "nice-commander";
+import { createMiddleware } from "nice-commander";
 
 const app = express();
 
 const mountPath = "/nice-commander";
-const niceCommander = new NiceCommander({
+const middleware = createMiddleware({
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   mountPath,
   redisConnectionOptions: {
@@ -59,7 +59,6 @@ const niceCommander = new NiceCommander({
     secretAccessKey: "xxx"
   })
 });
-const middleware = await niceCommander.getExpressMiddleware();
 app.use(mountPath, middleware);
 
 app.listen(3000);

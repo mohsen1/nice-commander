@@ -35,7 +35,7 @@ interface TaskDefinitionFile {
  *
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
-export default class NiceCommander {
+export class NiceCommander {
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
@@ -456,28 +456,64 @@ export default class NiceCommander {
   /**
    * Get express middleware to be mounted in your app
    *
-   *    // Note: this method is asynchronous
-   *    const middleware = await getExpressMiddleware();
+   *    const middleware = getExpressMiddleware();
    *    app.use('/admin/commander', middleware);
    */
-  public async getExpressMiddleware() {
-    const connection = await this.connectionPromise;
-
-    // Sync task definitions
-    await this.sync(this.taskDefinitionsFiles);
-
-    // Schedule tasks
-    await this.schedule();
+  public getExpressMiddleware() {
     const router = Router();
 
-    // API
-    const middleware = await this.getApolloServerMiddleware();
-    router.use(middleware);
+    let isBootstrapped = false;
+    let bootstrapError: Error | null = null;
 
-    // UI
-    const handler = await this.getNextJsRequestHandler(this.options.mountPath);
-    router.all("*", (req, res) => handler(req, res));
+    const bootstrap = async () => {
+      // Sync task definitions
+      await this.sync(this.taskDefinitionsFiles);
+
+      // Schedule tasks
+      await this.schedule();
+
+      // API
+      const middleware = await this.getApolloServerMiddleware();
+      router.use(middleware);
+
+      // UI
+      const handler = await this.getNextJsRequestHandler(
+        this.options.mountPath
+      );
+      router.all("*", (req, res) => handler(req, res));
+
+      isBootstrapped = true;
+    };
+
+    bootstrap().catch((e) => (bootstrapError = e));
+
+    router.get("*", (_, res, next) => {
+      if (bootstrapError) {
+        return next(bootstrapError);
+      }
+
+      if (isBootstrapped) {
+        return next();
+      }
+
+      res.status(200).send(
+        `<html>
+            <head>
+              <meta http-equiv="refresh" content="1">
+            </head>
+            <body>
+              <pre>NiceCommander is being bootstrapped. Please wait...</pre>
+            </body>
+          </html>`
+      );
+    });
 
     return router;
   }
+}
+
+export function createMiddleware(options: Options) {
+  const instance = new NiceCommander(options);
+
+  return instance.getExpressMiddleware();
 }
