@@ -8,7 +8,7 @@ NiceCommander run scheduled and one-off tasks in your Node.js server with a nice
 
 - **Redis Server** for distributed locking
 - **MySQL Server** for its task and task-run database
-- **Amazon S3 Access** to store logs
+- **Amazon CloudWatch Logs Access** to store logs
 
 ### Define your tasks
 
@@ -38,6 +38,7 @@ NiceCommander is an Express middleware. Create an instance of `NiceCommander` an
 ```javascript
 import express from "express";
 import path from "path";
+import AWS from "aws-sdk";
 import NiceCommander from "nice-commander";
 
 const app = express();
@@ -51,7 +52,12 @@ const niceCommander = new NiceCommander({
   },
   sqlConnectionOptions: {
     /* DB Config */
-  }
+  },
+  awsRegion: "us-east-2",
+  awsCredentials: new AWS.Credentials({
+    accessKeyId: "xxx",
+    secretAccessKey: "xxx"
+  })
 });
 const middleware = await niceCommander.getExpressMiddleware();
 app.use(mountPath, middleware);
