@@ -231,7 +231,7 @@ export class NiceCommander {
         getTasksResolver(connection),
         getTasksRunResolver(connection, this),
       ],
-      emitSchemaFile: true,
+      emitSchemaFile: false,
     });
 
     const server = new ApolloServer({
