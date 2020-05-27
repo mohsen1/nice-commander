@@ -35,7 +35,7 @@ type OutputLogEvent {
 
 type Query {
   """Get current viewer"""
-  viewer: Viewer!
+  viewer: Viewer
 
   """Get a list of tasks"""
   tasks(

@@ -12,7 +12,10 @@ class Viewer {
 }
 
 class RootResolver {
-  @Query((returns) => Viewer, { description: "Get current viewer" })
+  @Query((returns) => Viewer, {
+    description: "Get current viewer",
+    nullable: true,
+  })
   async viewer(@Ctx() context: NiceCommanderContext) {
     return context?.viewer;
   }

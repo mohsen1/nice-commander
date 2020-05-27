@@ -54,8 +54,8 @@ export function getTasksRunResolver(
       taskRun.invocationSource = TaskRun.InvocationSource.MANUAL;
       taskRun.state = TaskRun.TaskRunState.RUNNING;
       taskRun.payload = payload;
-      taskRun.runnerEmail = ctx.viewer.email;
-      taskRun.runnerName = ctx.viewer.name;
+      taskRun.runnerEmail = ctx?.viewer?.email;
+      taskRun.runnerName = ctx?.viewer?.name;
 
       // Store initial states of the task run
       await this.repository.save(taskRun);

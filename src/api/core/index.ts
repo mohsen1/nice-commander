@@ -44,7 +44,7 @@ interface TaskDefinitionFile {
 }
 
 export interface NiceCommanderContext {
-  viewer: NiceCommanderUser;
+  viewer?: NiceCommanderUser;
 }
 
 /**
@@ -67,7 +67,7 @@ export class NiceCommander {
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
   private schema?: GraphQLSchema;
-  /** AWS CloudWatch Log Log Group Name */
+  /** AWS CloudWatch Logs Log Group Name */
   public logGroupName = "NiceCommander";
   public cloudWatchLogs!: CloudWatchLogs;
 
@@ -79,6 +79,22 @@ export class NiceCommander {
       region: options.awsRegion,
       credentials: options.awsCredentials,
     });
+
+    this.cloudWatchLogs
+      .createLogGroup({
+        logGroupName: this.logGroupName,
+      })
+      .promise()
+      .then(() =>
+        this.debug(
+          "Made CloudWatch Logs Log Group with name",
+          this.logGroupName
+        )
+      )
+      .catch((e) => {
+        if (e.code === "ResourceAlreadyExistsException") return;
+        console.error("Failed to make Log Group named", this.logGroupName, e);
+      });
 
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
