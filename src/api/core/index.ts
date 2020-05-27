@@ -181,7 +181,7 @@ export class NiceCommander {
       .filter((filePath) => fs.statSync(filePath).isFile())
       .filter((filePath) => filePath.endsWith(".js"))
       .map((filePath) => {
-        const taskDefinition = require(filePath).default;
+        const taskDefinition = this.requireTaskDefinition(filePath);
 
         validateTaskDefinition(taskDefinition);
         const taskDefinitionFile: TaskDefinitionFile = {
@@ -190,6 +190,20 @@ export class NiceCommander {
         };
         return taskDefinitionFile;
       });
+  }
+
+  private requireTaskDefinition(filePath: string) {
+    const module = require(filePath);
+
+    if (typeof module.run === "function") {
+      return module;
+    }
+
+    if (typeof module?.default?.run === "function") {
+      return module.default;
+    }
+
+    throw new Error(`Task definition at ${filePath} is not valid`);
   }
 
   private async getApolloServerMiddleware() {

@@ -11,9 +11,24 @@
  *
  * You can try out this file by invoking it via `node` executable and passing required arguments
  */
+
+function requireTaskDefinition(filePath: string) {
+  const module = require(filePath);
+
+  if (typeof module.run === "function") {
+    return module;
+  }
+
+  if (typeof module?.default?.run === "function") {
+    return module.default;
+  }
+
+  throw new Error(`Task definition at ${filePath} is not valid`);
+}
+
 const taskFile = process.argv[2];
 const payload = JSON.parse(process.argv[3]);
-const taskDefinition = require(taskFile).default;
+const taskDefinition = requireTaskDefinition(taskFile);
 
 taskDefinition.run(payload);
 

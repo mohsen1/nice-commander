@@ -17,10 +17,10 @@ Create a directory dedicated to your tasks. Create one or many files that export
 ```javascript
 // tasks/simple.js
 /**
- * Using JSDoc you can type the exported file
+ * Using JSDoc you can type the exported task
  * @type {import("nice-commander").TaskDefinition}
  */
-module.exports.default = {
+module.exports = {
   name: "my-task",
   async run() {
     console.log("my-task is running");
