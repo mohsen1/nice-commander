@@ -50,6 +50,14 @@ export class TaskRun {
   @Column({ type: "bigint", nullable: true })
   public endTime!: string;
 
+  @Field((type) => String, { description: "Runner email" })
+  @Column({ nullable: true })
+  public runnerEmail?: string;
+
+  @Field((type) => String, { description: "Runner name" })
+  @Column({ nullable: true })
+  public runnerName?: string;
+
   @Field((type) => String, { description: "Payload" })
   @Column({ default: "{}" })
   public payload!: string;

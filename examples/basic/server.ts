@@ -17,6 +17,15 @@ import { createMiddleware } from "../../src/api/core";
 
 const app = express();
 
+// Fake user provider
+app.use((req, res, next) => {
+  req.user = {
+    name: "Test User",
+    email: "test@example.com",
+  };
+  next();
+});
+
 app.get("/", (_, res) =>
   res.status(200).send(`Go to <a href="${mountPath}">${mountPath}</a>`)
 );

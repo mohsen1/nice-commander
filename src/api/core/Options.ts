@@ -55,4 +55,13 @@ export interface Options {
      */
     setNotifyKeyspaceEvents?: boolean;
   };
+
+  /**
+   * Get user information from a request object.
+   *
+   * Defaults to reading name from `req.user.name` and email from `req.user.email`
+   *
+   * @param req Express request object
+   */
+  getUser?(req: Express.Request): Promise<{ name?: string; email?: string }>;
 }

@@ -1,7 +1,10 @@
+import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { createConnection, Connection, Not, IsNull } from "typeorm";
+import { GraphQLSchema } from "graphql";
+import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
 import AWS, { CloudWatchLogs } from "aws-sdk";
 import cp from "child_process";
@@ -12,7 +15,6 @@ import path from "path";
 import redis, { RedisClient } from "redis";
 import Redlock from "redlock";
 import timestring from "timestring";
-import _ from "lodash";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
@@ -20,12 +22,29 @@ import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
-import { GraphQLSchema } from "graphql";
-import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
+import RootResolver from "../resolvers/RootResolver";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: NiceCommanderUser;
+    }
+  }
+}
+
+/** User object for NiceCommander */
+interface NiceCommanderUser {
+  name?: string;
+  email?: string;
+}
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
   filePath: string;
+}
+
+export interface NiceCommanderContext {
+  viewer: NiceCommanderUser;
 }
 
 /**
@@ -79,6 +98,13 @@ export class NiceCommander {
 
     if (options.redisConnectionOptions.setNotifyKeyspaceEvents !== false) {
       this.redisSubscriber.config("SET", "notify-keyspace-events", "Ex");
+    }
+
+    if (!options.getUser) {
+      this.options.getUser = async (req) => ({
+        name: req?.user?.name,
+        email: req?.user?.email,
+      });
     }
 
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
@@ -171,6 +197,7 @@ export class NiceCommander {
 
     this.schema = await buildSchema({
       resolvers: [
+        RootResolver,
         getTasksResolver(connection),
         getTasksRunResolver(connection, this),
       ],
@@ -180,11 +207,10 @@ export class NiceCommander {
     const server = new ApolloServer({
       schema: this.schema,
       playground: true,
-      subscriptions: {
-        onConnect(connectionParams, webSocket) {
-          console.log({ connectionParams, webSocket });
-        },
-        path: path.join(this.options.mountPath, "/graphql/subscriptions"),
+      context: async ({ req }) => {
+        const viewer = await this.options?.getUser?.(req);
+
+        return { viewer };
       },
     });
     return server.getMiddleware({ path: "/graphql" });
