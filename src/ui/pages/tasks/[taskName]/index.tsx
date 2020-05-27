@@ -36,7 +36,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
       }
     }
   `;
-  const { data, error } = useQuery(query);
+  const { data, error } = useQuery(query, { pollInterval: 2000 });
 
   if (error) {
     return <ErrorPresenter error={error} />;

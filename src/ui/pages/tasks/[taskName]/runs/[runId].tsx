@@ -3,6 +3,7 @@ import gql from "graphql-tag";
 import { useRouter } from "next/router";
 import { useQuery } from "react-apollo";
 import styled from "styled-components";
+import Link from "next/link";
 
 import Editor from "../../../../components/Editor";
 import MainLayout from "../../../../layouts/MainLayout";
@@ -10,7 +11,6 @@ import ErrorPresenter from "../../../../components/ErrorPresentor";
 import H1 from "../../../../components/titles/H1";
 import { withApollo } from "../../../../lib/apollo";
 import H2 from "../../../../components/titles/H2";
-import Link from "next/link";
 import A from "../../../../components/base/A";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
 import { AppContext } from "../../../../context/AppContext";
@@ -21,8 +21,8 @@ const DetailsRow = styled.p`
 `;
 
 const TaskRunPage: React.FC = () => {
-  const router = useRouter();
-  const { taskName, runId } = router.query;
+  const { taskName, runId } = useRouter().query;
+
   const query = gql`
     query GetTaskRun {
       taskRun(id: "${runId}") {
@@ -39,10 +39,17 @@ const TaskRunPage: React.FC = () => {
       }
     }`;
 
-  const { data, error, refetch } = useQuery(query);
+  const { data, error, stopPolling } = useQuery(query, {
+    pollInterval: 1000,
+    notifyOnNetworkStatusChange: true,
+  });
 
   if (error) {
     return <ErrorPresenter error={error} />;
+  }
+
+  if (data?.taskRun?.state && data?.taskRun?.state !== "RUNNING") {
+    stopPolling();
   }
 
   const { baseUrl } = useContext(AppContext);
@@ -54,7 +61,6 @@ const TaskRunPage: React.FC = () => {
           <A>{taskName}</A>
         </Link>
       </H1>
-      <H2>Details</H2>
       <DetailsRow>
         Status: <span>{data?.taskRun.state}</span>
       </DetailsRow>

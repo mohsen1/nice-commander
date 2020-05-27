@@ -9,7 +9,7 @@ export default createGlobalStyle`
         --color-background: white;
         --color-text: black;
         --color-accent-dark: #1252bd;
-        --color-accent-normal: #4771b7;
+        --color-accent-normal: #c6dbff;
         --color-accent-light: #96b9f3;
         --color-gray-light: #efefef;
         --color-gray-normal: #888888;
