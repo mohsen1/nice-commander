@@ -17,7 +17,8 @@ jobs:
       - run: yarn install
       - run: yarn prepare
       - name: Publish if version has been updated
-        uses: primer/publish@master
+        uses: primer/publish@v2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_REGISTRY_URL: registry.npmjs.org
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
