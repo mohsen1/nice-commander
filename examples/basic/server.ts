@@ -6,6 +6,12 @@
 
 import express from "express";
 import path from "path";
+import config from "config";
+import AWS from "aws-sdk";
+
+const awsCredentials = new AWS.SharedIniFileCredentials({
+  profile: config.get("aws-profile"),
+});
 
 import NiceCommander from "../../src/api/core";
 
@@ -17,17 +23,13 @@ async function main() {
   app.get("/", (req, res) => res.status(200).send(`Go to ${mountPath}`));
 
   const niceCommander = new NiceCommander({
+    awsRegion: "us-east-2",
+    awsCredentials,
     mountPath,
-    redisConnectionOptions: {
-      host: "localhost",
-      port: 6379,
-    },
+    redisConnectionOptions: config.get("redis"),
     sqlConnectionOptions: {
       type: "mysql",
-      host: "localhost",
-      port: 3306,
-      username: "root",
-      database: "nicecommander",
+      ...config.get("db"),
     },
     taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   });

@@ -1,14 +1,4 @@
-import {
-  Resolver,
-  Query,
-  Arg,
-  Int,
-  Mutation,
-  Subscription,
-  PubSub,
-  Publisher,
-  Root,
-} from "type-graphql";
+import { Resolver, Query, Arg, Int, Mutation, Root } from "type-graphql";
 import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
@@ -16,6 +6,7 @@ import { Task } from "../models/Task";
 import NiceCommander from "../../api/core";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
+import LogEventsResponse from "./LogEventsResponse";
 
 export function getTasksRunResolver(
   connection: Connection,
@@ -45,7 +36,6 @@ export function getTasksRunResolver(
         defaultValue: "{}",
       })
       payload: string
-      // @PubSub("LOGS") publisher: Publisher<string>
     ) {
       if (payload.length > 1024) {
         throw new RangeError("Payload is too big");
@@ -60,8 +50,8 @@ export function getTasksRunResolver(
       const taskRun = new TaskRun();
       taskRun.task = task;
       taskRun.startTime = Date.now();
-      taskRun.invocationType = TaskRun.InvocationType.MANUAL;
-      taskRun.state = TaskRun.State.RUNNING;
+      taskRun.invocationSource = TaskRun.InvocationSource.MANUAL;
+      taskRun.state = TaskRun.TaskRunState.RUNNING;
       taskRun.payload = payload;
 
       // Store initial states of the task run
@@ -69,16 +59,6 @@ export function getTasksRunResolver(
 
       // start the task
       await niceCommander.startTask(taskRun);
-
-      // Assign logs
-      try {
-        const logs = await niceCommander.getLogsFromS3(taskRun.logsPath);
-        if (logs) {
-          taskRun.logs = logs;
-        }
-      } catch {
-        taskRun.logs = "logs are not available yet";
-      }
 
       // Save to DB
       await this.repository.save(taskRun);
@@ -131,29 +111,40 @@ export function getTasksRunResolver(
         where: { id },
         relations: ["task"],
       });
+
       if (!taskRun) {
         throw new NotFound(`TaskRun with id ${id} was not found`);
       }
 
-      let logs = await niceCommander.getLogsFromS3(taskRun.logsPath);
-
-      if (!logs) {
-        logs = "Could not get the logs for this task run...";
-      }
-
-      taskRun.logs = logs;
       return taskRun;
     }
 
-    @Subscription((returns) => [TaskRun], { topics: "LOGS" })
+    @Query((returns) => LogEventsResponse)
     async taskRunLogs(
       @Arg("id", (type) => String, { description: "TaskRun ID" }) id: string,
-      @Root() logsPayload: {}
+      @Arg("nextToken", (type) => String, {
+        description: "Next token",
+        nullable: true,
+      })
+      nextToken: string
     ) {
-      return {
-        ...logsPayload,
-        date: new Date(),
-      };
+      const taskRun = await this.repository.findOne({
+        where: { id },
+        relations: ["task"],
+      });
+
+      if (!taskRun) {
+        throw new NotFound(`TaskRun with id ${id} was not found`);
+      }
+
+      return niceCommander.cloudWatchLogs
+        .getLogEvents({
+          logGroupName: niceCommander.logGroupName,
+          logStreamName: taskRun.uniqueId,
+          startFromHead: !nextToken,
+          nextToken,
+        })
+        .promise();
     }
   }
 

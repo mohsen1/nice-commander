@@ -3,10 +3,16 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-"""Task Run invocation type"""
-enum InvocationType {
+"""Task Run invocation source. This indicates how this task is invoked """
+enum InvocationSource {
   MANUAL
   SCHEDULED
+}
+
+type LogEventsResponse {
+  nextForwardToken: String
+  nextBackwardToken: String
+  events: [OutputLogEvent!]!
 }
 
 type Mutation {
@@ -19,6 +25,12 @@ type Mutation {
     """Task ID"""
     id: String!
   ): TaskRun!
+}
+
+type OutputLogEvent {
+  timestamp: Float!
+  ingestionTime: Float!
+  message: String!
 }
 
 type Query {
@@ -47,21 +59,13 @@ type Query {
     taskId: String!
   ): [TaskRun!]!
   taskRun(id: String!): TaskRun!
-}
-
-"""State TaskRun is at right now"""
-enum State {
-  RUNNING
-  FINISHED
-  ERROR
-  TIMED_OUT
-}
-
-type Subscription {
   taskRunLogs(
+    """Next token"""
+    nextToken: String
+
     """TaskRun ID"""
     id: String!
-  ): [TaskRun!]!
+  ): LogEventsResponse!
 }
 
 type Task {
@@ -90,9 +94,6 @@ type TaskRun {
   """End time"""
   endTime: Float
 
-  """Logs"""
-  logs: String!
-
   """Payload"""
   payload: String!
 
@@ -106,8 +107,16 @@ type TaskRun {
   task: Task!
 
   """State of the TaskRun"""
-  state: State!
+  state: TaskRunState!
 
   """Invocation Type"""
-  invocationType: InvocationType!
+  invocationSource: InvocationSource!
+}
+
+"""State TaskRun is at right now"""
+enum TaskRunState {
+  RUNNING
+  FINISHED
+  ERROR
+  TIMED_OUT
 }

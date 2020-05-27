@@ -25,3 +25,7 @@ src/ui/.next
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# secrets
+config/development.json
+config/production.json

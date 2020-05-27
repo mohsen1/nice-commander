@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import styled from "styled-components";
+import Router from "next/router";
 
 import Editor from "./Editor";
 import Run from "./buttons/Run";
@@ -48,7 +49,6 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       runTask(id: $taskId, payload: $payload) {
         payload
         id
-        logs
         startTime
         endTime
       }
@@ -71,13 +71,16 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       </InvalidJSONError>
       <Buttons>
         <Run
-          onClick={() => {
-            runTask({
+          onClick={async () => {
+            const { data } = await runTask({
               variables: {
                 payload: getPayloadSafe(),
                 taskId,
               },
             });
+            Router.push(
+              window.location.pathname + "/runs/" + data?.runTask?.id
+            );
           }}
         >
           Run

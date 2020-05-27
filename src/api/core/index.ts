@@ -1,18 +1,18 @@
 import "reflect-metadata";
-import path from "path";
-import { Router } from "express";
-import { buildSchema } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
-import next from "next";
+import { buildSchema } from "type-graphql";
 import { createConnection, Connection, Not, IsNull } from "typeorm";
+import { Router } from "express";
+import AWS, { CloudWatchLogs } from "aws-sdk";
+import cp from "child_process";
 import debug from "debug";
 import fs from "fs";
+import next from "next";
+import path from "path";
 import redis, { RedisClient } from "redis";
-import cp from "child_process";
-import AWS from "aws-sdk";
-import { PassThrough } from "stream";
 import Redlock from "redlock";
 import timestring from "timestring";
+import _ from "lodash";
 
 import { getTasksResolver, getTasksRunResolver } from "../resolvers";
 import { Task } from "../models/Task";
@@ -21,6 +21,7 @@ import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
 import { GraphQLSchema } from "graphql";
+import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 
 interface TaskDefinitionFile {
   taskDefinition: TaskDefinition;
@@ -43,19 +44,26 @@ export default class NiceCommander {
   private readonly connectionPromise!: Promise<Connection>;
   private readonly debug = debug("nice-commander");
   private readonly invokeFile = path.resolve(__dirname, "./invoke");
-  private readonly s3 = new AWS.S3({ apiVersion: "2006-03-01" });
-  private readonly s3BucketName!: string;
   private readonly redisClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
   private schema?: GraphQLSchema;
+  /** AWS CloudWatch Log Log Group Name */
+  public logGroupName = "NiceCommander";
+  public cloudWatchLogs!: CloudWatchLogs;
 
   public constructor(private options: Options) {
+    this.logGroupName =
+      options.awsCloudWatchLogsLogGroupName || this.logGroupName;
+
+    this.cloudWatchLogs = new AWS.CloudWatchLogs({
+      region: options.awsRegion,
+      credentials: options.awsCredentials,
+    });
+
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
     );
-
-    this.s3BucketName = options.s3BucketName ?? "nice-commander";
 
     this.redisClient = redis.createClient({
       host: options.redisConnectionOptions.host,
@@ -148,6 +156,7 @@ export default class NiceCommander {
       .filter((filePath) => filePath.endsWith(".js"))
       .map((filePath) => {
         const taskDefinition = require(filePath).default;
+
         validateTaskDefinition(taskDefinition);
         const taskDefinitionFile: TaskDefinitionFile = {
           filePath,
@@ -159,18 +168,15 @@ export default class NiceCommander {
 
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
-    // const redisPubSub = new RedisPubSub({
-    //   publisher: this.redisClient,
-    //   subscriber: this.redisClient
-    // });
+
     this.schema = await buildSchema({
       resolvers: [
         getTasksResolver(connection),
         getTasksRunResolver(connection, this),
       ],
       emitSchemaFile: true,
-      // pubSub: redisPubSub
     });
+
     const server = new ApolloServer({
       schema: this.schema,
       playground: true,
@@ -196,7 +202,7 @@ export default class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Not(TaskRun.InvocationType.MANUAL),
+        schedule: Not(TaskRun.InvocationSource.MANUAL),
       },
     });
     const now = Date.now();
@@ -216,7 +222,7 @@ export default class NiceCommander {
 
       // In case we found the last run, schedule after last run's end time to keep on schedule
       if (lastTaskRun) {
-        if (lastTaskRun.state !== TaskRun.State.FINISHED) {
+        if (lastTaskRun.state !== TaskRun.TaskRunState.FINISHED) {
           // Invoke immediately if last run was not successful
           expires = 1;
         } else {
@@ -262,8 +268,8 @@ export default class NiceCommander {
       const taskRun = new TaskRun();
       taskRun.task = task;
       taskRun.startTime = Date.now();
-      taskRun.state = TaskRun.State.RUNNING;
-      taskRun.invocationType = TaskRun.InvocationType.SCHEDULED;
+      taskRun.state = TaskRun.TaskRunState.RUNNING;
+      taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
       await taskRunRepository.save(taskRun);
       this.startTask(taskRun);
 
@@ -277,13 +283,13 @@ export default class NiceCommander {
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
-    if (taskRun && taskRun.state === TaskRun.State.RUNNING) {
-      this.endTaskRun(TaskRun.State.TIMED_OUT, taskRun, undefined);
+    if (taskRun && taskRun.state === TaskRun.TaskRunState.RUNNING) {
+      this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
     }
   }
 
   /**
-   * Every time Nice Commander boots, it will read all of task definition files and updates models
+   * Every time Nice Commander boots up, it will read all of task definition files and updates models
    * in the database accordingly . We rely on definition name to find corresponding model in our
    * database
    *
@@ -352,19 +358,6 @@ export default class NiceCommander {
       const lockTTL = taskRun.task.timeoutAfter + 1000;
       await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
-      taskRun.logsPath = `tasks/${taskRun.task.id}/${
-        taskRun.id
-      }_${Date.now()}.log`;
-
-      // Start a child process
-      const passThrough = new PassThrough();
-      const upload = this.s3.upload({
-        Bucket: this.s3BucketName,
-        Key: taskRun.logsPath,
-        Body: passThrough,
-        ContentType: "text/plain",
-      });
-
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
         `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
@@ -373,6 +366,14 @@ export default class NiceCommander {
         taskRun.task.timeoutAfter
       );
 
+      await this.cloudWatchLogs
+        .createLogStream({
+          logGroupName: this.logGroupName,
+          logStreamName: taskRun.uniqueId,
+        })
+        .promise();
+
+      // Create a child process
       const child = cp.fork(
         this.invokeFile,
         [taskDefinitionFile.filePath, taskRun.payload],
@@ -381,30 +382,70 @@ export default class NiceCommander {
         }
       );
 
-      child.stdout?.pipe(passThrough);
-      child.stderr?.pipe(passThrough);
+      // TODO: Refactor this into a Node.js Stream so we can pipe stdout of child into it.
+      let logSubmitIsInFlight = false;
+      let sequenceToken: string | undefined;
+      const eventsBuffer: InputLogEvent[] = [];
 
+      const submitLogs = _.throttle(async () => {
+        if (logSubmitIsInFlight) return;
+
+        try {
+          logSubmitIsInFlight = true;
+
+          // Drain the logs buffer
+          const logEvents: InputLogEvent[] = [];
+          while (eventsBuffer.length) {
+            logEvents.push(eventsBuffer.shift()!);
+          }
+
+          const data = await this.cloudWatchLogs
+            .putLogEvents({
+              sequenceToken,
+              logGroupName: this.logGroupName,
+              logStreamName: taskRun.uniqueId,
+              logEvents,
+            })
+            .promise();
+
+          sequenceToken = data?.nextSequenceToken;
+        } catch (e) {
+          this.debug("Error putting logs in CloudWatch Logs", e);
+        } finally {
+          logSubmitIsInFlight = false;
+
+          if (eventsBuffer.length) {
+            submitLogs();
+          }
+        }
+      }, 1000);
+
+      child.stdout?.on("data", async (chunk) => {
+        eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
+        submitLogs();
+      });
+
+      // Pass through logs to stdout/stderr
       if (this.options.logToStdout) {
         child.stdout?.pipe(process.stdout);
         child.stderr?.pipe(process.stderr);
       }
 
       child.on("exit", (code, signal) => {
-        if (code === 0 && taskRun.state !== TaskRun.State.TIMED_OUT) {
-          this.endTaskRun(TaskRun.State.FINISHED, taskRun, code, signal);
+        if (code === 0 && taskRun.state !== TaskRun.TaskRunState.TIMED_OUT) {
+          this.endTaskRun(TaskRun.TaskRunState.FINISHED, taskRun, code, signal);
         } else {
-          this.endTaskRun(TaskRun.State.ERROR, taskRun, code, signal);
+          this.endTaskRun(TaskRun.TaskRunState.ERROR, taskRun, code, signal);
         }
       });
 
+      // TODO: this is probably a bad idea: why we can't rely on Redis timeout lock to expire to kill?
       // Kill the child process if it takes more time than timeout to exit
       setTimeout(() => {
         if (!child.killed) {
           child.kill("SIGABRT");
         }
       }, taskRun.task.timeoutAfter);
-
-      upload.send();
 
       // publishLogs(`${new Date()}`);
     } catch {
@@ -438,16 +479,5 @@ export default class NiceCommander {
     router.all("*", (req, res) => handler(req, res));
 
     return router;
-  }
-
-  public async getLogsFromS3(logsPath: string) {
-    const { Body } = await this.s3
-      .getObject({
-        Key: logsPath,
-        Bucket: this.s3BucketName,
-      })
-      .promise();
-
-    return Body?.toString();
   }
 }

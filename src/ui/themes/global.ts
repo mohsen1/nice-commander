@@ -9,7 +9,7 @@ export default createGlobalStyle`
         --color-background: white;
         --color-text: black;
         --color-accent-dark: #1252bd;
-        --color-accent-normal: #4771b7;
+        --color-accent-normal: #c6dbff;
         --color-accent-light: #96b9f3;
         --color-gray-light: #efefef;
         --color-gray-normal: #888888;
@@ -28,7 +28,7 @@ export default createGlobalStyle`
 
     @media (prefers-color-scheme: dark) {
         :root {
-            /* Absolute black nad white is too harsh */
+            /* Absolute black and white is too harsh */
             --color-background: #202020;
             --color-text: #d6d6d6;;
 

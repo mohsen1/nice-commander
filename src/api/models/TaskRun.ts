@@ -3,32 +3,36 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 import { Task } from "./Task";
 
-enum InvocationType {
+/** How a task is invoked */
+enum InvocationSource {
+  /** Manually using the dashboard */
   MANUAL,
+  /** Using a schedule */
   SCHEDULED,
 }
 
-enum State {
+enum TaskRunState {
   RUNNING,
   FINISHED,
   ERROR,
   TIMED_OUT,
 }
 
-registerEnumType(InvocationType, {
-  name: "InvocationType",
-  description: "Task Run invocation type",
+registerEnumType(InvocationSource, {
+  name: "InvocationSource",
+  description:
+    "Task Run invocation source. This indicates how this task is invoked ",
 });
-registerEnumType(State, {
-  name: "State",
+registerEnumType(TaskRunState, {
+  name: "TaskRunState",
   description: "State TaskRun is at right now",
 });
 
 @Entity()
 @ObjectType()
 export class TaskRun {
-  static InvocationType = InvocationType;
-  static State = State;
+  static InvocationSource = InvocationSource;
+  static TaskRunState = TaskRunState;
 
   @Field((type) => ID)
   @PrimaryGeneratedColumn()
@@ -45,12 +49,6 @@ export class TaskRun {
   })
   @Column({ type: "bigint", nullable: true })
   public endTime!: string;
-
-  @Column({ default: "" })
-  public logsPath!: string;
-
-  @Field((type) => String, { description: "Logs" })
-  public logs!: string;
 
   @Field((type) => String, { description: "Payload" })
   @Column({ default: "{}" })
@@ -70,23 +68,23 @@ export class TaskRun {
   @ManyToOne((type) => Task, (task) => task.runs)
   public task!: Task;
 
-  @Field((type) => State, {
+  @Field((type) => TaskRunState, {
     description: "State of the TaskRun",
   })
   @Column({
-    enum: State,
+    enum: TaskRunState,
     type: "enum",
   })
-  public state!: State;
+  public state!: TaskRunState;
 
-  @Field((type) => InvocationType, {
+  @Field((type) => InvocationSource, {
     description: "Invocation Type",
   })
   @Column({
-    enum: InvocationType,
+    enum: InvocationSource,
     type: "enum",
   })
-  public invocationType!: InvocationType;
+  public invocationSource!: InvocationSource;
 
   /** A unique ID for this run and its related task */
   public get uniqueId() {

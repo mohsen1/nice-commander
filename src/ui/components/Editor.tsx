@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useRef } from "react";
 import MonacoEditor, { EditorProps } from "@monaco-editor/react";
+import * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 
 function getHeight(value?: string, maxHeight: number = 25) {
   if (!value) return "200px";
@@ -8,30 +9,48 @@ function getHeight(value?: string, maxHeight: number = 25) {
   return `${Math.min(lines, maxHeight)}em`;
 }
 
+function getTheme() {
+  if (typeof window === "undefined") return "light";
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 const Editor: React.FC<
   EditorProps & {
     readonly?: boolean;
     maxHeight?: number;
+    /** Keep scrolling to the end as values change */
+    follow?: boolean;
   }
-> = (props) => (
-  <MonacoEditor
-    theme={"dark"}
-    language="json"
-    options={{
-      minimap: { enabled: false },
-      scrollBeyondLastColumn: 0,
-      scrollBeyondLastLine: false,
-      scrollbar: {
-        alwaysConsumeMouseWheel: false,
-        handleMouseWheel: false,
-        ...(props?.options?.scrollbar ?? {}),
-      },
-      ...(props.options ?? {}),
-      readOnly: props.readonly ?? false,
-    }}
-    height={getHeight(props.value, props.maxHeight)}
-    {...props}
-  />
-);
+> = (props) => {
+  const editor = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
+
+  if (props.follow && editor.current) {
+    editor.current.revealLineInCenter(props.value?.length);
+  }
+
+  return (
+    <MonacoEditor
+      theme={getTheme()}
+      language="json"
+      height={getHeight(props.value, props.maxHeight)}
+      editorDidMount={(_, e) => (editor.current = e)}
+      options={{
+        minimap: { enabled: false },
+        scrollBeyondLastColumn: 10,
+        scrollBeyondLastLine: false,
+        scrollbar: {
+          alwaysConsumeMouseWheel: false,
+          ...(props?.options?.scrollbar ?? {}),
+        },
+        ...(props.options ?? {}),
+        readOnly: props.readonly ?? false,
+      }}
+      {...props}
+    />
+  );
+};
 
 export default Editor;

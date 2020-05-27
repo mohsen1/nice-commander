@@ -1,9 +1,19 @@
+import { Credentials } from "aws-sdk";
 import { ConnectionOptions } from "typeorm";
 
 /**
  * NiceCommander constructor options
  */
 export interface Options {
+  /** AWS Credentials */
+  awsCredentials: Credentials;
+
+  /** AWS CloudWatch Log Log Group Name */
+  awsCloudWatchLogsLogGroupName?: string;
+
+  /** AWS Region */
+  awsRegion: string;
+
   /**
    * Path to directory that contains all tasks. This path must be absolute
    */
@@ -23,13 +33,6 @@ export interface Options {
    * @default false
    */
   logToStdout?: boolean;
-
-  /**
-   * S3 Bucket name to store log files
-   *
-   * @default "nice-commander"
-   */
-  s3BucketName?: string;
 
   /**
    * SQL connection configuration
