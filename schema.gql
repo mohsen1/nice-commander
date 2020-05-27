@@ -98,10 +98,10 @@ type TaskRun {
   endTime: Float
 
   """Runner email"""
-  runnerEmail: String!
+  runnerEmail: String
 
   """Runner name"""
-  runnerName: String!
+  runnerName: String
 
   """Payload"""
   payload: String!
