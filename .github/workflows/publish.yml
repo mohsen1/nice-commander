@@ -23,11 +23,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_REGISTRY_URL: registry.npmjs.org
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-  release:
-    name: GitHub release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Release
-        uses: ridedott/release-me-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
