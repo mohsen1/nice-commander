@@ -4,6 +4,10 @@
   "description": "Nice Commander",
   "main": "dist/src/index.js",
   "author": "Mohsen Azimi <me@azimi.me>",
+  "repository": {
+    "type": "git",
+    "url": "github.com/mohsen1/nice-commander.git"
+  },
   "license": "MIT",
   "scripts": {
     "preprod": "yarn build",
