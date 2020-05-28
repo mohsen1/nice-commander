@@ -27,8 +27,7 @@ let globalApolloClient = null;
  */
 export function withApollo(PageComponent, { ssr = true } = {}) {
   const WithApollo = ({ apolloClient, apolloState, ...pageProps }) => {
-    const { baseUrl } = useContext(AppContext);
-    const client = apolloClient || initApolloClient(apolloState, baseUrl);
+    const client = apolloClient || initApolloClient(apolloState);
     return (
       <ApolloProvider client={client}>
         <PageComponent {...pageProps} />
@@ -54,10 +53,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const apolloClient = (ctx.apolloClient = initApolloClient(
-        {},
-        ctx?.req?.baseUrl
-      ));
+      const apolloClient = (ctx.apolloClient = initApolloClient({}));
 
       // Run wrapped getInitialProps methods
       let pageProps = {};
@@ -104,7 +100,6 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       return {
         ...pageProps,
-        baseUrl: ctx?.req?.baseUrl,
         apolloState,
       };
     };
@@ -118,16 +113,16 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
  * Creates or reuses apollo client in the browser.
  * @param  {Object} initialState
  */
-function initApolloClient(initialState: object, baseUrl: string) {
+function initApolloClient(initialState: object) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
   if (typeof window === "undefined") {
-    return createApolloClient(initialState, baseUrl);
+    return createApolloClient(initialState);
   }
 
   // Reuse client on the client-side
   if (!globalApolloClient) {
-    globalApolloClient = createApolloClient(initialState, baseUrl);
+    globalApolloClient = createApolloClient(initialState);
   }
 
   return globalApolloClient;
@@ -137,29 +132,29 @@ function initApolloClient(initialState: object, baseUrl: string) {
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-function createApolloClient(initialState = {}, baseUrl: string) {
+function createApolloClient(initialState = {}) {
   const isBrowser = typeof window !== "undefined";
 
   return new ApolloClient({
     // Disables forceFetch on the server (so queries are only run once)
     ssrMode: !isBrowser,
-    link: createIsomorphLink(baseUrl),
+    link: createIsomorphLink(),
     cache: new InMemoryCache().restore(initialState),
   });
 }
 
-function createIsomorphLink(baseUrl: string) {
+function createIsomorphLink() {
   const isBrowser = typeof window !== "undefined";
+  const { publicRuntimeConfig } = getConfig();
 
   if (isBrowser) {
     return new HttpLink({
-      uri: `${window.location.origin}${baseUrl}/graphql`,
+      uri: `${window.location.origin}${publicRuntimeConfig.baseUrl}/graphql`,
       credentials: "same-origin",
       fetch,
     });
   }
 
-  const { publicRuntimeConfig } = getConfig();
   const { SchemaLink } = require("apollo-link-schema");
 
   return new SchemaLink({ schema: publicRuntimeConfig.schema });

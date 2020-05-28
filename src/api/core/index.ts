@@ -173,6 +173,7 @@ export class NiceCommander {
         assetPrefix: mountPath,
         publicRuntimeConfig: {
           schema: this.schema,
+          baseUrl: mountPath,
         },
       },
     });
