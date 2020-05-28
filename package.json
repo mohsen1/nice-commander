@@ -3,6 +3,7 @@
   "version": "0.0.12",
   "description": "Nice Commander",
   "main": "dist/src/index.js",
+  "typings": "nice-commander.d.ts",
   "author": "Mohsen Azimi <me@azimi.me>",
   "repository": {
     "type": "git",
