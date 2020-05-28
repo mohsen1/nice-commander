@@ -3,14 +3,14 @@
     "**/.git": true,
     "**/.DS_Store": true,
     "**/node_modules": true,
-    ".next": true,
+    "src/ui/.next/**": true,
     "dist/**": true
   },
   "search.exclude": {
     "**/.git": true,
     "**/.DS_Store": true,
     "**/node_modules": true,
-    ".next": true,
+    "src/ui/.next/**": true,
     "dist/**": true
   },
 
@@ -21,7 +21,7 @@
     "**/.git/subtree-cache/**": true,
     "**/node_modules/**": true,
     "**/dist/**": true,
-    ".next": true,
+    "src/ui/.next/**": true,
     "dist/**": true
   }
 }
