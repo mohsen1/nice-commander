@@ -33,13 +33,13 @@ const query = gql`
 `;
 
 const Header: React.FC = () => {
-  const { baseUrl } = useContext(AppContext);
+  const appContext = useContext(AppContext);
   const { data } = useQuery(query);
 
   return (
     <HeaderElement>
       <Title>
-        <Link prefetch={false} href={baseUrl || "/"}>
+        <Link prefetch={false} href={appContext?.baseUrl || "/"}>
           <A>Nice Commander</A>
         </Link>
         <ViewerDiv>

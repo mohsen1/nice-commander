@@ -54,12 +54,15 @@ const TaskRunPage: React.FC = () => {
     stopPolling();
   }
 
-  const { baseUrl } = useContext(AppContext);
+  const appContext = useContext(AppContext);
 
   return (
     <MainLayout>
       <H1>
-        <Link prefetch={false} href={`${baseUrl}/tasks/${taskName}`}>
+        <Link
+          prefetch={false}
+          href={`${appContext?.baseUrl}/tasks/${taskName}`}
+        >
           <A>{taskName}</A>
         </Link>
       </H1>

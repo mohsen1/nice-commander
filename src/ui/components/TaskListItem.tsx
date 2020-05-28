@@ -20,9 +20,9 @@ interface Task {
 }
 
 const TaskListItem: React.FC<Task> = ({ name }) => {
-  const { baseUrl } = useContext(AppContext);
+  const appContext = useContext(AppContext);
   return (
-    <Link prefetch={false} href={`${baseUrl}/tasks/${name}`}>
+    <Link prefetch={false} href={`${appContext?.baseUrl}/tasks/${name}`}>
       <ItemRow>{name}</ItemRow>
     </Link>
   );
