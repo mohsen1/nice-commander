@@ -1,0 +1,76 @@
+name: CI
+
+jobs:
+  build:
+    name: Build Next.js UI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: 10.x
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn
+      - name: Build Next.js
+        working-directory: src/ui
+        run: ../../node_modules/.bin/next build
+        env:
+          CI: true
+          NODE_ENV: production
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "10.x"
+      - run: yarn
+      - name: Check prettier
+        run: yarn prettier --list-different  '**/*.{ts,tsx}'
+
+  typescript:
+    name: Run TypeScript Compiler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - run: yarn
+      - name: Top level tsc
+        run: yarn tsc
+        env:
+          CI: true
+      - name: UI tsc
+        working-directory: src/ui
+        run: ../../node_modules/.bin/tsc
+
+  npm-publish:
+    name: npm publish
+    runs-on: ubuntu-latest
+    on:
+      push:
+        branches:
+          - master
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@master
+      - name: Set up Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: 10.x
+      - run: yarn install
+      - run: yarn prepare
+      - name: Publish if version has been updated
+        uses: primer/publish@v2.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_REGISTRY_URL: registry.npmjs.org
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
