@@ -11,7 +11,7 @@
     "tsc-watch": "tsc --watch",
     "example-server": "DEBUG=nice-commander nodemon --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
-    "fix": "prettier --write '**/*.{ts,tsx}'",
+    "fix": "prettier --write '**/*.{ts,tsx,yml,js,.md}'",
     "prepare": "rm -rf src/ui/.next && next build src/ui && tsc"
   },
   "dependencies": {

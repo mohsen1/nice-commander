@@ -6,9 +6,9 @@ update_configs:
     directory: "/"
     update_schedule: "live"
     ignored_updates:
-    - match:
-        dependency_name: "aws-sdk"
+      - match:
+          dependency_name: "aws-sdk"
     automerged_updates:
-    - match:
-        dependency_type: "development"
-        update_type: "semver:patch"
+      - match:
+          dependency_type: "development"
+          update_type: "semver:patch"

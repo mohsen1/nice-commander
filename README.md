@@ -1,6 +1,14 @@
 # Nice Commander
 
+![CI](https://github.com/mohsen1/nice-commander/workflows/CI/badge.svg)
+
 NiceCommander run scheduled and one-off tasks in your Node.js server with a nice UI
+
+## Work in progress
+
+This project is not ready for any sort of use yet.
+
+See Github Project for 1.0 for more information.
 
 ## Quick Start
 
@@ -25,7 +33,7 @@ module.exports = {
   async run() {
     console.log("my-task is running");
   },
-  timeoutAfter: 1000
+  timeoutAfter: 1000,
 };
 ```
 
@@ -56,16 +64,10 @@ const middleware = createMiddleware({
   awsRegion: "us-east-2",
   awsCredentials: new AWS.Credentials({
     accessKeyId: "xxx",
-    secretAccessKey: "xxx"
-  })
+    secretAccessKey: "xxx",
+  }),
 });
 app.use(mountPath, middleware);
 
 app.listen(3000);
 ```
-
-## Work in progress
-
-This project is not ready for any sort of use yet.
-
-See Github Project for 1.0 for more information.
