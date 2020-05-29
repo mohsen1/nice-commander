@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
 import { uniqBy, sortBy } from "lodash";
-import * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 
 import Editor from "./Editor";
 import BaseButton from "./buttons/BaseButton";

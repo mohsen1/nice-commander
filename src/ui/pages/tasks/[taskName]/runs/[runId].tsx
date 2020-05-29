@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
 import { useQuery } from "react-apollo";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import Link from "next/link";
 
 import Editor from "../../../../components/Editor";

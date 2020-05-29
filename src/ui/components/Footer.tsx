@@ -1,16 +1,16 @@
 import React from "react";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 
 const FooterElement = styled.footer`
   padding: 0.3rem 1rem;
   text-align: center;
   font-size: 0.5rem;
-  color: ${(props) => props.theme.colors.gray.dark};
-  background: ${(props) => props.theme.colors.gray.light};
+  color: var(--color-gray-bold);
+  background: var(--color-gray-dim);
 `;
 
 const AttributeLink = styled.a`
-  color: ${(props) => props.theme.colors.gray.dark};
+  color: var(--color-gray-bold);
   text-decoration: none;
 `;
 

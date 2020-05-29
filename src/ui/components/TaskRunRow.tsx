@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import Link from "next/link";
 
 import {
@@ -7,17 +7,14 @@ import {
 } from "./utils/colors";
 import { displayTaskRunDuration } from "./utils/time";
 import A from "./base/A";
-import { useRouter } from "next/router";
 import { AppContext } from "../context/AppContext";
 import { useContext } from "react";
 
 const Container = styled.div<{ state: "FINISHED" | "ERROR" | "RUNNING" }>`
   padding: 1rem;
-  border: 1px solid
-    ${({ theme, state }) => getForegroundColorForStatus(state, theme)};
-  color: ${({ theme, state }) => getForegroundColorForStatus(state, theme)};
-  background-color: ${({ theme, state }) =>
-    getBackgroundColorForStatus(state, theme)};
+  border: 1px solid ${({ state }) => getForegroundColorForStatus(state)};
+  color: ${({ state }) => getForegroundColorForStatus(state)};
+  background-color: ${({ state }) => getBackgroundColorForStatus(state)};
   margin: 1rem 0;
   display: flex;
   justify-content: space-between;
@@ -46,7 +43,7 @@ const TaskRunRow: React.FC<TaskRun> = ({
       href={`${appContext?.baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
     >
       <A>
-        <Container state={state}>
+        <Container state={state as "FINISHED" | "ERROR" | "RUNNING"}>
           <span>
             {new Date(startTime).toLocaleDateString("en-US", {})}
             {" - "}

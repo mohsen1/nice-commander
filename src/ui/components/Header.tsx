@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import Link from "next/link";
 
 import A from "./base/A";
@@ -16,7 +16,7 @@ const Title = styled.h1`
 
 const HeaderElement = styled.header`
   padding: 0.5rem 1rem;
-  background-color: ${(props) => props.theme.colors.accent.normal};
+  background-color: var(--color-accent-normal);
 `;
 
 const ViewerDiv = styled.div`

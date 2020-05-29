@@ -1,28 +1,26 @@
-import { ThemeType } from "../../themes/type";
-
 type Status = "FINISHED" | "RUNNING" | "ERROR" | "TIMED_OUT";
 
-export function getBackgroundColorForStatus(status: Status, theme: ThemeType) {
+export function getBackgroundColorForStatus(status: Status) {
   switch (status) {
     case "ERROR":
-      return theme.colors.fail.light;
+      return "var(--color-fail-dim)";
     case "FINISHED":
-      return theme.colors.success.light;
+      return "var(--color-success-dim)";
     case "RUNNING":
-      return theme.colors.progress.light;
+      return "var(--color-progress-dim)";
     case "TIMED_OUT":
-      return theme.colors.gray.light;
+      return "var(--color-gray-dim)";
   }
 }
-export function getForegroundColorForStatus(status: Status, theme: ThemeType) {
+export function getForegroundColorForStatus(status: Status) {
   switch (status) {
     case "ERROR":
-      return theme.colors.fail.normal;
+      return "var(--color-fail-normal)";
     case "FINISHED":
-      return theme.colors.success.normal;
+      return "var(--color-success-normal)";
     case "RUNNING":
-      return theme.colors.progress.normal;
+      return "var(--color-progress-normal)";
     case "TIMED_OUT":
-      return theme.colors.gray.normal;
+      return "var(--color-gray-normal)";
   }
 }

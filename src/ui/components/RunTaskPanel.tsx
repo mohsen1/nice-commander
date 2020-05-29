@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import Router from "next/router";
 
 import Editor from "./Editor";
@@ -17,7 +17,7 @@ const Container = styled.div`
 const InvalidJSONError = styled.p`
   text-align: right;
   padding: 1rem;
-  color: ${({ theme }) => theme.colors.fail.normal};
+  color: var(--color-fail-normal);
 `;
 
 const Buttons = styled.div`
