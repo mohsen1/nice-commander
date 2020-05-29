@@ -13,7 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": false,
     "preserveWatchOutput": true
   },
