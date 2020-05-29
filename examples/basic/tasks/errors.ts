@@ -12,7 +12,7 @@ const task: TaskDefinition = {
     console.error("Exiting with exit code", code, "on", Date.now());
     process.exit(code);
   },
-  timeoutAfter: 60 * 1000,
+  timeoutAfter: "1 minute",
   schedule: "manual",
 };
 

@@ -12,7 +12,7 @@ const task: TaskDefinition = {
       console.log(`Sample Tak log ${i} -- payload name is ${payload?.name}`);
     }
   },
-  timeoutAfter: 5000,
+  timeoutAfter: "5 seconds",
   schedule: "manual",
 };
 

@@ -13,7 +13,7 @@ const task: TaskDefinition = {
     await wait(10 * 1000);
     console.log("Task finished -- this should never happen!");
   },
-  timeoutAfter: 1000,
+  timeoutAfter: "1 second",
   schedule: "manual",
 };
 

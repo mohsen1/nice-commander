@@ -26,6 +26,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
         id
         schedule
         code
+        timeoutAfterDescription
         runs {
           id
           state
@@ -50,6 +51,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
           ? "Manual invocation only"
           : `Runs every ${data?.task?.schedule}`}
       </p>
+      <p>Times out after {data?.task?.timeoutAfterDescription}</p>
       <H2>Code</H2>
       <Editor readonly value={data?.task?.code} language="typescript" />
 

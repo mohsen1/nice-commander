@@ -33,7 +33,7 @@ module.exports = {
   async run() {
     console.log("my-task is running");
   },
-  timeoutAfter: 1000,
+  timeoutAfter: "2 seconds",
 };
 ```
 
