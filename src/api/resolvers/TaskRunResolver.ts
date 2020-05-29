@@ -1,29 +1,15 @@
 import { Resolver, Query, Arg, Int, Mutation, Ctx } from "type-graphql";
-import { Connection } from "typeorm";
 
 import { TaskRun } from "../models/TaskRun";
-import { Task } from "../models/Task";
 import { NiceCommander, NiceCommanderContext } from "../../api/core";
+import { prisma } from "../..";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 import LogEventsResponse from "./LogEventsResponse";
 
-export function getTasksRunResolver(
-  connection: Connection,
-  niceCommander: NiceCommander
-) {
+export function getTasksRunResolver(niceCommander: NiceCommander) {
   @Resolver(TaskRun)
   class TasksRunResolver {
-    private get repository() {
-      const taskRunRepository = connection.getRepository(TaskRun);
-      return taskRunRepository;
-    }
-
-    private get taskRepository() {
-      const taskRepository = connection.getRepository(Task);
-      return taskRepository;
-    }
-
     @Mutation((returns) => TaskRun)
     async runTask(
       @Arg("id", (type) => String, {
@@ -42,29 +28,35 @@ export function getTasksRunResolver(
         throw new RangeError("Payload is too big");
       }
 
-      const [task] = (await this.taskRepository.find({ where: { id } })) || [];
+      const task = await prisma.task.findOne({
+        where: { id: parseInt(id, 10) },
+      });
 
       if (!task) {
         throw new Error(`Task with ID ${id} was not found`);
       }
 
-      const taskRun = new TaskRun();
-      taskRun.task = task;
-      taskRun.startTime = Date.now();
-      taskRun.invocationSource = TaskRun.InvocationSource.MANUAL;
-      taskRun.state = TaskRun.TaskRunState.RUNNING;
-      taskRun.payload = payload;
-      taskRun.runnerEmail = ctx?.viewer?.email;
-      taskRun.runnerName = ctx?.viewer?.name;
-
-      // Store initial states of the task run
-      await this.repository.save(taskRun);
+      const taskRun = await prisma.taskRun.create({
+        data: {
+          startTime: Date.now(),
+          invocationSource: TaskRun.InvocationSource.MANUAL,
+          state: TaskRun.TaskRunState.RUNNING,
+          payload: payload,
+          runnerEmail: ctx?.viewer?.email,
+          runnerName: ctx?.viewer?.name,
+          task: {
+            connect: {
+              id: task.id,
+            },
+          },
+        },
+      });
 
       // start the task
       await niceCommander.startTask(taskRun);
 
       // Save to DB
-      await this.repository.save(taskRun);
+      // await taskRun.
 
       return taskRun;
     }
@@ -91,13 +83,15 @@ export function getTasksRunResolver(
     ) {
       assertNumberArgumentIsInRange("take", take, 1, 500);
       assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
-      const task = await this.taskRepository.findOne({ where: { id: taskId } });
+      const task = await prisma.task.findOne({
+        where: { id: parseInt(taskId, 10) },
+      });
 
       if (!task) {
         throw new NotFound(`Task with id ${taskId} was not found.`);
       }
 
-      const taskRuns = await this.repository.find({
+      const taskRuns = await prisma.taskRun.findMany({
         take,
         skip,
         where: { task: { id: taskId } },
@@ -110,9 +104,11 @@ export function getTasksRunResolver(
 
     @Query((returns) => TaskRun)
     async taskRun(@Arg("id", (type) => String) id: string) {
-      const taskRun = await this.repository.findOne({
-        where: { id },
-        relations: ["task"],
+      const taskRun = await prisma.taskRun.findOne({
+        where: { id: parseInt(id, 10) },
+        include: {
+          task: true,
+        },
       });
 
       if (!taskRun) {
@@ -131,9 +127,11 @@ export function getTasksRunResolver(
       })
       nextToken: string
     ) {
-      const taskRun = await this.repository.findOne({
-        where: { id },
-        relations: ["task"],
+      const taskRun = await prisma.taskRun.findOne({
+        where: { id: parseInt(id, 10) },
+        include: {
+          task: true,
+        },
       });
 
       if (!taskRun) {

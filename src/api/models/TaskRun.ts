@@ -6,16 +6,16 @@ import { Task } from "./Task";
 /** How a task is invoked */
 enum InvocationSource {
   /** Manually using the dashboard */
-  MANUAL,
+  MANUAL = "MANUAL",
   /** Using a schedule */
-  SCHEDULED,
+  SCHEDULED = "SCHEDULED",
 }
 
 enum TaskRunState {
-  RUNNING,
-  FINISHED,
-  ERROR,
-  TIMED_OUT,
+  RUNNING = "RUNNING",
+  FINISHED = "FINISHED",
+  ERROR = "ERROR",
+  TIMED_OUT = "TIMED_OUT",
 }
 
 registerEnumType(InvocationSource, {

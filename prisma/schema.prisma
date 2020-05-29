@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://test:test@localhost:3306/nicecommander"
+}
+
+model Task {
+  id           Int       @default(autoincrement()) @id
+  code         String
+  name         String
+  schedule     String
+  timeoutAfter Int
+  taskRun      TaskRun[]
+}
+
+model TaskRun {
+  id               Int              @default(autoincrement()) @id
+  endTime          Int?
+  exitCode         Int?
+  exitSignal       String?
+  invocationSource InvocationSource
+  payload          String           @default("{}")
+  runnerEmail      String?
+  runnerName       String?
+  startTime        Int
+  state            TaskRunState
+  taskId           Int?
+  task             Task?            @relation(fields: [taskId], references: [id])
+
+  @@index([taskId], name: "FK_dad807e0562e20f2ccf739d7cde")
+}
+
+enum InvocationSource {
+  MANUAL
+  SCHEDULED
+}
+
+enum TaskRunState {
+  RUNNING
+  FINISHED
+  ERROR
+  TIMED_OUT
+}
