@@ -92,22 +92,21 @@ export default css`
         /* Absolute black and white is too harsh */
         --color-background: #202020;
         --color-text: #d6d6d6;
-
-        --color-accent-dark: #1252bd;
+        --color-accent-bold: #1252bd;
         --color-accent-normal: #4771b7;
-        --color-accent-light: #96b9f3;
-        --color-gray-light: #efefef;
+        --color-accent-dim: #96b9f3;
+        --color-gray-bold: #efefef;
         --color-gray-normal: #888888;
-        --color-gray-dark: #333333;
-        --color-success-dark: darkgreen;
+        --color-gray-dim: #333333;
+        --color-success-bold: darkgreen;
         --color-success-normal: green;
-        --color-success-light: lightgreen;
-        --color-fail-dark: darkred;
+        --color-success-dim: lightgreen;
+        --color-fail-bold: darkred;
         --color-fail-normal: red;
-        --color-fail-light: #f9b8b8;
-        --color-progress-dark: #9ea718;
+        --color-fail-dim: #f9b8b8;
+        --color-progress-bold: #9ea718;
         --color-progress-normal: #a0a00a;
-        --color-progress-light: #fdfdcd;
+        --color-progress-dim: #fdfdcd;
         --color-warning-normal: orange;
       }
     }
