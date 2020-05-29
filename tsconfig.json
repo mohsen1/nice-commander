@@ -13,8 +13,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "sourceMap": false,
-    "declaration": false,
+    "sourceMap": true,
+    "declaration": true,
     "preserveWatchOutput": true
   },
   "exclude": ["src/ui", "dist"]

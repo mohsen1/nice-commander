@@ -15,14 +15,14 @@ import path from "path";
 import redis, { RedisClient } from "redis";
 import Redlock from "redlock";
 import timestring from "timestring";
+import { Container } from "typedi";
 
-import { getTasksResolver, getTasksRunResolver } from "../resolvers";
+import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { Task } from "../models/Task";
 import { TaskRun } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
-import RootResolver from "../resolvers/RootResolver";
 
 declare global {
   namespace Express {
@@ -33,7 +33,7 @@ declare global {
 }
 
 /** User object for NiceCommander */
-interface NiceCommanderUser {
+export interface NiceCommanderUser {
   name?: string;
   email?: string;
 }
@@ -226,13 +226,19 @@ export class NiceCommander {
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
 
+    Container.set({
+      id: "connection",
+      factory: () => connection,
+    });
+    Container.set({
+      id: "niceCommander",
+      factory: () => this,
+    });
+
     this.schema = await buildSchema({
-      resolvers: [
-        RootResolver,
-        getTasksResolver(connection),
-        getTasksRunResolver(connection, this),
-      ],
+      resolvers: [RootResolver, TasksResolver, TaskRunResolver],
       emitSchemaFile: false,
+      container: Container,
     });
 
     const server = new ApolloServer({

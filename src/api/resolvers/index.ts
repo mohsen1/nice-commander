@@ -1,4 +1,5 @@
-import { getTasksResolver } from "./TasksResolver";
-import { getTasksRunResolver } from "./TaskRunResolver";
+import RootResolver from "./RootResolver";
+import TaskRunResolver from "./TaskRunResolver";
+import TasksResolver from "./TasksResolver";
 
-export { getTasksResolver, getTasksRunResolver };
+export { TasksResolver, TaskRunResolver, RootResolver };
