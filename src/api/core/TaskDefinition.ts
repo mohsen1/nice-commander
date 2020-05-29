@@ -19,9 +19,13 @@ export interface TaskDefinition {
   run: (payload: any) => Promise<void>;
 
   /**
-   * Maximum time this task can run in milliseconds
+   * Maximum time this task can run.
+   * Number of milliseconds, if a number provided. A string describing the timeout if a string is provided.
+   *
+   * This field is using timestring
+   * @see https://www.npmjs.com/package/timestring
    */
-  timeoutAfter: number;
+  timeoutAfter: string | number;
 
   /**
    * Time string or "manual"
@@ -42,6 +46,9 @@ export function validateTaskDefinition(
     throw new TaskDefinitionValidationError("name must be a string");
   }
   if (!taskDefinition.timeoutAfter) {
+    if (typeof taskDefinition.timeoutAfter === "string") {
+      timestring(taskDefinition.timeoutAfter);
+    }
     throw new TaskDefinitionValidationError("timeoutAfter is required");
   }
   if (typeof taskDefinition.run !== "function") {

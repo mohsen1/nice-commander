@@ -18,9 +18,15 @@ export class Task {
   @Column({ type: "text" })
   public code!: string;
 
-  @Field((type) => Number, { description: "Path of the task file." })
+  @Field((type) => Number, { description: "timeout after (ms)" })
   @Column()
   public timeoutAfter!: number;
+
+  @Field((type) => String, {
+    description: "timeout after as described in task definition.",
+  })
+  @Column()
+  public timeoutAfterDescription!: String;
 
   @Field((type) => [TaskRun], {
     description: "List of task runs",

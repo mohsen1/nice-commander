@@ -369,8 +369,18 @@ export class NiceCommander {
       });
 
       const task = existingTask || new Task();
+
+      const { timeoutAfter } = taskDefinitionFile.taskDefinition;
+
+      if (typeof timeoutAfter === "string") {
+        task.timeoutAfterDescription = timeoutAfter;
+        task.timeoutAfter = timestring(timeoutAfter);
+      } else {
+        task.timeoutAfterDescription = `${timeoutAfter} milliseconds`;
+        task.timeoutAfter = timeoutAfter;
+      }
+
       task.name = taskDefinitionFile.taskDefinition.name;
-      task.timeoutAfter = taskDefinitionFile.taskDefinition.timeoutAfter;
       task.schedule = taskDefinitionFile.taskDefinition.schedule;
       task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 
