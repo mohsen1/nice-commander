@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import {
   getBackgroundColorForStatus,
   getForegroundColorForStatus,
@@ -13,10 +13,8 @@ interface BuildTimeAndStatusProps {
 }
 
 export default styled.span<BuildTimeAndStatusProps>`
-  color: ${({ theme, status }) => getForegroundColorForStatus(status, theme)};
-  border: 1px solid
-    ${({ theme, status }) => getForegroundColorForStatus(status, theme)};
-  background-color: ${({ theme, status }) =>
-    getBackgroundColorForStatus(status, theme)};
+  color: ${({ status }) => getForegroundColorForStatus(status)};
+  border: 1px solid ${({ status }) => getForegroundColorForStatus(status)};
+  background-color: ${({ status }) => getBackgroundColorForStatus(status)};
   border-radius: 3px;
 `;

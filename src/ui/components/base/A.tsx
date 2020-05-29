@@ -1,7 +1,7 @@
-import styled from "styled-components";
+import { styled } from "linaria/react";
 
 export default styled.a`
   text-decoration: none;
-  color: ${({ theme }) => theme.colors.text};
+  color: var(--color-text);
   cursor: pointer;
 `;

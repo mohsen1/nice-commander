@@ -20,6 +20,7 @@ src/ui/.next
 # misc
 .DS_Store
 .env*
+.linaria-cache
 
 # debug
 npm-debug.log*

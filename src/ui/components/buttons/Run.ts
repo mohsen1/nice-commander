@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import { styled } from "linaria/react";
 
 import {
   getBackgroundColorForStatus,
@@ -7,9 +7,7 @@ import {
 import BaseButton from "./BaseButton";
 
 export default styled(BaseButton)`
-  border-color: ${({ theme }) =>
-    getForegroundColorForStatus("FINISHED", theme)};
-  color: ${({ theme }) => getForegroundColorForStatus("FINISHED", theme)};
-  background-color: ${({ theme }) =>
-    getBackgroundColorForStatus("FINISHED", theme)};
+  border-color: ${() => getForegroundColorForStatus("FINISHED")};
+  color: ${() => getForegroundColorForStatus("FINISHED")};
+  background-color: ${() => getBackgroundColorForStatus("FINISHED")};
 `;

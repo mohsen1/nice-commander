@@ -165,17 +165,18 @@ export class NiceCommander {
   private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.DEBUG?.includes("nice-commander");
     const dir = path.resolve(__dirname, "../../../../src/ui");
+    const nextConfig = require(path.join(dir, "next.config.js"));
 
     const app = next({
       dev,
       dir,
-      conf: {
+      conf: nextConfig({
         assetPrefix: mountPath,
         publicRuntimeConfig: {
           schema: this.schema,
           baseUrl: mountPath,
         },
-      },
+      }),
     });
     await app.prepare();
     const handle = app.getRequestHandler();

@@ -1,22 +1,11 @@
 import React from "react";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 
 const ErrorMessage = styled.pre`
   padding: 1rem;
   font-family: monospace;
-  background: ${({ theme }) => {
-    if (theme.name === "dark") {
-      return theme.colors.fail.dark;
-    }
-    return theme.colors.fail.light;
-  }};
-
-  color: ${({ theme }) => {
-    if (theme.name === "dark") {
-      return theme.colors.fail.light;
-    }
-    return theme.colors.fail.dark;
-  }};
+  background: var(--color-fail-dim);
+  color: var(--color-fail-bold);
 `;
 
 const ErrorPresenter: React.FC<{ error?: Error }> = ({ error }) => {

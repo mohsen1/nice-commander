@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import { styled } from "linaria/react";
 
 export default styled.button`
   display: inline-block;
@@ -9,7 +9,7 @@ export default styled.button`
   border-width: 1px;
   font-size: 1.15rem;
   border-style: solid;
-  border-color: ${({ theme }) => theme.colors.gray.light};
-  color: ${({ theme }) => theme.colors.gray.dark};
-  background-color: ${({ theme }) => theme.colors.gray.light};
+  border-color: var(--color-gray-dim);
+  color: var(--color-gray-bold);
+  background-color: var(--color-gray-dim);
 `;

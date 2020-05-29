@@ -1,14 +1,14 @@
 import React, { useContext } from "react";
-import styled from "styled-components";
+import { styled } from "linaria/react";
 import Link from "next/link";
 
 import A from "./base/A";
 import { AppContext } from "../context/AppContext";
 
 const ItemRow = styled(A)`
-  border: 1px solid ${(props) => props.theme.colors.accent.light};
-  color: ${(props) => props.theme.colors.text};
-  background-color: ${(props) => props.theme.colors.background};
+  border: 1px solid var(--color-accent-dim);
+  color: var(--color-text);
+  background-color: var(--color-accent-normal);
   margin: 1rem 0;
   padding: 0.5rem;
   display: block;
