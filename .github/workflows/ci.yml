@@ -50,3 +50,16 @@ jobs:
       - name: UI tsc
         working-directory: src/ui
         run: ../../node_modules/.bin/tsc
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "10.x"
+      - run: yarn
+      - name: Unit tests
+        run: yarn test

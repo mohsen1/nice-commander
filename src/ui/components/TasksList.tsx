@@ -1,10 +1,10 @@
 import React from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
+import { cx } from "linaria";
 
 import TaskListItem from "../components/TaskListItem";
 import ErrorPresenter from "../components/ErrorPresentor";
-import H1 from "./titles/H1";
 
 const TaskList = () => {
   const query = gql`
@@ -27,7 +27,7 @@ const TaskList = () => {
 
   return (
     <>
-      <H1>Tasks</H1>
+      <h1 className={cx("bp3-heading")}>Tasks</h1>
       {data?.tasks.map((task: any) => (
         <TaskListItem key={task.name} name={task.name} runs={task.runs} />
       ))}

@@ -4,14 +4,12 @@ import { useRouter } from "next/router";
 import { useQuery } from "react-apollo";
 import { styled } from "linaria/react";
 import Link from "next/link";
+import { cx } from "linaria";
 
 import Editor from "../../../../components/Editor";
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
-import H1 from "../../../../components/titles/H1";
 import { withApollo } from "../../../../lib/apollo";
-import H2 from "../../../../components/titles/H2";
-import A from "../../../../components/base/A";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
 import { AppContext } from "../../../../context/AppContext";
 import LogViewer from "../../../../components/LogViewer";
@@ -58,14 +56,14 @@ const TaskRunPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <H1>
+      <h1 className={cx("bp3-heading")}>
         <Link
           prefetch={false}
           href={`${appContext?.baseUrl}/tasks/${taskName}`}
         >
-          <A>{taskName}</A>
+          <a>{taskName}</a>
         </Link>
-      </H1>
+      </h1>
       <DetailsRow>
         Started by:{" "}
         <a href={`mailto://${data?.taskRun.runnerEmail}`}>
@@ -85,9 +83,9 @@ const TaskRunPage: React.FC = () => {
       <DetailsRow>
         Started at {new Date(data?.taskRun.startTime).toLocaleString()}
       </DetailsRow>
-      <H2>Payload</H2>
+      <h2 className={cx("bp3-heading")}>Payload</h2>
       <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
-      <H2>Logs</H2>
+      <h2 className={cx("bp3-heading")}>Logs</h2>
       <LogViewer
         taskRunId={runId as string}
         isRunning={data?.taskRun.state === "RUNNING"}

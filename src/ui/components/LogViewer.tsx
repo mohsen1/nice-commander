@@ -2,9 +2,9 @@ import React, { useState, useRef } from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
 import { uniqBy, sortBy } from "lodash";
+import { Button } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-import BaseButton from "./buttons/BaseButton";
 import ErrorPresenter from "./ErrorPresentor";
 
 const query = gql`
@@ -67,7 +67,9 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
 
   return (
     <div>
-      <BaseButton
+      <Button
+        intent="none"
+        icon="circle"
         onClick={() => {
           goLive((oldValue) => {
             const isLive = !oldValue;
@@ -79,9 +81,8 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
             return isLive;
           });
         }}
-      >
-        {isLive ? "Stop streaming" : "Start streaming"}
-      </BaseButton>
+        text={isLive ? "Stop streaming" : "Start streaming"}
+      />
 
       <Editor
         readonly

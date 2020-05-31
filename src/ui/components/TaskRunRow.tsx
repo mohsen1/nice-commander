@@ -6,7 +6,6 @@ import {
   getBackgroundColorForStatus,
 } from "./utils/colors";
 import { displayTaskRunDuration } from "./utils/time";
-import A from "./base/A";
 import { AppContext } from "../context/AppContext";
 import { useContext } from "react";
 
@@ -42,7 +41,7 @@ const TaskRunRow: React.FC<TaskRun> = ({
       prefetch={false}
       href={`${appContext?.baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
     >
-      <A>
+      <a>
         <Container state={state as "FINISHED" | "ERROR" | "RUNNING"}>
           <span>
             {new Date(startTime).toLocaleDateString("en-US", {})}
@@ -53,7 +52,7 @@ const TaskRunRow: React.FC<TaskRun> = ({
           </span>
           <span>{displayTaskRunDuration(startTime, endTime)}</span>
         </Container>
-      </A>
+      </a>
     </Link>
   );
 };

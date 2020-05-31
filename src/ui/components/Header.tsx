@@ -2,7 +2,6 @@ import React, { useContext } from "react";
 import { styled } from "linaria/react";
 import Link from "next/link";
 
-import A from "./base/A";
 import { AppContext } from "../context/AppContext";
 import gql from "graphql-tag";
 import { useQuery } from "react-apollo";
@@ -40,10 +39,10 @@ const Header: React.FC = () => {
     <HeaderElement>
       <Title>
         <Link prefetch={false} href={appContext?.baseUrl || "/"}>
-          <A>Nice Commander</A>
+          <a>Nice Commander</a>
         </Link>
         <ViewerDiv>
-          <A href={`mailto:${data?.viewer?.email}`}>{data?.viewer?.name}</A>
+          <a href={`mailto:${data?.viewer?.email}`}>{data?.viewer?.name}</a>
         </ViewerDiv>
       </Title>
     </HeaderElement>

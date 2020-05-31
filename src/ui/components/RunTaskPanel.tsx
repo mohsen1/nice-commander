@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import { styled } from "linaria/react";
+import { cx } from "linaria";
 import Router from "next/router";
+import { Button } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-import Run from "./buttons/Run";
-import H2 from "./titles/H2";
 
 const Container = styled.div`
   display: flex;
@@ -57,7 +57,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
 
   return (
     <Container>
-      <H2>Run</H2>
+      <h2 className={cx("bp3-heading")}>Run</h2>
       <p>Enter this run's payload:</p>
       <Editor
         value={defaultValue}
@@ -70,7 +70,10 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
         {!isValidPayload && "Invalid JSON in payload"}
       </InvalidJSONError>
       <Buttons>
-        <Run
+        <Button
+          large
+          intent="primary"
+          text="Run"
           onClick={async () => {
             const { data } = await runTask({
               variables: {
@@ -82,9 +85,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
               window.location.pathname + "/runs/" + data?.runTask?.id
             );
           }}
-        >
-          Run
-        </Run>
+        />
       </Buttons>
     </Container>
   );

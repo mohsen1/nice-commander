@@ -2,11 +2,10 @@ import React from "react";
 import { useRouter } from "next/router";
 import gql from "graphql-tag";
 import { useQuery } from "react-apollo";
+import { cx } from "linaria";
 
 import MainLayout from "../../../layouts/MainLayout";
-import H1 from "../../../components/titles/H1";
 import Editor from "../../../components/Editor";
-import H2 from "../../../components/titles/H2";
 import TaskRunRow from "../../../components/TaskRunRow";
 import ErrorPresenter from "../../../components/ErrorPresentor";
 import { withApollo } from "../../../lib/apollo";
@@ -45,20 +44,20 @@ const TaskPage: React.FC<TaskPageProps> = () => {
 
   return (
     <MainLayout>
-      <H1>{data?.task?.name}</H1>
+      <h1 className={cx("bp3-heading")}>{data?.task?.name}</h1>
       <p>
         {data?.task?.schedule === "manual"
           ? "Manual invocation only"
           : `Runs every ${data?.task?.schedule}`}
       </p>
       <p>Times out after {data?.task?.timeoutAfterDescription}</p>
-      <H2>Code</H2>
+      <h2 className={cx("bp3-heading")}>Code</h2>
       <Editor readonly value={data?.task?.code} language="typescript" />
 
       <div>
         <RunTaskPanel taskId={data?.task?.id} />
       </div>
-      <H2>Latest Runs</H2>
+      <h2 className={cx("bp3-heading")}>Latest Runs</h2>
       {data?.task?.runs?.map((run) => (
         <TaskRunRow key={run.startTime} taskName={data?.task?.name} {...run} />
       ))}

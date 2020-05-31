@@ -7,6 +7,9 @@ module.exports = (overrides) =>
     publicRuntimeConfig: {
       baseUrl: "/",
     },
+    cssLoaderOptions: {
+      url: false,
+    },
     ...overrides,
     webpack(config, options) {
       config.module.rules.push({
