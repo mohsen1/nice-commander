@@ -29,10 +29,10 @@ export interface TaskDefinition {
   timeoutAfter: string | number;
 
   /**
-   * Time string or "manual"
+   * Time string or "manual". If not provided it is considered manual
    * @see https://www.npmjs.com/package/timestring
    */
-  schedule: "manual" | string;
+  schedule?: "manual" | string;
 }
 
 export class TaskDefinitionValidationError extends Error {}
@@ -55,7 +55,10 @@ export function validateTaskDefinition(
   if (typeof taskDefinition.run !== "function") {
     throw new TaskDefinitionValidationError("run must be a function");
   }
-  if (taskDefinition.schedule && taskDefinition.schedule !== "manual") {
+  if (!taskDefinition.schedule) {
+    taskDefinition.schedule = "manual";
+  }
+  if (taskDefinition.schedule !== "manual") {
     timestring(taskDefinition.schedule);
   }
   return true;
