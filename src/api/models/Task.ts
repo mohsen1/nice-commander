@@ -26,7 +26,7 @@ export class Task {
     description: "timeout after as described in task definition.",
   })
   @Column()
-  public timeoutAfterDescription!: String;
+  public timeoutAfterDescription!: string;
 
   @Field((type) => [TaskRun], {
     description: "List of task runs",

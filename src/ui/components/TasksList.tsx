@@ -1,10 +1,11 @@
 import React from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
+import { Card, Elevation } from "@blueprintjs/core";
 
 import TaskListItem from "../components/TaskListItem";
 import ErrorPresenter from "../components/ErrorPresentor";
-import H1 from "./titles/H1";
+import { H4 } from "./headings";
 
 const TaskList = () => {
   const query = gql`
@@ -26,12 +27,21 @@ const TaskList = () => {
   }
 
   return (
-    <>
-      <H1>Tasks</H1>
-      {data?.tasks.map((task: any) => (
-        <TaskListItem key={task.name} name={task.name} runs={task.runs} />
-      ))}
-    </>
+    <Card elevation={Elevation.ONE}>
+      <H4>Tasks</H4>
+      {data?.tasks.map(
+        (task: {
+          name: string;
+          runs: {
+            state: string;
+            startTime: number;
+            endTime: number;
+          }[];
+        }) => (
+          <TaskListItem key={task.name} name={task.name} runs={task.runs} />
+        )
+      )}
+    </Card>
   );
 };
 

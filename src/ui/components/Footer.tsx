@@ -11,7 +11,6 @@ const FooterElement = styled.footer`
 
 const AttributeLink = styled.a`
   color: var(--color-gray-bold);
-  text-decoration: none;
 `;
 
 const Footer: React.FC = () => (

@@ -24,14 +24,6 @@ import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: NiceCommanderUser;
-    }
-  }
-}
-
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
   name?: string;
@@ -165,6 +157,7 @@ export class NiceCommander {
   private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.DEBUG?.includes("nice-commander");
     const dir = path.resolve(__dirname, "../../../../src/ui");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const nextConfig = require(path.join(dir, "next.config.js"));
 
     const app = next({
@@ -211,6 +204,7 @@ export class NiceCommander {
   }
 
   private requireTaskDefinition(filePath: string) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const module = require(filePath);
 
     if (typeof module.run === "function") {
@@ -251,6 +245,7 @@ export class NiceCommander {
         return { viewer };
       },
     });
+
     return server.getMiddleware({ path: "/graphql" });
   }
 
@@ -470,6 +465,7 @@ export class NiceCommander {
           // Drain the logs buffer
           const logEvents: InputLogEvent[] = [];
           while (eventsBuffer.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             logEvents.push(eventsBuffer.shift()!);
           }
 

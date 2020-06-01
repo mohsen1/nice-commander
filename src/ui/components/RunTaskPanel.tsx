@@ -3,16 +3,10 @@ import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import { styled } from "linaria/react";
 import Router from "next/router";
+import { Button, Classes } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-import Run from "./buttons/Run";
-import H2 from "./titles/H2";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin: 1rem 0;
-`;
+import { H2 } from "./headings";
 
 const InvalidJSONError = styled.p`
   text-align: right;
@@ -56,7 +50,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
   `);
 
   return (
-    <Container>
+    <div className={Classes.DIALOG_BODY}>
       <H2>Run</H2>
       <p>Enter this run's payload:</p>
       <Editor
@@ -70,7 +64,10 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
         {!isValidPayload && "Invalid JSON in payload"}
       </InvalidJSONError>
       <Buttons>
-        <Run
+        <Button
+          large
+          intent="primary"
+          text="Run"
           onClick={async () => {
             const { data } = await runTask({
               variables: {
@@ -82,11 +79,9 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
               window.location.pathname + "/runs/" + data?.runTask?.id
             );
           }}
-        >
-          Run
-        </Run>
+        />
       </Buttons>
-    </Container>
+    </div>
   );
 };
 

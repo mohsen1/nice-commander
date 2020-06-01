@@ -8,6 +8,7 @@ import express from "express";
 import path from "path";
 import config from "config";
 import AWS from "aws-sdk";
+import { ConnectionOptions } from "typeorm";
 
 const awsCredentials = new AWS.SharedIniFileCredentials({
   profile: config.get("aws-profile"),
@@ -38,6 +39,7 @@ const middleware = createMiddleware({
   redisConnectionOptions: config.get("redis"),
   sqlConnectionOptions: {
     type: "mysql",
+    // eslint-disable-next-line @typescript-eslint/ban-types
     ...config.get<object>("db"),
   },
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),

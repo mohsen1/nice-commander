@@ -2,23 +2,17 @@ import React, { useContext } from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
 import { useQuery } from "react-apollo";
-import { styled } from "linaria/react";
 import Link from "next/link";
+import { Card, Elevation } from "@blueprintjs/core";
 
-import Editor from "../../../../components/Editor";
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
-import H1 from "../../../../components/titles/H1";
 import { withApollo } from "../../../../lib/apollo";
-import H2 from "../../../../components/titles/H2";
-import A from "../../../../components/base/A";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
 import { AppContext } from "../../../../context/AppContext";
 import LogViewer from "../../../../components/LogViewer";
-
-const DetailsRow = styled.p`
-  padding: 0.5rem 0;
-`;
+import { H3, H4 } from "../../../../components/headings";
+import { getBackgroundColorForStatus } from "../../../../components/utils/colors";
 
 const TaskRunPage: React.FC = () => {
   const { taskName, runId } = useRouter().query;
@@ -58,40 +52,56 @@ const TaskRunPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <H1>
-        <Link
-          prefetch={false}
-          href={`${appContext?.baseUrl}/tasks/${taskName}`}
-        >
-          <A>{taskName}</A>
-        </Link>
-      </H1>
-      <DetailsRow>
-        Started by:{" "}
-        <a href={`mailto://${data?.taskRun.runnerEmail}`}>
-          {data?.taskRun.runnerName}{" "}
-        </a>
-      </DetailsRow>
-      <DetailsRow>
-        Status: <span>{data?.taskRun.state}</span>
-      </DetailsRow>
-      <DetailsRow>
-        Runtime:{" "}
-        {displayTaskRunDuration(data?.taskRun.startTime, data?.taskRun.endTime)}
-      </DetailsRow>
-      <DetailsRow>
-        Invocation source: {data?.taskRun.invocationSource}
-      </DetailsRow>
-      <DetailsRow>
-        Started at {new Date(data?.taskRun.startTime).toLocaleString()}
-      </DetailsRow>
-      <H2>Payload</H2>
-      <Editor readonly maxHeight={10} value={data?.taskRun.payload} />
-      <H2>Logs</H2>
-      <LogViewer
-        taskRunId={runId as string}
-        isRunning={data?.taskRun.state === "RUNNING"}
-      />
+      <Card
+        elevation={Elevation.ONE}
+        style={{
+          marginBottom: 20,
+          backgroundColor: getBackgroundColorForStatus(data?.taskRun.state),
+        }}
+      >
+        <H3>
+          <Link
+            prefetch={false}
+            href={`${appContext?.baseUrl}/tasks/${taskName}`}
+          >
+            <a>
+              {taskName} - {new Date(data?.taskRun.startTime).toLocaleString()}
+            </a>
+          </Link>
+        </H3>
+        <p>
+          Started by:{" "}
+          <a href={`mailto://${data?.taskRun.runnerEmail}`}>
+            {data?.taskRun.runnerName}{" "}
+          </a>
+        </p>
+        <p>
+          Status: <span>{data?.taskRun.state}</span>
+        </p>
+        <p>
+          Runtime:{" "}
+          {displayTaskRunDuration(
+            data?.taskRun.startTime,
+            data?.taskRun.endTime
+          )}
+        </p>
+        <p>Invocation source: {data?.taskRun.invocationSource}</p>
+        {data?.taskRun.startTime && (
+          <p>
+            Started at {new Date(data?.taskRun.startTime).toISOString()} -{" "}
+            {new Date(data?.taskRun.startTime).getTime()}
+          </p>
+        )}
+        <p>Payload</p>
+        <pre>{data?.taskRun.payload}</pre>
+      </Card>
+      <Card elevation={Elevation.ONE}>
+        <H4>Logs</H4>
+        <LogViewer
+          taskRunId={runId as string}
+          isRunning={data?.taskRun.state === "RUNNING"}
+        />
+      </Card>
     </MainLayout>
   );
 };

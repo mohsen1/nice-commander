@@ -2,6 +2,7 @@
  * @fileOverview
  * Verbatim copied from https://github.com/zeit/next.js/blob/canary/examples/with-apollo/lib/apollo.js
  */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
 import React, { useContext } from "react";
@@ -113,6 +114,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
  * Creates or reuses apollo client in the browser.
  * @param  {Object} initialState
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 function initApolloClient(initialState: object) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
@@ -155,6 +157,7 @@ function createIsomorphLink() {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { SchemaLink } = require("apollo-link-schema");
 
   return new SchemaLink({ schema: publicRuntimeConfig.schema });

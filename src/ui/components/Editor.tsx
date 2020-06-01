@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import MonacoEditor, { EditorProps } from "@monaco-editor/react";
 import * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 
-function getHeight(value?: string, maxHeight: number = 25) {
+function getHeight(value?: string, maxHeight = 25) {
   if (!value) return "200px";
   const lines = value.split("\n").length;
 
