@@ -3,7 +3,7 @@ import { TaskDefinition } from "../../../src";
 // A simple manual task that errors out
 const task: TaskDefinition = {
   name: "Errors Out",
-  async run(payload) {
+  async run(payload: { wait: string; exitCode: string }) {
     const wait = (amount: number) =>
       new Promise((resolve) => setTimeout(resolve, amount));
     console.info("Starting at", Date.now());

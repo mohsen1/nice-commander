@@ -16,7 +16,8 @@ export interface TaskDefinition {
    *
    * @param payload Task payload sent via manual task invocation
    */
-  run: (payload: unknown) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  run: (payload: any) => Promise<void>;
 
   /**
    * Maximum time this task can run.
