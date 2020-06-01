@@ -13,7 +13,7 @@
     "preprod": "yarn build",
     "prod": "NODE_ENV=production node dist/examples/basic/server.js",
     "tsc-watch": "tsc --watch",
-    "example-server": "DEBUG=nice-commander nodemon --delay 100 --watch dist dist/examples/basic/server.js",
+    "example-server": "DEBUG=nice-commander nodemon --delay 10 --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx,yml,js,.md}'",
     "prepare": "rm -rf src/ui/.next && next build src/ui && tsc",

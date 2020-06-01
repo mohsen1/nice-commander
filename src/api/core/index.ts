@@ -251,6 +251,7 @@ export class NiceCommander {
         return { viewer };
       },
     });
+
     return server.getMiddleware({ path: "/graphql" });
   }
 

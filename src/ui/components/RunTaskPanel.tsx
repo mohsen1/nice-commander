@@ -2,17 +2,11 @@ import React, { useState } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import { styled } from "linaria/react";
-import { cx } from "linaria";
 import Router from "next/router";
-import { Button } from "@blueprintjs/core";
+import { Button, Classes } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin: 1rem 0;
-`;
+import { H2 } from "./headings";
 
 const InvalidJSONError = styled.p`
   text-align: right;
@@ -56,8 +50,8 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
   `);
 
   return (
-    <Container>
-      <h2 className={cx("bp3-heading")}>Run</h2>
+    <div className={Classes.DIALOG_BODY}>
+      <H2>Run</H2>
       <p>Enter this run's payload:</p>
       <Editor
         value={defaultValue}
@@ -87,7 +81,7 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
           }}
         />
       </Buttons>
-    </Container>
+    </div>
   );
 };
 

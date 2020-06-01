@@ -1,5 +1,6 @@
 import { styled } from "linaria/react";
 import Link from "next/link";
+import { Card, Elevation } from "@blueprintjs/core";
 
 import {
   getForegroundColorForStatus,
@@ -9,7 +10,7 @@ import { displayTaskRunDuration } from "./utils/time";
 import { AppContext } from "../context/AppContext";
 import { useContext } from "react";
 
-const Container = styled.div<{ state: "FINISHED" | "ERROR" | "RUNNING" }>`
+const Container = styled(Card)<{ state: "FINISHED" | "ERROR" | "RUNNING" }>`
   padding: 1rem;
   border: 1px solid ${({ state }) => getForegroundColorForStatus(state)};
   color: ${({ state }) => getForegroundColorForStatus(state)};
@@ -42,7 +43,11 @@ const TaskRunRow: React.FC<TaskRun> = ({
       href={`${appContext?.baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
     >
       <a>
-        <Container state={state as "FINISHED" | "ERROR" | "RUNNING"}>
+        <Container
+          elevation={Elevation.ZERO}
+          interactive
+          state={state as "FINISHED" | "ERROR" | "RUNNING"}
+        >
           <span>
             {new Date(startTime).toLocaleDateString("en-US", {})}
             {" - "}

@@ -1,26 +1,10 @@
 import React, { useContext } from "react";
-import { styled } from "linaria/react";
 import Link from "next/link";
+import { Navbar, Alignment, Button } from "@blueprintjs/core";
 
 import { AppContext } from "../context/AppContext";
 import gql from "graphql-tag";
 import { useQuery } from "react-apollo";
-
-const Title = styled.h1`
-  font-size: 1.2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const HeaderElement = styled.header`
-  padding: 0.5rem 1rem;
-  background-color: var(--color-accent-normal);
-`;
-
-const ViewerDiv = styled.div`
-  font-size: 10px;
-`;
 
 const query = gql`
   query GetViewer {
@@ -36,16 +20,19 @@ const Header: React.FC = () => {
   const { data } = useQuery(query);
 
   return (
-    <HeaderElement>
-      <Title>
-        <Link prefetch={false} href={appContext?.baseUrl || "/"}>
-          <a>Nice Commander</a>
-        </Link>
-        <ViewerDiv>
-          <a href={`mailto:${data?.viewer?.email}`}>{data?.viewer?.name}</a>
-        </ViewerDiv>
-      </Title>
-    </HeaderElement>
+    <Navbar>
+      <Navbar.Group align={Alignment.LEFT}>
+        <Navbar.Heading>
+          <Link prefetch={false} href={appContext?.baseUrl || "/"}>
+            <a>Nice Commander</a>
+          </Link>
+        </Navbar.Heading>
+        <Navbar.Divider />
+      </Navbar.Group>
+      <Navbar.Group align={Alignment.RIGHT}>
+        <Button className="bp3-minimal" icon="user" text={data?.viewer?.name} />
+      </Navbar.Group>
+    </Navbar>
   );
 };
 export default Header;

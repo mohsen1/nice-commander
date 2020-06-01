@@ -1,19 +1,18 @@
 import React, { useContext } from "react";
 import { styled } from "linaria/react";
 import Link from "next/link";
+import { Card, Elevation } from "@blueprintjs/core";
 
 import { AppContext } from "../context/AppContext";
 
-const ItemRow = styled.a`
-  border: 1px solid var(--color-accent-dim);
+const ItemRow = styled(Card)`
+  border: 1px solid var(--color-accent-bold);
   color: var(--color-text);
-  background-color: var(--color-accent-normal);
+  background-color: var(--color-accent-dim);
   margin: 1rem 0;
   padding: 0.5rem;
   display: block;
-  hover: {
-    text-decoration: none;
-  }
+  cursor: pointer;
 `;
 
 interface Task {
@@ -25,7 +24,9 @@ const TaskListItem: React.FC<Task> = ({ name }) => {
   const appContext = useContext(AppContext);
   return (
     <Link prefetch={false} href={`${appContext?.baseUrl}/tasks/${name}`}>
-      <ItemRow>{name}</ItemRow>
+      <ItemRow elevation={Elevation.ZERO} interactive>
+        {name}
+      </ItemRow>
     </Link>
   );
 };

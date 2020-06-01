@@ -67,22 +67,30 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
 
   return (
     <div>
-      <Button
-        intent="none"
-        icon="circle"
-        onClick={() => {
-          goLive((oldValue) => {
-            const isLive = !oldValue;
-            if (isLive) {
-              startPolling(pollInterval);
-            } else {
-              stopPolling();
-            }
-            return isLive;
-          });
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          padding: "10px 0",
         }}
-        text={isLive ? "Stop streaming" : "Start streaming"}
-      />
+      >
+        <Button
+          intent={isLive ? "success" : "primary"}
+          icon="refresh"
+          onClick={() => {
+            goLive((oldValue) => {
+              const isLive = !oldValue;
+              if (isLive) {
+                startPolling(pollInterval);
+              } else {
+                stopPolling();
+              }
+              return isLive;
+            });
+          }}
+          text={isLive ? "Stop streaming" : "Start streaming"}
+        />
+      </div>
 
       <Editor
         readonly

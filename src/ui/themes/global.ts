@@ -7,7 +7,7 @@ export default css`
       --color-text: black;
       --color-accent-bold: #1252bd;
       --color-accent-normal: #c6dbff;
-      --color-accent-dim: #96b9f3;
+      --color-accent-dim: #e6f1f8;
       --color-gray-bold: #444444;
       --color-gray-normal: #2b1d1d;
       --color-gray-dim: #d3d3d3;
@@ -55,6 +55,10 @@ export default css`
       margin: 0;
       color: var(--color-text);
       background: var(--color-background);
+    }
+    a,
+    a:hover {
+      text-decoration: none;
     }
   }
 `;
