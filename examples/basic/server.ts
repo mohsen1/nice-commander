@@ -38,7 +38,7 @@ const middleware = createMiddleware({
   redisConnectionOptions: config.get("redis"),
   sqlConnectionOptions: {
     type: "mysql",
-    ...config.get<object>("db"),
+    ...config.get("db"),
   },
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
 });

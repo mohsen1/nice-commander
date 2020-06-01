@@ -13,6 +13,7 @@
  */
 
 function requireTaskDefinition(filePath: string) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const module = require(filePath);
 
   if (typeof module.run === "function") {

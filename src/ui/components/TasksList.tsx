@@ -29,9 +29,18 @@ const TaskList = () => {
   return (
     <Card elevation={Elevation.ONE}>
       <H4>Tasks</H4>
-      {data?.tasks.map((task: any) => (
-        <TaskListItem key={task.name} name={task.name} runs={task.runs} />
-      ))}
+      {data?.tasks.map(
+        (task: {
+          name: string;
+          runs: {
+            state: string;
+            startTime: number;
+            endTime: number;
+          }[];
+        }) => (
+          <TaskListItem key={task.name} name={task.name} runs={task.runs} />
+        )
+      )}
     </Card>
   );
 };

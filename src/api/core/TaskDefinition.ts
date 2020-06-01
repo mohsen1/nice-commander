@@ -16,7 +16,7 @@ export interface TaskDefinition {
    *
    * @param payload Task payload sent via manual task invocation
    */
-  run: (payload: any) => Promise<void>;
+  run: (payload: unknown) => Promise<void>;
 
   /**
    * Maximum time this task can run.

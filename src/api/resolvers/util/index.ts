@@ -8,7 +8,7 @@ export function assertNumberArgumentIsInRange(
   argName: string,
   argValue: number,
   start: number,
-  end: number = Infinity
+  end = Infinity
 ) {
   assert(
     inRange(argValue, start, end),
@@ -22,7 +22,7 @@ export function assertNumberArgumentIsInRange(
  * Generate a random string
  * @param length Output string length
  */
-export function rand(length: number = 10) {
+export function rand(length = 10) {
   let result = "";
   for (let i = 0; i < length; i++) {
     // Add a random letter from A to Z

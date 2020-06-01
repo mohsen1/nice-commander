@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const withCSS = require("@zeit/next-css");
 
 module.exports = (overrides) =>
@@ -11,7 +12,7 @@ module.exports = (overrides) =>
       url: false,
     },
     ...overrides,
-    webpack(config, options) {
+    webpack(config) {
       config.module.rules.push({
         test: /\.(js|tsx|ts)$/,
         use: [

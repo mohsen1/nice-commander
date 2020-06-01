@@ -1,3 +1,4 @@
+import React from "react";
 import { styled } from "linaria/react";
 import Link from "next/link";
 import { Card, Elevation } from "@blueprintjs/core";
