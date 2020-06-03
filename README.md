@@ -52,7 +52,7 @@ import { createMiddleware } from "nice-commander";
 const app = express();
 
 const mountPath = "/nice-commander";
-const middleware = createMiddleware({
+const { middleware } = createMiddleware({
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
   mountPath,
   redisConnectionOptions: {

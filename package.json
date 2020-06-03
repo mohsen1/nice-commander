@@ -54,7 +54,7 @@
     "timestring": "^6.0.0",
     "type-graphql": "^0.17.5",
     "typedi": "^0.8.0",
-    "typeorm": "^0.2.22"
+    "typeorm-plus": "^0.0.58"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.12.1",

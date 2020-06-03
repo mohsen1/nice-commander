@@ -15,7 +15,13 @@
   },
 
   "editor.formatOnSave": true,
-  "cSpell.words": ["Keyspace", "Redlock", "keyevent", "timestring", "typeorm"],
+  "cSpell.words": [
+    "Keyspace",
+    "Redlock",
+    "keyevent",
+    "timestring",
+    "typeorm-plus"
+  ],
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,

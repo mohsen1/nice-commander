@@ -2,7 +2,7 @@ import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { createConnection, Connection, Not, IsNull } from "typeorm";
+import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
@@ -407,8 +407,22 @@ export class NiceCommander {
       task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 
       await taskRepository.save(task);
+    }
 
-      // TODO: handle deleted tasks
+    // handle deleted tasks that exist in db but not on FS
+    const allTaskDefinitions = await taskRepository.find({
+      take: Number.MAX_SAFE_INTEGER,
+    });
+    const allTaskDefinitionsNames = allTaskDefinitions.map((td) => td.name);
+    const deletedNames = _.difference(
+      allTaskDefinitionsNames,
+      taskDefinitionsFiles.map((tdf) => tdf.taskDefinition.name)
+    );
+    for (const name of deletedNames) {
+      const deletedTask = await taskRepository.findOne({ where: { name } });
+      if (deletedTask) {
+        taskRepository.softDelete(deletedTask);
+      }
     }
   }
 

@@ -9,7 +9,7 @@ const task: TaskDefinition = {
 
     for (const i of Array.from({ length: 10 }, (_, ii) => ii)) {
       await wait(5);
-      console.log(`Scheduled Sample Tak log ${i}`);
+      console.log(`Scheduled Simple Task log ${i}`);
     }
   },
   timeoutAfter: "5 seconds",
