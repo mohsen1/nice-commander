@@ -175,6 +175,7 @@ export class NiceCommander {
         publicRuntimeConfig: {
           schema: this.schema,
           baseUrl: mountPath,
+          getUser: this.options.getUser,
         },
       }),
     });
@@ -239,15 +240,14 @@ export class NiceCommander {
 
     this.schema = await buildSchema({
       resolvers: [RootResolver, TasksResolver, TaskRunResolver],
-      emitSchemaFile: false,
       container: Container,
     });
 
     const server = new ApolloServer({
       schema: this.schema,
       playground: true,
-      context: async ({ req }) => {
-        const viewer = await this.options?.getUser?.(req);
+      context: async (args) => {
+        const viewer = await this.options?.getUser?.(args?.req);
 
         return { viewer };
       },
