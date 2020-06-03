@@ -50,6 +50,7 @@ export class NiceCommander {
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
+  private readonly REDIS_TASK_STOP_PREFIX = "NiceCommander:task:stop:";
   private readonly REDIS_KEY_EXPIRED_CHANNEL = "__keyevent@1__:expired";
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
@@ -138,6 +139,11 @@ export class NiceCommander {
       if (message.startsWith(this.REDIS_TASK_TIMEOUT_PREFIX)) {
         // try to kill that child process
         this.onTaskTimeoutKeyExpired(message);
+      }
+
+      // if key expired as a s resulr of a task run stopping command, try to stop the task run
+      if (message.startsWith(this.REDIS_TASK_STOP_PREFIX)) {
+        this.onTaskRunStop(message);
       }
     });
 
@@ -253,6 +259,7 @@ export class NiceCommander {
     const server = new ApolloServer({
       schema: this.schema,
       playground: true,
+      introspection: true,
       context: async (args) => {
         const viewer = await this.options?.getUser?.(args?.req);
 
@@ -352,7 +359,6 @@ export class NiceCommander {
   }
 
   private async onTaskTimeoutKeyExpired(message: string) {
-    this.debug("onTaskTimeoutKeyExpired", message);
     const taskRunId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
@@ -365,7 +371,28 @@ export class NiceCommander {
     ) {
       await this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
 
-      this.killTaskRunProcess(taskRun);
+      this.killTaskRunProcess(taskRun.id);
+    }
+  }
+
+  /**
+   * Respond to message on of killing a task run
+   */
+  private async onTaskRunStop(message: string) {
+    const taskRunId = message.replace(this.REDIS_TASK_STOP_PREFIX, "");
+    const childExists = this.childProcesses.has(taskRunId);
+
+    if (childExists) {
+      const connection = await this.connectionPromise;
+      const taskRunRepository = connection.getRepository(TaskRun);
+      const taskRun = await taskRunRepository.findOne(taskRunId);
+
+      if (taskRun) {
+        taskRun.state = TaskRun.TaskRunState.KILLED;
+        await taskRunRepository.save(taskRun);
+
+        this.killTaskRunProcess(taskRunId);
+      }
     }
   }
 
@@ -446,10 +473,10 @@ export class NiceCommander {
    *
    * Returns true if the child process was associated with this instance and was successfully killed.
    */
-  private async killTaskRunProcess(taskRun: TaskRun) {
-    if (this.childProcesses.has(taskRun.id)) {
-      this.childProcesses.get(taskRun.id)?.kill("SIGABRT");
-      this.childProcesses.delete(taskRun.id);
+  private killTaskRunProcess(taskRunId: string) {
+    if (this.childProcesses.has(taskRunId)) {
+      this.childProcesses.get(taskRunId)?.kill("SIGABRT");
+      this.childProcesses.delete(taskRunId);
       return true;
     }
     return false;
@@ -482,6 +509,21 @@ export class NiceCommander {
     await taskRunRepository.save(taskRun);
     this.startTask(taskRun);
     await taskRunRepository.save(taskRun);
+  }
+
+  /**
+   * Programmatically stop a task run
+   */
+  public async stopTaskRunById(taskRunId: string) {
+    const connection = await this.connectionPromise;
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const taskRun = await taskRunRepository.findOne(taskRunId);
+
+    if (!taskRun) {
+      throw new Error(`Can not find task run with id ${taskRunId}`);
+    }
+
+    return this.stopTask(taskRun);
   }
 
   /**
@@ -533,7 +575,7 @@ export class NiceCommander {
       );
 
       // Store the child process
-      this.childProcesses.set(taskRun.id, child);
+      this.childProcesses.set(String(taskRun.id), child);
 
       // TODO: Refactor this into a Node.js Stream so we can pipe stdout of child into it.
       let logSubmitIsInFlight = false;
@@ -590,9 +632,19 @@ export class NiceCommander {
         child.stderr?.pipe(process.stderr);
       }
 
-      child.on("exit", (code, signal) => {
-        // Skip ending TaskRun if it was timed out
-        if (taskRun.state === TaskRun.TaskRunState.TIMED_OUT) {
+      child.on("exit", async (code, signal) => {
+        // Fetch a fresh instance of taskRun because there might be state changes outside of
+        // this process that has happened to the taskRun
+        const connection = await this.connectionPromise;
+        const taskRunRepository = connection.getRepository(TaskRun);
+        const freshTaskRun = await taskRunRepository.findOne(taskRun.id);
+
+        // Skip ending TaskRun if it was timed out or was killed
+        if (
+          !freshTaskRun ||
+          freshTaskRun.state === TaskRun.TaskRunState.TIMED_OUT ||
+          freshTaskRun.state === TaskRun.TaskRunState.KILLED
+        ) {
           return;
         }
 
@@ -607,7 +659,7 @@ export class NiceCommander {
           code === 0
             ? TaskRun.TaskRunState.FINISHED
             : TaskRun.TaskRunState.ERROR,
-          taskRun,
+          freshTaskRun,
           code,
           signal
         );
@@ -615,6 +667,26 @@ export class NiceCommander {
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host
     }
+  }
+
+  /**
+   * Stop a task that is running by broadcasting a message via Redis channel
+   * to all nodes to find and stop the process
+   */
+  public stopTask(taskRun: TaskRun) {
+    // Can't stop task run that is not running
+    if (taskRun.state !== TaskRun.TaskRunState.RUNNING) {
+      return false;
+    }
+
+    this.redisClient.set(
+      `${this.REDIS_TASK_STOP_PREFIX}${taskRun.id}`,
+      taskRun.id,
+      "PX",
+      1
+    );
+
+    return true;
   }
 
   /**
@@ -688,5 +760,6 @@ export function createMiddleware(options: Options) {
     instance,
     middleware,
     startTask: instance.startTaskByName.bind(instance),
+    stopTaskRun: instance.stopTaskRunById.bind(instance),
   };
 }

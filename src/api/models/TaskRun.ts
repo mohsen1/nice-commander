@@ -23,6 +23,7 @@ export enum TaskRunState {
   FINISHED,
   ERROR,
   TIMED_OUT,
+  KILLED,
 }
 
 registerEnumType(InvocationSource, {

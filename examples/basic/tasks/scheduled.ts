@@ -2,7 +2,7 @@ import { TaskDefinition } from "../../../src";
 
 // A simple scheduled task
 const task: TaskDefinition = {
-  name: "Scheduled Sample Task",
+  name: "Scheduled Simple Task",
   async run() {
     const wait = (amount: number) =>
       new Promise((resolve) => setTimeout(resolve, amount));

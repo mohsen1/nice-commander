@@ -155,4 +155,11 @@ export default class TasksRunResolver {
       })
       .promise();
   }
+
+  @Mutation((returns) => Boolean)
+  async stopTaskRun(
+    @Arg("id", (type) => String, { description: "TaskRun ID" }) id: string
+  ) {
+    return this.niceCommander.stopTaskRunById(id);
+  }
 }
