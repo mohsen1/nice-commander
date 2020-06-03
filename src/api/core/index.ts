@@ -7,7 +7,7 @@ import { GraphQLSchema } from "graphql";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
 import AWS, { CloudWatchLogs } from "aws-sdk";
-import cp from "child_process";
+import cp, { ChildProcess } from "child_process";
 import debug from "debug";
 import fs from "fs";
 import next from "next";
@@ -59,6 +59,13 @@ export class NiceCommander {
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
   private schema?: GraphQLSchema;
+  /**
+   * A map of taskRun IDs to forked child processes for running the job
+   * Each instance of NiceCommander will maintain its own map of taskRun IDs to forked child processes
+   * For killing a taskRun that is timed out, all instances of NiceCommander will receive a Redis key
+   * expired signal and try to find the child process in their map and kill the process.
+   */
+  private readonly childProcesses: Map<string, ChildProcess> = new Map();
   /** AWS CloudWatch Logs Log Group Name */
   public logGroupName = "NiceCommander";
   public cloudWatchLogs!: CloudWatchLogs;
@@ -345,13 +352,22 @@ export class NiceCommander {
   }
 
   private async onTaskTimeoutKeyExpired(message: string) {
+    this.debug("onTaskTimeoutKeyExpired", message);
     const taskRunId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
 
     if (taskRun && taskRun.state === TaskRun.TaskRunState.RUNNING) {
-      this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
+      if (this.childProcesses.has(taskRun.id)) {
+        await this.endTaskRun(
+          TaskRun.TaskRunState.TIMED_OUT,
+          taskRun,
+          undefined
+        );
+      }
+
+      this.killTaskRunProcess(taskRun);
     }
   }
 
@@ -414,6 +430,20 @@ export class NiceCommander {
   }
 
   /**
+   * Try to kill associated child process with this taskRun.
+   *
+   * Returns true if the child process was associated with this instance and was successfully killed.
+   */
+  private async killTaskRunProcess(taskRun: TaskRun) {
+    if (this.childProcesses.has(taskRun.id)) {
+      this.childProcesses.get(taskRun.id)?.kill("SIGABRT");
+      this.childProcesses.delete(taskRun.id);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Start a task with a given task run
    * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
    * @param publishLogs Logging pub-sub
@@ -460,6 +490,9 @@ export class NiceCommander {
           stdio: "pipe",
         }
       );
+
+      // Store the child process
+      this.childProcesses.set(taskRun.id, child);
 
       // TODO: Refactor this into a Node.js Stream so we can pipe stdout of child into it.
       let logSubmitIsInFlight = false;
@@ -517,7 +550,12 @@ export class NiceCommander {
       }
 
       child.on("exit", (code, signal) => {
-        if (code === 0 && taskRun.state !== TaskRun.TaskRunState.TIMED_OUT) {
+        // Skip ending TaskRun if it was timed out
+        if (taskRun.state !== TaskRun.TaskRunState.TIMED_OUT) {
+          return;
+        }
+
+        if (code === 0) {
           this.endTaskRun(TaskRun.TaskRunState.FINISHED, taskRun, code, signal);
         } else {
           this.endTaskRun(TaskRun.TaskRunState.ERROR, taskRun, code, signal);
