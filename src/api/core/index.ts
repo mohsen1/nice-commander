@@ -54,7 +54,7 @@ export class NiceCommander {
   private readonly taskDefinitionsFiles: TaskDefinitionFile[] = [];
   private readonly connectionPromise!: Promise<Connection>;
   private readonly debug = debug("nice-commander");
-  private readonly invokeFile = path.resolve(__dirname, "./invoke");
+  private readonly invokeFile = path.resolve(__dirname, "./invoke.js");
   private readonly redisClient!: RedisClient;
   private readonly redisSubscriber!: RedisClient;
   private readonly redLock!: Redlock;
@@ -115,14 +115,21 @@ export class NiceCommander {
       });
     }
 
+    // Subscribe to key expiration messages
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
     this.redisSubscriber.on("message", (channel, message) => {
       if (channel !== this.REDIS_KEY_EXPIRED_CHANNEL) return;
 
+      // if key expired as a result of an scheduled task key that was set to expire
       if (message.startsWith(this.REDIS_TASK_SCHEDULE_PREFIX)) {
+        // invoke the task
         this.onTaskScheduleKeyExpired(message);
       }
+
+      // if the key expired as a result of a task run timeout key that was set to expire
+      // to kill that task past its time budget
       if (message.startsWith(this.REDIS_TASK_TIMEOUT_PREFIX)) {
+        // try to kill that child process
         this.onTaskTimeoutKeyExpired(message);
       }
     });
@@ -342,6 +349,7 @@ export class NiceCommander {
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
+
     if (taskRun && taskRun.state === TaskRun.TaskRunState.RUNNING) {
       this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
     }
@@ -427,6 +435,13 @@ export class NiceCommander {
       const lockTTL = taskRun.task.timeoutAfter + 1000;
       await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
+      await this.cloudWatchLogs
+        .createLogStream({
+          logGroupName: this.logGroupName,
+          logStreamName: taskRun.uniqueId,
+        })
+        .promise();
+
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
         `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
@@ -435,19 +450,12 @@ export class NiceCommander {
         taskRun.task.timeoutAfter
       );
 
-      await this.cloudWatchLogs
-        .createLogStream({
-          logGroupName: this.logGroupName,
-          logStreamName: taskRun.uniqueId,
-        })
-        .promise();
-
       // Create a child process
       const child = cp.fork(
         this.invokeFile,
         [taskDefinitionFile.filePath, taskRun.payload],
         {
-          stdio: "pipe",
+          stdio: this.options.logToStdout ? "pipe" : "ignore",
         }
       );
 
@@ -508,16 +516,6 @@ export class NiceCommander {
           this.endTaskRun(TaskRun.TaskRunState.ERROR, taskRun, code, signal);
         }
       });
-
-      // TODO: this is probably a bad idea: why we can't rely on Redis timeout lock to expire to kill?
-      // Kill the child process if it takes more time than timeout to exit
-      setTimeout(() => {
-        if (!child.killed) {
-          child.kill("SIGABRT");
-        }
-      }, taskRun.task.timeoutAfter);
-
-      // publishLogs(`${new Date()}`);
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host
     }
@@ -557,7 +555,7 @@ export class NiceCommander {
 
     bootstrap().catch((e) => (bootstrapError = e));
 
-    router.get("*", (_, res, next) => {
+    router.all("*", (_, res, next) => {
       if (bootstrapError) {
         return next(bootstrapError);
       }

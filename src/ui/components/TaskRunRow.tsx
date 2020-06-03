@@ -41,7 +41,8 @@ const TaskRunRow: React.FC<TaskRun> = ({
   return (
     <Link
       prefetch={false}
-      href={`${appContext?.baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
+      as={`${appContext?.baseUrl}/tasks/${taskName}/runs/${taskRunId}`}
+      href={`${appContext?.baseUrl}/tasks/[taskName]/runs/[runId]`}
     >
       <a>
         <Container

@@ -3,7 +3,9 @@ const withCSS = require("@zeit/next-css");
 
 module.exports = (overrides) =>
   withCSS({
-    reactStrictMode: true,
+    // https://github.com/palantir/blueprint/issues/4149
+    // Blueprint uses the old context API
+    reactStrictMode: false,
 
     publicRuntimeConfig: {
       baseUrl: "/",

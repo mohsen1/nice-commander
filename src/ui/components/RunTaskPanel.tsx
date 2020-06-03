@@ -6,7 +6,6 @@ import Router from "next/router";
 import { Button, Classes } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-import { H2 } from "./headings";
 
 const InvalidJSONError = styled.p`
   text-align: right;
@@ -25,19 +24,9 @@ const defaultValue = `{
 `;
 
 const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
-  let getEditorValueRef = () => "";
+  const [editorValue, setEditorValue] = useState(defaultValue);
   const [isValidPayload, setIsValidPayload] = useState<boolean>(true);
-  function getPayloadSafe() {
-    try {
-      // make sure input is valid JSON
-      const value = JSON.stringify(JSON.parse(getEditorValueRef()));
-      setIsValidPayload(true);
-      return value;
-    } catch (e) {
-      setIsValidPayload(false);
-      return "{}";
-    }
-  }
+
   const [runTask] = useMutation(gql`
     mutation Run($taskId: String!, $payload: String!) {
       runTask(id: $taskId, payload: $payload) {
@@ -51,14 +40,22 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
 
   return (
     <div className={Classes.DIALOG_BODY}>
-      <H2>Run</H2>
       <p>Enter this run's payload:</p>
       <Editor
         value={defaultValue}
         height="150px"
-        editorDidMount={(getEditorValue) =>
-          (getEditorValueRef = getEditorValue)
-        }
+        editorDidMount={(_, editor) => {
+          editor.onDidChangeModelContent((event) => {
+            const value = editor.getValue();
+            setEditorValue(value);
+            try {
+              JSON.parse(value);
+              setIsValidPayload(true);
+            } catch {
+              setIsValidPayload(false);
+            }
+          });
+        }}
       />
       <InvalidJSONError>
         {!isValidPayload && "Invalid JSON in payload"}
@@ -66,12 +63,14 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
       <Buttons>
         <Button
           large
+          icon="play"
           intent="primary"
           text="Run"
+          disabled={!isValidPayload}
           onClick={async () => {
             const { data } = await runTask({
               variables: {
-                payload: getPayloadSafe(),
+                payload: editorValue,
                 taskId,
               },
             });

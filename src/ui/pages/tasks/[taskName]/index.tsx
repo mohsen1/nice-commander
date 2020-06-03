@@ -76,7 +76,14 @@ const TaskPage: React.FC<TaskPageProps> = () => {
 
         <Editor readonly value={data?.task?.code} language="typescript" />
       </Card>
-      <Dialog isOpen={isRunDialogOpen} canOutsideClickClose={true}>
+      <Dialog
+        icon="play"
+        title={`Run "${data?.task?.name}"`}
+        isOpen={isRunDialogOpen}
+        onClose={() => setRunDialogOpen(false)}
+        canOutsideClickClose
+        canEscapeKeyClose
+      >
         <RunTaskPanel taskId={data?.task?.id} />
       </Dialog>
       <H4>Latest Runs</H4>

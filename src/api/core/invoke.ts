@@ -27,10 +27,14 @@ function requireTaskDefinition(filePath: string) {
   throw new Error(`Task definition at ${filePath} is not valid`);
 }
 
-const taskFile = process.argv[2];
-const payload = JSON.parse(process.argv[3]);
-const taskDefinition = requireTaskDefinition(taskFile);
+async function main() {
+  const taskFile = process.argv[2];
+  const payload = JSON.parse(process.argv[3]);
+  const taskDefinition = requireTaskDefinition(taskFile);
 
-taskDefinition.run(payload);
+  await taskDefinition.run(payload);
+}
+
+main().catch(() => process.exit(1));
 
 export {};

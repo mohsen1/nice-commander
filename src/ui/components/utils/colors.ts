@@ -1,4 +1,4 @@
-type Status = "FINISHED" | "RUNNING" | "ERROR" | "TIMED_OUT";
+export type Status = "FINISHED" | "RUNNING" | "ERROR" | "TIMED_OUT";
 
 export function getBackgroundColorForStatus(status: Status) {
   switch (status) {

@@ -8,7 +8,7 @@ import express from "express";
 import path from "path";
 import config from "config";
 import AWS from "aws-sdk";
-import { ConnectionOptions } from "typeorm";
+import treeKill from "tree-kill";
 
 const awsCredentials = new AWS.SharedIniFileCredentials({
   profile: config.get("aws-profile"),
@@ -47,6 +47,22 @@ const middleware = createMiddleware({
 
 app.use(mountPath, middleware);
 
-app.listen(3000, () =>
+const server = app.listen(3000, () =>
   console.info("Server is listening on http://localhost:3000")
 );
+
+process.once("SIGUSR2", () => {
+  server.close(() => {
+    treeKill(process.pid, "SIGUSR2");
+  });
+
+  // After a second give up and abort
+  setTimeout(() => {
+    treeKill(process.pid, "SIGUSR2", (err) => {
+      if (err) {
+        console.error("Error tree-killing", err);
+      }
+      process.abort();
+    });
+  }, 1000);
+});

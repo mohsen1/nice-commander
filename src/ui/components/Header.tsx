@@ -23,7 +23,7 @@ const Header: React.FC = () => {
     <Navbar>
       <Navbar.Group align={Alignment.LEFT}>
         <Navbar.Heading>
-          <Link prefetch={false} href={appContext?.baseUrl || "/"}>
+          <Link prefetch={false} as={appContext?.baseUrl} href={"/"}>
             <a>Nice Commander</a>
           </Link>
         </Navbar.Heading>
