@@ -378,7 +378,7 @@ export class NiceCommander {
 
       if (typeof timeoutAfter === "string") {
         task.timeoutAfterDescription = timeoutAfter;
-        task.timeoutAfter = timestring(timeoutAfter);
+        task.timeoutAfter = timestring(timeoutAfter, "ms");
       } else {
         task.timeoutAfterDescription = `${timeoutAfter} milliseconds`;
         task.timeoutAfter = timeoutAfter;
@@ -455,7 +455,7 @@ export class NiceCommander {
         this.invokeFile,
         [taskDefinitionFile.filePath, taskRun.payload],
         {
-          stdio: this.options.logToStdout ? "pipe" : "ignore",
+          stdio: "pipe",
         }
       );
 
@@ -499,6 +499,11 @@ export class NiceCommander {
       }, 1000);
 
       child.stdout?.on("data", async (chunk) => {
+        eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
+        submitLogs();
+      });
+
+      child.stderr?.on("data", async (chunk) => {
         eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
         submitLogs();
       });

@@ -5,7 +5,7 @@ const ErrorMessage = styled.pre`
   padding: 1rem;
   font-family: monospace;
   background: var(--color-fail-dim);
-  color: var(--color-fail-bold);
+  color: var(--color-text);
 `;
 
 const ErrorPresenter: React.FC<{ error?: Error }> = ({ error }) => {

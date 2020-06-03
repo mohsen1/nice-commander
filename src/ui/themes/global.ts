@@ -36,7 +36,7 @@ export default css`
         --color-gray-dim: #333333;
         --color-success-bold: darkgreen;
         --color-success-normal: green;
-        --color-success-dim: lightgreen;
+        --color-success-dim: #1f2f1f;
         --color-fail-bold: darkred;
         --color-fail-normal: #ee3333;
         --color-fail-dim: #642f2f;
