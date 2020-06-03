@@ -4,14 +4,16 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { Task } from "./Task";
 
 /** How a task is invoked */
-enum InvocationSource {
+export enum InvocationSource {
   /** Manually using the dashboard */
   MANUAL,
   /** Using a schedule */
   SCHEDULED,
+  /** Programmatically started */
+  API,
 }
 
-enum TaskRunState {
+export enum TaskRunState {
   RUNNING,
   FINISHED,
   ERROR,

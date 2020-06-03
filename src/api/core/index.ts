@@ -444,6 +444,35 @@ export class NiceCommander {
   }
 
   /**
+   * Programmatically start a new task
+   */
+  public async startTaskByName(
+    taskName: string,
+    payload = "{}",
+    invocationSource = TaskRun.InvocationSource.API
+  ) {
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const task = await taskRepository.findOne({ where: { name: taskName } });
+
+    if (!task) {
+      throw new Error(`Can not find task named ${taskName}`);
+    }
+
+    const taskRun = new TaskRun();
+    taskRun.payload = payload;
+    taskRun.startTime = Date.now();
+    taskRun.invocationSource = invocationSource;
+    taskRun.state = TaskRun.TaskRunState.RUNNING;
+    taskRun.task = task;
+
+    await taskRunRepository.save(taskRun);
+    this.startTask(taskRun);
+    await taskRunRepository.save(taskRun);
+  }
+
+  /**
    * Start a task with a given task run
    * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
    * @param publishLogs Logging pub-sub
@@ -625,8 +654,17 @@ export class NiceCommander {
   }
 }
 
+/**
+ * Create a Nice Commander instance with an Express middleware
+ * Use the returned `startTask` to programmatically start tasks in your application
+ */
 export function createMiddleware(options: Options) {
   const instance = new NiceCommander(options);
+  const middleware = instance.getExpressMiddleware();
 
-  return instance.getExpressMiddleware();
+  return {
+    instance,
+    middleware,
+    startTask: instance.startTaskByName.bind(instance),
+  };
 }
