@@ -358,14 +358,12 @@ export class NiceCommander {
     const taskRunRepository = connection.getRepository(TaskRun);
     const taskRun = await taskRunRepository.findOne(taskRunId);
 
-    if (taskRun && taskRun.state === TaskRun.TaskRunState.RUNNING) {
-      if (this.childProcesses.has(taskRun.id)) {
-        await this.endTaskRun(
-          TaskRun.TaskRunState.TIMED_OUT,
-          taskRun,
-          undefined
-        );
-      }
+    if (
+      taskRun &&
+      taskRun.state === TaskRun.TaskRunState.RUNNING &&
+      this.childProcesses.has(taskRun.id)
+    ) {
+      await this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
 
       this.killTaskRunProcess(taskRun);
     }
@@ -594,15 +592,25 @@ export class NiceCommander {
 
       child.on("exit", (code, signal) => {
         // Skip ending TaskRun if it was timed out
-        if (taskRun.state !== TaskRun.TaskRunState.TIMED_OUT) {
+        if (taskRun.state === TaskRun.TaskRunState.TIMED_OUT) {
           return;
         }
 
-        if (code === 0) {
-          this.endTaskRun(TaskRun.TaskRunState.FINISHED, taskRun, code, signal);
-        } else {
-          this.endTaskRun(TaskRun.TaskRunState.ERROR, taskRun, code, signal);
-        }
+        // Delete the timeout key for this task run
+        this.redisClient.del(
+          `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
+          taskRun.id
+        );
+
+        // End the task
+        this.endTaskRun(
+          code === 0
+            ? TaskRun.TaskRunState.FINISHED
+            : TaskRun.TaskRunState.ERROR,
+          taskRun,
+          code,
+          signal
+        );
       });
     } catch {
       // ignore failing to acquire a lock, this is task run is probably run by another host

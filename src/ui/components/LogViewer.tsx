@@ -54,17 +54,17 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
     },
   });
 
+  if (error) {
+    stopPolling();
+    return <ErrorPresenter error={error} />;
+  }
+
   const value = allLogs
     .map(
       ({ message, timestamp }) =>
         `${new Date(timestamp).toLocaleTimeString()} ${message}`
     )
     .join("");
-
-  if (error) {
-    stopPolling();
-    return <ErrorPresenter error={error} />;
-  }
 
   return (
     <div>
