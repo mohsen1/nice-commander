@@ -111,7 +111,7 @@ export default class TasksRunResolver {
       order: { startTime: "DESC" },
     });
 
-    return taskRuns;
+    return taskRuns.sort((a, b) => a.startTime - b.startTime);
   }
 
   @Query((returns) => TaskRun)

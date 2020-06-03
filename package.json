@@ -10,13 +10,13 @@
   },
   "license": "MIT",
   "scripts": {
-    "preprod": "yarn build",
-    "prod": "NODE_ENV=production node dist/examples/basic/server.js",
+    "preprod": "yarn prepare",
+    "prod": "NODE_ENV=production nodemon --watch dist dist/examples/basic/server.js",
     "tsc-watch": "tsc --watch",
-    "example-server": "DEBUG=nice-commander nodemon --delay 10 --watch dist dist/examples/basic/server.js",
+    "example-server": "DEBUG=nice-commander nodemon --delay 0.1 --watch dist dist/examples/basic/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "lint": "yarn eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "prettier -l '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx",
     "prepare": "rm -rf src/ui/.next && next build src/ui && tsc",
     "test": "jest"
   },
@@ -80,6 +80,7 @@
     "nodemon": "^2.0.2",
     "prettier": "^2.0.5",
     "prop-types": "^15.7.2",
+    "tree-kill": "^1.2.2",
     "tslib": "^2.0.0",
     "typescript": "^3.7.5"
   },

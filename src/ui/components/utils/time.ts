@@ -3,7 +3,7 @@ export function displayTaskRunDuration(
   endTime?: number | null
 ) {
   if (!endTime) {
-    return "...";
+    return "…";
   }
   const diffSeconds = Math.floor((endTime - startTime) / 1000);
   if (diffSeconds < 60) {

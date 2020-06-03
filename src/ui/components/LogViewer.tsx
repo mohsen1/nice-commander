@@ -62,6 +62,7 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
     .join("");
 
   if (error) {
+    stopPolling();
     return <ErrorPresenter error={error} />;
   }
 

@@ -5,7 +5,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 const Main = styled.main`
-  margin: 1rem;
+  margin: 1rem auto;
+  padding: 0 1rem;
+  max-width: 85rem;
+  min-width: min(65rem, 100vw);
 `;
 
 const Container = styled.div`
