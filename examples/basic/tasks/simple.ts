@@ -3,6 +3,8 @@ import { TaskDefinition } from "../../../src";
 // A simple manual task
 const task: TaskDefinition = {
   name: "Sample Task",
+  description:
+    "This is a very simple task to demonstrate how to use Nice Commander. All it does is to print a few lines out to stdout",
   async run(payload) {
     const wait = (amount: number) =>
       new Promise((resolve) => setTimeout(resolve, amount));

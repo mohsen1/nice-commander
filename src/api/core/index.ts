@@ -385,6 +385,8 @@ export class NiceCommander {
       }
 
       task.name = taskDefinitionFile.taskDefinition.name;
+      task.description =
+        taskDefinitionFile.taskDefinition.description ?? "No description";
       task.schedule = taskDefinitionFile.taskDefinition.schedule || "manual";
       task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 

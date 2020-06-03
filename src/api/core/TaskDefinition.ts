@@ -11,6 +11,9 @@ export interface TaskDefinition {
    */
   name: string;
 
+  /** Task description. Plain text */
+  description?: string;
+
   /**
    * Run function. This function is asynchronous
    *
