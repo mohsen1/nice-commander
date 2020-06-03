@@ -3,6 +3,7 @@ import { styled } from "linaria/react";
 import Link from "next/link";
 import { Card, Elevation } from "@blueprintjs/core";
 
+import RunButton from "./RunButton";
 import { AppContext } from "../context/AppContext";
 import { displayTaskRunDuration } from "./utils/time";
 import {
@@ -31,6 +32,7 @@ interface Run {
 }
 interface Task {
   name: string;
+  id: string;
   runs: Run[];
 }
 
@@ -47,13 +49,18 @@ const RunDotSpan = styled.pre<{ status: Status }>`
   text-align: center;
 `;
 
+const TaskTitle = styled.span`
+  margin-left: 1rem;
+`;
+
 const RunDot: React.FC<{ run: Run }> = ({ run }) => {
   const duration = displayTaskRunDuration(run.startTime, run.endTime);
   return <RunDotSpan status={run.state as Status}>{duration}</RunDotSpan>;
 };
 
-const TaskListItem: React.FC<Task> = ({ name, runs }) => {
+const TaskListItem: React.FC<Task> = ({ name, runs, id }) => {
   const appContext = useContext(AppContext);
+
   return (
     <Link
       prefetch={false}
@@ -61,7 +68,10 @@ const TaskListItem: React.FC<Task> = ({ name, runs }) => {
       href={`${appContext?.baseUrl}/tasks/[taskName]`}
     >
       <ItemRow elevation={Elevation.ZERO} interactive>
-        <span>{name}</span>
+        <span>
+          <RunButton taskId={id} taskName={name} text={``} />
+          <TaskTitle>{name}</TaskTitle>
+        </span>
         <span>
           {runs.slice(0, 5).map((run) => (
             <RunDot run={run} key={run.startTime} />

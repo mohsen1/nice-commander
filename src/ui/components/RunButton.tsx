@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useMutation } from "react-apollo";
 import gql from "graphql-tag";
 import { styled } from "linaria/react";
 import Router from "next/router";
-import { Button, Classes } from "@blueprintjs/core";
+import { Button, Classes, Dialog } from "@blueprintjs/core";
 
 import Editor from "./Editor";
+import { AppContext } from "../context/AppContext";
 
 const InvalidJSONError = styled.p`
   text-align: right;
@@ -23,7 +24,11 @@ const defaultValue = `{
 }
 `;
 
-const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
+const RunTaskPanel: React.FC<{ taskId: string; taskName: string }> = ({
+  taskId,
+  taskName,
+}) => {
+  const appContext = useContext(AppContext);
   const [editorValue, setEditorValue] = useState(defaultValue);
   const [isValidPayload, setIsValidPayload] = useState<boolean>(true);
 
@@ -75,7 +80,11 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
               },
             });
             Router.push(
-              window.location.pathname + "/runs/" + data?.runTask?.id
+              appContext.baseUrl +
+                "/tasks/" +
+                taskName +
+                "/runs/" +
+                data?.runTask?.id
             );
           }}
         />
@@ -84,4 +93,37 @@ const RunTaskPanel: React.FC<{ taskId: string }> = ({ taskId }) => {
   );
 };
 
-export default RunTaskPanel;
+const RunButton: React.FC<{
+  taskId: string;
+  taskName: string;
+  text?: string;
+}> = ({ taskId, taskName, text = "Run" }) => {
+  const [isRunDialogOpen, setRunDialogOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        icon="play"
+        text={text}
+        intent="primary"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setRunDialogOpen(true);
+        }}
+      />
+      <Dialog
+        icon="play"
+        title={`Run "${taskName}"`}
+        isOpen={isRunDialogOpen}
+        onClose={() => setRunDialogOpen(false)}
+        canOutsideClickClose
+        canEscapeKeyClose
+      >
+        <RunTaskPanel taskId={taskId} taskName={taskName} />
+      </Dialog>
+    </>
+  );
+};
+
+export default RunButton;

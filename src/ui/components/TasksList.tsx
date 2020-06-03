@@ -7,19 +7,21 @@ import TaskListItem from "../components/TaskListItem";
 import ErrorPresenter from "../components/ErrorPresentor";
 import { H4 } from "./headings";
 
-const TaskList = () => {
-  const query = gql`
-    query GetTasks {
-      tasks {
-        name
-        runs {
-          state
-          startTime
-          endTime
-        }
+const query = gql`
+  query GetTasks {
+    tasks {
+      name
+      id
+      runs {
+        state
+        startTime
+        endTime
       }
     }
-  `;
+  }
+`;
+
+const TaskList = () => {
   const { data, error } = useQuery(query);
 
   if (error) {
@@ -32,13 +34,19 @@ const TaskList = () => {
       {data?.tasks.map(
         (task: {
           name: string;
+          id: string;
           runs: {
             state: string;
             startTime: number;
             endTime: number;
           }[];
         }) => (
-          <TaskListItem key={task.name} name={task.name} runs={task.runs} />
+          <TaskListItem
+            key={task.name}
+            id={task.id}
+            name={task.name}
+            runs={task.runs}
+          />
         )
       )}
     </Card>
