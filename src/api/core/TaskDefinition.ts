@@ -15,6 +15,12 @@ export interface TaskDefinition {
   description?: string;
 
   /**
+   * Provide a JSON Schema definition for how the payload should look like.
+   * When running tasks, the incoming payload will be validated against this schema
+   */
+  payloadJsonSchema?: string;
+
+  /**
    * Run function. This function is asynchronous
    *
    * @param payload Task payload sent via manual task invocation

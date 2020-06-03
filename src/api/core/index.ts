@@ -368,13 +368,15 @@ export class NiceCommander {
 
     // Sync incoming task definitions to database
     for (const taskDefinitionFile of taskDefinitionsFiles) {
+      const { taskDefinition, filePath } = taskDefinitionFile;
+
       const existingTask = await taskRepository.findOne({
-        name: taskDefinitionFile.taskDefinition.name,
+        name: taskDefinition.name,
       });
 
       const task = existingTask || new Task();
 
-      const { timeoutAfter } = taskDefinitionFile.taskDefinition;
+      const { timeoutAfter } = taskDefinition;
 
       if (typeof timeoutAfter === "string") {
         task.timeoutAfterDescription = timeoutAfter;
@@ -384,11 +386,11 @@ export class NiceCommander {
         task.timeoutAfter = timeoutAfter;
       }
 
-      task.name = taskDefinitionFile.taskDefinition.name;
-      task.description =
-        taskDefinitionFile.taskDefinition.description ?? "No description";
-      task.schedule = taskDefinitionFile.taskDefinition.schedule || "manual";
-      task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
+      task.name = taskDefinition.name;
+      task.description = taskDefinition.description ?? "No description";
+      task.payloadJsonSchema = taskDefinition.payloadJsonSchema ?? "{}";
+      task.schedule = taskDefinition.schedule || "manual";
+      task.code = fs.readFileSync(filePath).toString();
 
       await taskRepository.save(task);
 

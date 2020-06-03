@@ -22,6 +22,10 @@ export class Task {
   @Column({ type: "text" })
   public code!: string;
 
+  @Field({ description: "Task payload JSON Schema" })
+  @Column({ type: "text" })
+  public payloadJsonSchema!: string;
+
   @Field((type) => Number, { description: "timeout after (ms)" })
   @Column()
   public timeoutAfter!: number;

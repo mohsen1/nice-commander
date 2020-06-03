@@ -5,6 +5,15 @@ const task: TaskDefinition = {
   name: "Sample Task",
   description:
     "This is a very simple task to demonstrate how to use Nice Commander. All it does is to print a few lines out to stdout",
+  payloadJsonSchema: JSON.stringify({
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+        description: "name of your payload",
+      },
+    },
+  }),
   async run(payload) {
     const wait = (amount: number) =>
       new Promise((resolve) => setTimeout(resolve, amount));
