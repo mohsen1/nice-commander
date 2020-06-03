@@ -32,7 +32,7 @@ app.get("/", (_, res) =>
 );
 
 const mountPath = "/nice-commander";
-const middleware = createMiddleware({
+const { middleware, startTask } = createMiddleware({
   awsRegion: "us-east-2",
   awsCredentials,
   mountPath,
@@ -46,6 +46,21 @@ const middleware = createMiddleware({
 });
 
 app.use(mountPath, middleware);
+
+// Demonstration of programmatic invocation
+// Try running:
+// curl -X POST http://localhost:3000/run/Sample%20Task
+app.post("/run/:name", (req, res) => {
+  const name = req.params["name"];
+  console.log("Starting task programmatically. Task name:", name);
+  startTask(name)
+    .then(() => {
+      res.status(200).send("Successfully started task");
+    })
+    .catch((err) => {
+      res.status(500).send(err.stack);
+    });
+});
 
 const server = app.listen(3000, () =>
   console.info("Server is listening on http://localhost:3000")
