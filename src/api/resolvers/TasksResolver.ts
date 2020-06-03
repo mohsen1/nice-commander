@@ -32,11 +32,16 @@ export default class TasksResolver {
     assertNumberArgumentIsInRange("take", take, 1, 500);
     assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
 
-    return this.repository.find({
+    const tasks = await this.repository.find({
       take,
       skip,
       relations: ["runs"],
     });
+
+    return tasks.map((task) => ({
+      ...task,
+      runs: task.runs.sort((a, b) => b.startTime - a.startTime),
+    }));
   }
 
   @Query((returns) => Task, {
