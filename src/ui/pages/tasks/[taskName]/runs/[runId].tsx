@@ -7,6 +7,7 @@ import { Card, Elevation } from "@blueprintjs/core";
 
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
+import RunButton from "../../../../components/RunButton";
 import { withApollo } from "../../../../lib/apollo";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
 import { AppContext } from "../../../../context/AppContext";
@@ -69,6 +70,13 @@ const TaskRunPage: React.FC = () => {
             </a>
           </Link>
         </H3>
+        <p>
+          <RunButton
+            text="Run again"
+            taskId={data?.taskRun?.task?.id}
+            taskName={data?.taskRun?.task?.name}
+          />
+        </p>
         <p>
           Started by:{" "}
           <a href={`mailto://${data?.taskRun.runnerEmail}`}>
