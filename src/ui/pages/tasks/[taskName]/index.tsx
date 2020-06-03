@@ -15,6 +15,7 @@ import { H3, H4 } from "../../../components/headings";
 
 const Details = styled.div`
   display: grid;
+  grid-column-gap: 1rem;
   grid-template-columns: 1fr auto;
 `;
 
@@ -29,6 +30,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
     query GetTask {
       task(name: "${taskName}") {
         name
+        description
         id
         schedule
         code
@@ -55,6 +57,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
         <H3>{data?.task?.name}</H3>
         <Details>
           <div>
+            <p>{data?.task?.description}</p>
             <p>
               {data?.task?.schedule === "manual"
                 ? "Manual invocation only"
