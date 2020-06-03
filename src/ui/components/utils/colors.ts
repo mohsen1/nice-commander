@@ -1,4 +1,4 @@
-export type Status = "FINISHED" | "RUNNING" | "ERROR" | "TIMED_OUT";
+export type Status = "FINISHED" | "RUNNING" | "ERROR" | "TIMED_OUT" | "KILLED";
 
 export function getBackgroundColorForStatus(status: Status) {
   switch (status) {
@@ -9,6 +9,7 @@ export function getBackgroundColorForStatus(status: Status) {
     case "RUNNING":
       return "var(--color-progress-dim)";
     case "TIMED_OUT":
+    case "KILLED":
       return "var(--color-gray-dim)";
   }
 }
@@ -21,6 +22,7 @@ export function getForegroundColorForStatus(status: Status) {
     case "RUNNING":
       return "var(--color-progress-normal)";
     case "TIMED_OUT":
+    case "KILLED":
       return "var(--color-gray-normal)";
   }
 }

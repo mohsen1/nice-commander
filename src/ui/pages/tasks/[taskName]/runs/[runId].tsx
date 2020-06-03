@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import gql from "graphql-tag";
 import { useRouter } from "next/router";
-import { useQuery } from "react-apollo";
+import { useQuery, useMutation } from "react-apollo";
 import Link from "next/link";
-import { Card, Elevation } from "@blueprintjs/core";
+import { Card, Elevation, ButtonGroup, Button } from "@blueprintjs/core";
 
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
@@ -15,33 +15,46 @@ import LogViewer from "../../../../components/LogViewer";
 import { H3, H4 } from "../../../../components/headings";
 import { getBackgroundColorForStatus } from "../../../../components/utils/colors";
 
+const stopTaskRunMutation = gql`
+  mutation StopTaskRun($taskRunId: String!) {
+    stopTaskRun(id: $taskRunId)
+  }
+`;
+
+const getTaskRunQuery = gql`
+  query GetTaskRun($runId: String!) {
+    taskRun(id: $runId) {
+      endTime
+      startTime
+      state
+      payload
+      id
+      invocationSource
+      runnerName
+      runnerEmail
+      task {
+        name
+        id
+      }
+    }
+  }
+`;
+
 const TaskRunPage: React.FC = () => {
   const { taskName, runId } = useRouter().query;
 
-  const query = gql`
-    query GetTaskRun {
-      taskRun(id: "${runId}") {
-          endTime
-          startTime
-          state
-          payload
-          id
-          invocationSource
-          runnerName
-          runnerEmail
-          task {
-            name
-            id
-          }
-      }
-    }`;
-
-  const { data, error, stopPolling } = useQuery(query, {
+  const { data, error, stopPolling } = useQuery(getTaskRunQuery, {
+    variables: {
+      runId,
+    },
     pollInterval: 1000,
     notifyOnNetworkStatusChange: true,
   });
 
+  const [stopTaskRun] = useMutation(stopTaskRunMutation);
+
   if (error) {
+    stopPolling();
     return <ErrorPresenter error={error} />;
   }
 
@@ -71,11 +84,29 @@ const TaskRunPage: React.FC = () => {
           </Link>
         </H3>
         <p>
-          <RunButton
-            text="Run again"
-            taskId={data?.taskRun?.task?.id}
-            taskName={data?.taskRun?.task?.name}
-          />
+          <ButtonGroup>
+            {data?.taskRun?.state === "RUNNING" && (
+              <Button
+                text="stop"
+                intent="danger"
+                icon="stop"
+                onClick={() =>
+                  stopTaskRun({
+                    variables: {
+                      taskRunId: data?.taskRun?.id,
+                    },
+                  })
+                }
+              />
+            )}
+            {data?.taskRun?.state !== "RUNNING" && (
+              <RunButton
+                text="Run again"
+                taskId={data?.taskRun?.task?.id}
+                taskName={data?.taskRun?.task?.name}
+              />
+            )}
+          </ButtonGroup>
         </p>
         <p>
           Started by:{" "}

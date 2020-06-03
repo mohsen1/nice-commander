@@ -49,7 +49,7 @@ app.use(mountPath, middleware);
 
 // Demonstration of programmatic invocation
 // Try running:
-// curl -X POST http://localhost:3000/run/Sample%20Task
+// curl -X POST http://localhost:3000/run/Simple%20Task
 app.post("/run/:name", (req, res) => {
   const name = req.params["name"];
   console.log("Starting task programmatically. Task name:", name);

@@ -11,7 +11,7 @@ const task: TaskDefinition = {
 
     for (const i of Array.from({ length: 10 }, (_, ii) => ii)) {
       await wait(5);
-      console.log(`Sample Task log ${i} -- payload name is ${payload?.name}`);
+      console.log(`Simple Task log ${i} -- payload name is ${payload?.name}`);
     }
   },
   timeoutAfter: "5 seconds",
