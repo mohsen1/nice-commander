@@ -1,5 +1,5 @@
 import { Resolver, Query, Arg, Int, Mutation, Ctx } from "type-graphql";
-import { Connection } from "typeorm";
+import { Connection } from "typeorm-plus";
 import { Service, Inject } from "typedi";
 
 import { TaskRun } from "../models/TaskRun";

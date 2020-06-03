@@ -1,5 +1,11 @@
 import { ObjectType, ID, Field } from "type-graphql";
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  DeleteDateColumn,
+} from "typeorm-plus";
 
 import { TaskRun } from "./TaskRun";
 
@@ -9,6 +15,9 @@ export class Task {
   @Field((type) => ID)
   @PrimaryGeneratedColumn()
   public id!: string;
+
+  @DeleteDateColumn()
+  public deletedAt!: Date;
 
   @Field({ description: "Task name" })
   @Column()

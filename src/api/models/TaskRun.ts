@@ -1,5 +1,10 @@
 import { ObjectType, ID, Field, registerEnumType, Int } from "type-graphql";
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+} from "typeorm-plus";
 
 import { Task } from "./Task";
 

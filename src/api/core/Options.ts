@@ -1,5 +1,5 @@
 import { Credentials } from "aws-sdk";
-import { ConnectionOptions } from "typeorm";
+import { ConnectionOptions } from "typeorm-plus";
 
 /**
  * NiceCommander constructor options
