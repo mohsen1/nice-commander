@@ -5,7 +5,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
-import React, { useContext } from "react";
+import React from "react";
 import Head from "next/head";
 import { ApolloProvider } from "@apollo/react-hooks";
 import { ApolloClient } from "apollo-client";
@@ -13,8 +13,6 @@ import { InMemoryCache } from "apollo-cache-inmemory";
 import { HttpLink } from "apollo-link-http";
 import fetch from "isomorphic-unfetch";
 import getConfig from "next/config";
-
-import { AppContext } from "../context/AppContext";
 
 let globalApolloClient = null;
 
@@ -54,7 +52,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const apolloClient = (ctx.apolloClient = initApolloClient({}));
+      const apolloClient = (ctx.apolloClient = initApolloClient({}, ctx?.req));
 
       // Run wrapped getInitialProps methods
       let pageProps = {};
@@ -115,16 +113,16 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
  * @param  {Object} initialState
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-function initApolloClient(initialState: object) {
+function initApolloClient(initialState: object, req?: Express.Request) {
   // Make sure to create a new client for every server-side request so that data
   // isn't shared between connections (which would be bad)
   if (typeof window === "undefined") {
-    return createApolloClient(initialState);
+    return createApolloClient(initialState, req);
   }
 
   // Reuse client on the client-side
   if (!globalApolloClient) {
-    globalApolloClient = createApolloClient(initialState);
+    globalApolloClient = createApolloClient(initialState, req);
   }
 
   return globalApolloClient;
@@ -134,18 +132,18 @@ function initApolloClient(initialState: object) {
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-function createApolloClient(initialState = {}) {
+function createApolloClient(initialState = {}, req: Express.Request) {
   const isBrowser = typeof window !== "undefined";
 
   return new ApolloClient({
     // Disables forceFetch on the server (so queries are only run once)
     ssrMode: !isBrowser,
-    link: createIsomorphLink(),
+    link: createIsomorphLink(req),
     cache: new InMemoryCache().restore(initialState),
   });
 }
 
-function createIsomorphLink() {
+function createIsomorphLink(req: Express.Request) {
   const isBrowser = typeof window !== "undefined";
   const { publicRuntimeConfig } = getConfig();
 
@@ -160,5 +158,10 @@ function createIsomorphLink() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { SchemaLink } = require("apollo-link-schema");
 
-  return new SchemaLink({ schema: publicRuntimeConfig.schema });
+  return new SchemaLink({
+    schema: publicRuntimeConfig.schema,
+    context: async () => ({
+      viewer: await publicRuntimeConfig?.getUser?.(req),
+    }),
+  });
 }
