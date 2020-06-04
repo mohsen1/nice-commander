@@ -2,7 +2,7 @@ import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
+import { createConnection, Connection, Equal, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
@@ -19,7 +19,7 @@ import { Container } from "typedi";
 
 import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { Task } from "../models/Task";
-import { TaskRun, TaskRunState } from "../models/TaskRun";
+import { TaskRun, TaskRunState, InvocationSource } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
@@ -310,7 +310,7 @@ export class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Not("manual"),
+        schedule: Equal(InvocationSource.SCHEDULED),
       },
     });
 
