@@ -8,6 +8,7 @@ import { NiceCommander, NiceCommanderContext } from "../../api/core";
 import { assertNumberArgumentIsInRange } from "./util";
 import NotFound from "./errors/NotFound";
 import LogEventsResponse from "./LogEventsResponse";
+import { CloudWatchLogs } from "aws-sdk";
 
 @Service()
 @Resolver(TaskRun)
@@ -146,9 +147,16 @@ export default class TasksRunResolver {
       throw new NotFound(`TaskRun with id ${id} was not found`);
     }
 
-    return this.niceCommander.cloudWatchLogs
+    const cloudWatchLogs = new CloudWatchLogs({
+      region: this.niceCommander.options.awsRegion,
+      credentials: this.niceCommander.options.awsCredentials,
+    });
+
+    return cloudWatchLogs
       .getLogEvents({
-        logGroupName: this.niceCommander.logGroupName,
+        logGroupName:
+          this.niceCommander.options.awsCloudWatchLogsLogGroupName ??
+          "NiceCommander",
         logStreamName: taskRun.uniqueId,
         startFromHead: !nextToken,
         nextToken,

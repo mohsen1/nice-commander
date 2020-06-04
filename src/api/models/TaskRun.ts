@@ -86,6 +86,7 @@ export class TaskRun {
 
   @Field((type) => TaskRunState, {
     description: "State of the TaskRun",
+    defaultValue: TaskRunState.RUNNING,
   })
   @Column({
     enum: TaskRunState,
@@ -94,7 +95,8 @@ export class TaskRun {
   public state!: TaskRunState;
 
   @Field((type) => InvocationSource, {
-    description: "Invocation Type",
+    description: "Invocation Source. How this task was started?",
+    defaultValue: InvocationSource.MANUAL,
   })
   @Column({
     enum: InvocationSource,
