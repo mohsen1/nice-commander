@@ -174,228 +174,6 @@ export class NiceCommander {
     });
   }
 
-  private async getNextJsRequestHandler(mountPath: string) {
-    const dev = process.env.DEBUG?.includes("nice-commander");
-    const dir = path.resolve(__dirname, "../../../../src/ui");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const nextConfig = require(path.join(dir, "next.config.js"));
-
-    const app = next({
-      dev,
-      dir,
-      conf: nextConfig({
-        assetPrefix: mountPath,
-        publicRuntimeConfig: {
-          schema: this.schema,
-          baseUrl: mountPath,
-          getUser: this.options.getUser,
-        },
-      }),
-    });
-    await app.prepare();
-    const handle = app.getRequestHandler();
-    return handle;
-  }
-
-  /**
-   * Read tasks definitions from a directory
-   * @param directory The path where tasks are stored at.
-   *
-   */
-  private readTaskDefinitions(directory: string) {
-    if (!directory.startsWith("/")) {
-      throw new Error("directory path must be absolute");
-    }
-
-    return fs
-      .readdirSync(directory)
-      .map((file) => path.resolve(directory, file))
-      .filter((filePath) => fs.statSync(filePath).isFile())
-      .filter((filePath) => filePath.endsWith(".js"))
-      .map((filePath) => {
-        const taskDefinition = this.requireTaskDefinition(filePath);
-
-        validateTaskDefinition(taskDefinition);
-        const taskDefinitionFile: TaskDefinitionFile = {
-          filePath,
-          taskDefinition,
-        };
-        return taskDefinitionFile;
-      });
-  }
-
-  private requireTaskDefinition(filePath: string) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const module = require(filePath);
-
-    if (typeof module.run === "function") {
-      return module;
-    }
-
-    if (typeof module?.default?.run === "function") {
-      return module.default;
-    }
-
-    throw new Error(`Task definition at ${filePath} is not valid`);
-  }
-
-  private async getApolloServerMiddleware() {
-    const connection = await this.connectionPromise;
-
-    Container.set({
-      id: "connection",
-      factory: () => connection,
-    });
-    Container.set({
-      id: "niceCommander",
-      factory: () => this,
-    });
-
-    this.schema = await buildSchema({
-      resolvers: [RootResolver, TasksResolver, TaskRunResolver],
-      container: Container,
-    });
-
-    const server = new ApolloServer({
-      schema: this.schema,
-      playground: true,
-      introspection: true,
-      context: async (args) => {
-        const viewer = await this.options?.getUser?.(args?.req);
-
-        return { viewer };
-      },
-    });
-
-    return server.getMiddleware({ path: "/graphql" });
-  }
-
-  /**
-   * Here we manage schedules of each task
-   */
-  private async schedule() {
-    const connection = await this.connectionPromise;
-    const taskRepository = connection.getRepository(Task);
-    const taskRunRepository = connection.getRepository(TaskRun);
-
-    const scheduledTasks = await taskRepository.find({
-      // TODO: paginate
-      take: Number.MAX_SAFE_INTEGER,
-      where: {
-        schedule: Not(TaskRun.InvocationSource.MANUAL),
-      },
-    });
-    const now = Date.now();
-    for (const task of scheduledTasks) {
-      const [lastTaskRun] = await taskRunRepository.find({
-        where: { task, endTime: Not(IsNull()) },
-        order: {
-          endTime: "DESC",
-        },
-        take: 1,
-      });
-
-      const scheduleMs = timestring(task.schedule, "ms");
-
-      // Default to scheduling next run immoderately after now
-      let expires = scheduleMs;
-
-      // In case we found the last run, schedule after last run's end time to keep on schedule
-      if (lastTaskRun) {
-        if (lastTaskRun.state !== TaskRun.TaskRunState.FINISHED) {
-          // Invoke immediately if last run was not successful
-          expires = 1;
-        } else {
-          const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
-
-          if (nextRun < now) {
-            // We are past due, schedule for immediate invocation
-            expires = 1;
-          } else {
-            expires = nextRun - now;
-          }
-        }
-      }
-
-      this.scheduleTask(task, expires);
-    }
-  }
-
-  /**
-   * Schedule a task to run in X milliseconds
-   * @param task Task
-   * @param inMs Time in milliseconds
-   */
-  private async scheduleTask(task: Task, inMs: number) {
-    // fire and forget
-    this.redisClient.set(
-      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-      task.id,
-      "PX",
-      inMs
-    );
-  }
-
-  private async onTaskScheduleKeyExpired(message: string) {
-    const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
-    const connection = await this.connectionPromise;
-    const taskRepository = connection.getRepository(Task);
-    const taskRunRepository = connection.getRepository(TaskRun);
-    const task = await taskRepository.findOne(taskId);
-
-    if (task) {
-      this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
-      const taskRun = new TaskRun();
-      taskRun.task = task;
-      taskRun.startTime = Date.now();
-      taskRun.state = TaskRun.TaskRunState.RUNNING;
-      taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
-      await taskRunRepository.save(taskRun);
-      this.startTask(taskRun);
-
-      // Schedule the next run
-      this.scheduleTask(task, timestring(task.schedule, "ms"));
-    }
-  }
-
-  private async onTaskTimeoutKeyExpired(message: string) {
-    const taskRunId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
-    const connection = await this.connectionPromise;
-    const taskRunRepository = connection.getRepository(TaskRun);
-    const taskRun = await taskRunRepository.findOne(taskRunId);
-
-    if (
-      taskRun &&
-      taskRun.state === TaskRun.TaskRunState.RUNNING &&
-      this.childProcesses.has(taskRun.id)
-    ) {
-      await this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
-
-      this.killTaskRunProcess(taskRun.id);
-    }
-  }
-
-  /**
-   * Respond to message on of killing a task run
-   */
-  private async onTaskRunStop(message: string) {
-    const taskRunId = message.replace(this.REDIS_TASK_STOP_PREFIX, "");
-    const childExists = this.childProcesses.has(taskRunId);
-
-    if (childExists) {
-      const connection = await this.connectionPromise;
-      const taskRunRepository = connection.getRepository(TaskRun);
-      const taskRun = await taskRunRepository.findOne(taskRunId);
-
-      if (taskRun) {
-        taskRun.state = TaskRun.TaskRunState.KILLED;
-        await taskRunRepository.save(taskRun);
-
-        this.killTaskRunProcess(taskRunId);
-      }
-    }
-  }
-
   /**
    * Every time Nice Commander boots up, it will read all of task definition files and updates models
    * in the database accordingly . We rely on definition name to find corresponding model in our
@@ -475,6 +253,191 @@ export class NiceCommander {
       }
 
       skip += take;
+    }
+  }
+
+  private requireTaskDefinition(filePath: string) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require(filePath);
+
+    if (typeof module.run === "function") {
+      return module;
+    }
+
+    if (typeof module?.default?.run === "function") {
+      return module.default;
+    }
+
+    throw new Error(`Task definition at ${filePath} is not valid`);
+  }
+
+  /**
+   * Read tasks definitions from a directory
+   * @param directory The path where tasks are stored at.
+   *
+   */
+  private readTaskDefinitions(directory: string) {
+    if (!directory.startsWith("/")) {
+      throw new Error("directory path must be absolute");
+    }
+
+    return fs
+      .readdirSync(directory)
+      .map((file) => path.resolve(directory, file))
+      .filter((filePath) => fs.statSync(filePath).isFile())
+      .filter((filePath) => filePath.endsWith(".js"))
+      .map((filePath) => {
+        const taskDefinition = this.requireTaskDefinition(filePath);
+
+        validateTaskDefinition(taskDefinition);
+        const taskDefinitionFile: TaskDefinitionFile = {
+          filePath,
+          taskDefinition,
+        };
+        return taskDefinitionFile;
+      });
+  }
+
+  /**
+   * Here we manage schedules of each task
+   */
+  private async schedule() {
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
+
+    const scheduledTasks = await taskRepository.find({
+      // TODO: paginate
+      take: Number.MAX_SAFE_INTEGER,
+      where: {
+        schedule: Not("manual"),
+      },
+    });
+
+    const names = scheduledTasks.map((s) => s.name);
+    console.log("Scheduled tasks", names);
+
+    for (const task of scheduledTasks) {
+      const [lastTaskRun] = await taskRunRepository.find({
+        where: { task, endTime: Not(IsNull()) },
+        order: {
+          endTime: "DESC",
+        },
+        take: 1,
+      });
+
+      console.log("lastTaskRun", lastTaskRun?.startTime);
+
+      const now = Date.now();
+      const scheduleMs = timestring(task.schedule, "ms");
+
+      // Default to scheduling next run immoderately after now
+      let expires = scheduleMs;
+
+      // In case we found the last run, schedule after last run's end time to keep on schedule
+      if (lastTaskRun) {
+        if (lastTaskRun.state !== TaskRun.TaskRunState.FINISHED) {
+          // Invoke immediately if last run was not successful
+          expires = 1;
+        } else {
+          const nextRun = parseInt(lastTaskRun.endTime, 10) + scheduleMs;
+
+          if (nextRun < now) {
+            // We are past due, schedule for immediate invocation
+            expires = 1;
+          } else {
+            expires = nextRun - now;
+          }
+        }
+      } else {
+        // if this is the first time, run immediately
+        expires = 1;
+      }
+
+      this.scheduleTask(task, expires);
+    }
+  }
+
+  /**
+   * Schedule a task to run in X milliseconds
+   * @param task Task
+   * @param inMs Time in milliseconds
+   */
+  private async scheduleTask(task: Task, inMs: number) {
+    this.debug(
+      "scheduleTask, ",
+      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+      task.id,
+      "PX",
+      inMs
+    );
+    // fire and forget
+    this.redisClient.set(
+      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+      task.id,
+      "PX",
+      inMs
+    );
+  }
+
+  private async onTaskScheduleKeyExpired(message: string) {
+    this.debug("onTaskScheduleKeyExpired", message);
+    const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const task = await taskRepository.findOne(taskId);
+
+    if (task) {
+      this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
+      const taskRun = new TaskRun();
+      taskRun.task = task;
+      taskRun.startTime = Date.now();
+      taskRun.state = TaskRun.TaskRunState.RUNNING;
+      taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
+      await taskRunRepository.save(taskRun);
+      this.startTask(taskRun);
+
+      // Schedule the next run
+      this.scheduleTask(task, timestring(task.schedule, "ms"));
+    }
+  }
+
+  private async onTaskTimeoutKeyExpired(message: string) {
+    const taskRunId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
+    const connection = await this.connectionPromise;
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const taskRun = await taskRunRepository.findOne(taskRunId);
+
+    if (
+      taskRun &&
+      taskRun.state === TaskRun.TaskRunState.RUNNING &&
+      this.childProcesses.has(taskRun.id)
+    ) {
+      await this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
+
+      this.killTaskRunProcess(taskRun.id);
+    }
+  }
+
+  /**
+   * Respond to message on of killing a task run
+   */
+  private async onTaskRunStop(message: string) {
+    const taskRunId = message.replace(this.REDIS_TASK_STOP_PREFIX, "");
+    const childExists = this.childProcesses.has(taskRunId);
+
+    if (childExists) {
+      const connection = await this.connectionPromise;
+      const taskRunRepository = connection.getRepository(TaskRun);
+      const taskRun = await taskRunRepository.findOne(taskRunId);
+
+      if (taskRun) {
+        taskRun.state = TaskRun.TaskRunState.KILLED;
+        await taskRunRepository.save(taskRun);
+
+        this.killTaskRunProcess(taskRunId);
+      }
     }
   }
 
@@ -714,6 +677,60 @@ export class NiceCommander {
     );
 
     return true;
+  }
+
+  private async getApolloServerMiddleware() {
+    const connection = await this.connectionPromise;
+
+    Container.set({
+      id: "connection",
+      factory: () => connection,
+    });
+    Container.set({
+      id: "niceCommander",
+      factory: () => this,
+    });
+
+    this.schema = await buildSchema({
+      resolvers: [RootResolver, TasksResolver, TaskRunResolver],
+      container: Container,
+    });
+
+    const server = new ApolloServer({
+      schema: this.schema,
+      playground: true,
+      introspection: true,
+      context: async (args) => {
+        const viewer = await this.options?.getUser?.(args?.req);
+
+        return { viewer };
+      },
+    });
+
+    return server.getMiddleware({ path: "/graphql" });
+  }
+
+  private async getNextJsRequestHandler(mountPath: string) {
+    const dev = process.env.DEBUG?.includes("nice-commander");
+    const dir = path.resolve(__dirname, "../../../../src/ui");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nextConfig = require(path.join(dir, "next.config.js"));
+
+    const app = next({
+      dev,
+      dir,
+      conf: nextConfig({
+        assetPrefix: mountPath,
+        publicRuntimeConfig: {
+          schema: this.schema,
+          baseUrl: mountPath,
+          getUser: this.options.getUser,
+        },
+      }),
+    });
+    await app.prepare();
+    const handle = app.getRequestHandler();
+    return handle;
   }
 
   /**
