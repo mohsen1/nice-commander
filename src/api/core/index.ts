@@ -19,7 +19,7 @@ import { Container } from "typedi";
 
 import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { Task } from "../models/Task";
-import { TaskRun } from "../models/TaskRun";
+import { TaskRun, TaskRunState } from "../models/TaskRun";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
@@ -448,6 +448,33 @@ export class NiceCommander {
       if (deletedTask) {
         taskRepository.softDelete(deletedTask);
       }
+    }
+
+    // Mark task runs that are still in running state but have actually timed out as timed out
+    const taskRunRepository = connection.getRepository(TaskRun);
+    const all = await taskRunRepository.count({
+      where: { state: TaskRunState.RUNNING },
+    });
+    const take = 10;
+    let skip = 0;
+
+    while (skip + take < all) {
+      const taskRuns = await taskRunRepository.find({
+        take,
+        skip,
+        where: { state: TaskRunState.RUNNING },
+        relations: ["task"],
+      });
+
+      for (const taskRun of taskRuns) {
+        const startTime = parseInt(String(taskRun.startTime), 10);
+        if (startTime + taskRun.task.timeoutAfter < Date.now()) {
+          taskRun.state = TaskRunState.TIMED_OUT;
+          taskRunRepository.save(taskRun);
+        }
+      }
+
+      skip += take;
     }
   }
 

@@ -11,19 +11,19 @@ import { Task } from "./Task";
 /** How a task is invoked */
 export enum InvocationSource {
   /** Manually using the dashboard */
-  MANUAL,
+  MANUAL = "MANUAL",
   /** Using a schedule */
-  SCHEDULED,
+  SCHEDULED = "SCHEDULED",
   /** Programmatically started */
-  API,
+  API = "API",
 }
 
 export enum TaskRunState {
-  RUNNING,
-  FINISHED,
-  ERROR,
-  TIMED_OUT,
-  KILLED,
+  RUNNING = "RUNNING",
+  FINISHED = "FINISHED",
+  ERROR = "ERROR",
+  TIMED_OUT = "TIMED_OUT",
+  KILLED = "KILLED",
 }
 
 registerEnumType(InvocationSource, {
