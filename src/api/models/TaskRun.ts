@@ -42,6 +42,10 @@ export class TaskRun {
   static InvocationSource = InvocationSource;
   static TaskRunState = TaskRunState;
 
+  constructor() {
+    console.trace("TaskRun constructor");
+  }
+
   @Field((type) => ID)
   @PrimaryGeneratedColumn()
   public id!: string;
