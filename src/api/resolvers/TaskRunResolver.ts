@@ -154,9 +154,7 @@ export default class TasksRunResolver {
 
     return cloudWatchLogs
       .getLogEvents({
-        logGroupName:
-          this.niceCommander.options.awsCloudWatchLogsLogGroupName ??
-          "NiceCommander",
+        logGroupName: this.niceCommander.options.awsCloudWatchLogsLogGroupName,
         logStreamName: taskRun.getUniqueId(
           this.niceCommander.NODE_ENV,
           String(this.niceCommander.options.sqlConnectionOptions.database)

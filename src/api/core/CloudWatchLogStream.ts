@@ -7,13 +7,13 @@ import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 interface CloudWatchLogStreamConstructorOptions {
   awsRegion: string;
   credentials?: Credentials;
-  logGroupName?: string;
+  logGroupName: string;
   logStreamName: string;
 }
 
 export default class CloudWatchLogStream extends Writable {
   private readonly debug = debug("nice-commander:CloudWatchLogStream");
-  private logGroupName = "NiceCommander";
+  private logGroupName!: string;
   private logStreamName!: string;
   private cloudWatchLogs!: CloudWatchLogs;
   private logStreamIsCreated = false;
@@ -37,9 +37,7 @@ export default class CloudWatchLogStream extends Writable {
       credentials,
     });
 
-    this.createLogStream().then(() => {
-      this.logStreamIsCreated = true;
-    });
+    this.createLogStream();
   }
 
   private async createLogStream() {
@@ -49,9 +47,11 @@ export default class CloudWatchLogStream extends Writable {
         logStreamName: this.logStreamName,
       })
       .promise();
+    this.logStreamIsCreated = true;
   }
 
   private submitLogs = _.throttle(async () => {
+    console.log("submitLogs");
     if (!this.logStreamIsCreated) return;
     if (this.logSubmitIsInFlight) return;
 

@@ -9,7 +9,7 @@ export interface Options {
   awsCredentials?: Credentials;
 
   /** AWS CloudWatch Log Log Group Name */
-  awsCloudWatchLogsLogGroupName?: string;
+  awsCloudWatchLogsLogGroupName: string;
 
   /** AWS Region */
   awsRegion: string;

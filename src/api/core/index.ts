@@ -275,6 +275,7 @@ export class NiceCommander {
    * Here we manage schedules of each task
    */
   private async schedule() {
+    this.debug("schedule");
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
     const taskRunRepository = connection.getRepository(TaskRun);
@@ -287,8 +288,10 @@ export class NiceCommander {
       },
     });
 
-    const names = scheduledTasks.map((s) => s.name);
-    console.log("Scheduled tasks", names);
+    this.debug(
+      "scheduledTasks",
+      scheduledTasks.map((m) => m.name)
+    );
 
     for (const task of scheduledTasks) {
       const [lastTaskRun] = await taskRunRepository.find({
@@ -345,6 +348,7 @@ export class NiceCommander {
   }
 
   private async onTaskScheduleKeyExpired(message: string) {
+    this.debug("onTaskScheduleKeyExpired", message);
     const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
@@ -512,6 +516,7 @@ export class NiceCommander {
           String(this.options.sqlConnectionOptions.database)
         ),
       });
+
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
         `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
@@ -660,6 +665,7 @@ export class NiceCommander {
    *    app.use('/admin/commander', middleware);
    */
   public getExpressMiddleware() {
+    this.debug("getExpressMiddleware");
     const router = Router();
 
     let isBootstrapped = false;
