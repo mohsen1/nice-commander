@@ -2,7 +2,7 @@ import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { createConnection, Connection, Equal, Not, IsNull } from "typeorm-plus";
+import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
@@ -314,20 +314,10 @@ export class NiceCommander {
       },
     });
 
-    this.debug(
-      `Scheduled task names`,
-      scheduledTasks.map((n) => n.name)
-    );
-
     const names = scheduledTasks.map((s) => s.name);
     console.log("Scheduled tasks", names);
 
     for (const task of scheduledTasks) {
-      const taskTimeoutKey = `${this.REDIS_TASK_TIMEOUT_PREFIX}${task.id}`;
-      if (this.redisClient.exists(taskTimeoutKey)) {
-        continue;
-      }
-
       const [lastTaskRun] = await taskRunRepository.find({
         where: { task, endTime: Not(IsNull()) },
         order: {
@@ -341,7 +331,7 @@ export class NiceCommander {
       const now = Date.now();
       const scheduleMs = timestring(task.schedule, "ms");
 
-      // Default to scheduling next run immediately after now + scheduled time
+      // Default to scheduling next run immoderately after now
       let expires = scheduleMs;
 
       // In case we found the last run, schedule after last run's end time to keep on schedule
@@ -359,6 +349,9 @@ export class NiceCommander {
             expires = nextRun - now;
           }
         }
+      } else {
+        // if this is the first time, run immediately
+        expires = 1;
       }
 
       this.scheduleTask(task, expires);
@@ -371,13 +364,6 @@ export class NiceCommander {
    * @param inMs Time in milliseconds
    */
   private async scheduleTask(task: Task, inMs: number) {
-    this.debug(
-      "scheduleTask, ",
-      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-      task.id,
-      "PX",
-      inMs
-    );
     // fire and forget
     this.redisClient.set(
       `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
@@ -411,11 +397,10 @@ export class NiceCommander {
   }
 
   private async onTaskTimeoutKeyExpired(message: string) {
-    const taskId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
-    const taskRunId = this.redisClient.mget(taskId);
+    const taskRunId = message.replace(this.REDIS_TASK_TIMEOUT_PREFIX, "");
     const connection = await this.connectionPromise;
     const taskRunRepository = connection.getRepository(TaskRun);
-    const taskRun = await taskRunRepository.findOne(String(taskRunId));
+    const taskRun = await taskRunRepository.findOne(taskRunId);
 
     if (
       taskRun &&
@@ -557,7 +542,7 @@ export class NiceCommander {
 
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
-        `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.task.id}`,
+        `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
         taskRun.id,
         "PX",
         taskRun.task.timeoutAfter
@@ -648,7 +633,7 @@ export class NiceCommander {
 
         // Delete the timeout key for this task run
         this.redisClient.del(
-          `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.task.id}`,
+          `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
           taskRun.id
         );
 
