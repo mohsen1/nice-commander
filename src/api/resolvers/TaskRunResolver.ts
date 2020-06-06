@@ -149,7 +149,10 @@ export default class TasksRunResolver {
     return this.niceCommander.cloudWatchLogs
       .getLogEvents({
         logGroupName: this.niceCommander.logGroupName,
-        logStreamName: taskRun.uniqueId,
+        logStreamName: taskRun.getUniqueId(
+          this.niceCommander.NODE_ENV,
+          String(this.niceCommander.options.sqlConnectionOptions.database)
+        ),
         startFromHead: !nextToken,
         nextToken,
       })
