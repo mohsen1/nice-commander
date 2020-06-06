@@ -2,7 +2,7 @@ import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { createConnection, Connection, Equal, Not, IsNull } from "typeorm-plus";
+import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
@@ -311,7 +311,7 @@ export class NiceCommander {
       // TODO: paginate
       take: Number.MAX_SAFE_INTEGER,
       where: {
-        schedule: Equal(InvocationSource.SCHEDULED),
+        schedule: Not("manual"),
       },
     });
 
@@ -365,13 +365,6 @@ export class NiceCommander {
    * @param inMs Time in milliseconds
    */
   private async scheduleTask(task: Task, inMs: number) {
-    this.debug(
-      "scheduleTask, ",
-      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-      task.id,
-      "PX",
-      inMs
-    );
     // fire and forget
     this.redisClient.set(
       `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,

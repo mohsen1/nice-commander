@@ -67,17 +67,25 @@ const server = app.listen(3000, () =>
 );
 
 process.once("SIGUSR2", () => {
-  server.close(() => {
-    treeKill(process.pid, "SIGUSR2");
-  });
+  server.close((err) => {
+    if (err) {
+      console.error("Failed to close the Express server");
+      console.error(err);
+    } else {
+      console.log("Closed the Express server.");
+    }
 
-  // After a second give up and abort
-  setTimeout(() => {
+    console.log("Now killing sub-processes");
+
     treeKill(process.pid, "SIGUSR2", (err) => {
       if (err) {
-        console.error("Error tree-killing", err);
+        console.error("Failed to kill sub-processes");
+        console.error(err);
+      } else {
+        console.log("Done killing all sub-processes");
       }
+      process.kill(process.pid);
       process.abort();
     });
-  }, 1000);
+  });
 });
