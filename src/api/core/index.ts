@@ -47,6 +47,7 @@ export interface NiceCommanderContext {
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
 export class NiceCommander {
+  public readonly NODE_ENV = process.env.NODE_ENV || "development";
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
@@ -71,7 +72,7 @@ export class NiceCommander {
   public logGroupName = "NiceCommander";
   public cloudWatchLogs!: CloudWatchLogs;
 
-  public constructor(private options: Options) {
+  public constructor(public options: Options) {
     this.logGroupName =
       options.awsCloudWatchLogsLogGroupName || this.logGroupName;
 
@@ -543,7 +544,10 @@ export class NiceCommander {
       await this.cloudWatchLogs
         .createLogStream({
           logGroupName: this.logGroupName,
-          logStreamName: taskRun.uniqueId,
+          logStreamName: taskRun.getUniqueId(
+            this.NODE_ENV,
+            String(this.options.sqlConnectionOptions.database)
+          ),
         })
         .promise();
 
@@ -589,7 +593,10 @@ export class NiceCommander {
             .putLogEvents({
               sequenceToken,
               logGroupName: this.logGroupName,
-              logStreamName: taskRun.uniqueId,
+              logStreamName: taskRun.getUniqueId(
+                this.NODE_ENV,
+                String(this.options.sqlConnectionOptions.database)
+              ),
               logEvents,
             })
             .promise();
