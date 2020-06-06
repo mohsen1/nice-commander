@@ -20,6 +20,8 @@
     "Redlock",
     "keyevent",
     "timestring",
+    "typedi",
+    "typeorm",
     "typeorm-plus"
   ],
   "files.watcherExclude": {

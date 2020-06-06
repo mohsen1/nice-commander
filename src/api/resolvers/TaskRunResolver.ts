@@ -157,7 +157,10 @@ export default class TasksRunResolver {
         logGroupName:
           this.niceCommander.options.awsCloudWatchLogsLogGroupName ??
           "NiceCommander",
-        logStreamName: taskRun.uniqueId,
+        logStreamName: taskRun.getUniqueId(
+          this.niceCommander.NODE_ENV,
+          String(this.niceCommander.options.sqlConnectionOptions.database)
+        ),
         startFromHead: !nextToken,
         nextToken,
       })

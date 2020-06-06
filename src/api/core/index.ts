@@ -114,7 +114,7 @@ export class NiceCommander {
         this.onTaskTimeoutKeyExpired(message);
       }
 
-      // if key expired as a s resulr of a task run stopping command, try to stop the task run
+      // if key expired as a s result of a task run stopping command, try to stop the task run
       if (message.startsWith(this.REDIS_TASK_STOP_PREFIX)) {
         this.onTaskRunStop(message);
       }
@@ -507,7 +507,10 @@ export class NiceCommander {
         awsRegion: this.options.awsRegion,
         credentials: this.options.awsCredentials,
         logGroupName: this.options.awsCloudWatchLogsLogGroupName,
-        logStreamName: taskRun.uniqueId,
+        logStreamName: taskRun.getUniqueId(
+          this.NODE_ENV,
+          String(this.options.sqlConnectionOptions.database)
+        ),
       });
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
