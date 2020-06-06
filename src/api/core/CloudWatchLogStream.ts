@@ -37,29 +37,9 @@ export default class CloudWatchLogStream extends Writable {
       credentials,
     });
 
-    this.createLogGroup()
-      .then(() => this.createLogStream())
-      .then(() => {
-        this.logStreamIsCreated = true;
-      });
-  }
-
-  private createLogGroup() {
-    return this.cloudWatchLogs
-      .createLogGroup({
-        logGroupName: this.logGroupName,
-      })
-      .promise()
-      .then(() =>
-        this.debug(
-          "Made CloudWatch Logs Log Group with name",
-          this.logGroupName
-        )
-      )
-      .catch((e) => {
-        if (e.code === "ResourceAlreadyExistsException") return;
-        console.error("Failed to make Log Group named", this.logGroupName, e);
-      });
+    this.createLogStream().then(() => {
+      this.logStreamIsCreated = true;
+    });
   }
 
   private async createLogStream() {
