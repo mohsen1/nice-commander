@@ -46,6 +46,7 @@ export interface NiceCommanderContext {
  * To debug Nice Commander set `DEBUG` environment variable to `"nice-commander"`
  */
 export class NiceCommander {
+  public readonly NODE_ENV = process.env.NODE_ENV || "development";
   private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
@@ -66,7 +67,6 @@ export class NiceCommander {
    * expired signal and try to find the child process in their map and kill the process.
    */
   private readonly childProcesses: Map<string, ChildProcess> = new Map();
-  /** AWS CloudWatch Logs Log Group Name */
 
   public constructor(public options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(

@@ -106,9 +106,13 @@ export class TaskRun {
   })
   public invocationSource!: InvocationSource;
 
-  /** A unique ID for this run and its related task */
-  public get uniqueId() {
-    return `${this.task.id}-${this.id}`;
+  /**
+   * Get unique ID for this run and its related task
+   * This unique ID is unique across various databases and environments
+   * because is is used to make a unique name for this run's CloudWatch Logs log stream
+   */
+  public getUniqueId(nodeEnv: string, dbName: string) {
+    return `${dbName}-${nodeEnv}-${this.task.id}-${this.id}`;
   }
 
   public get redisLockKey() {
