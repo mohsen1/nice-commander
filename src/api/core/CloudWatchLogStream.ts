@@ -13,13 +13,13 @@ interface CloudWatchLogStreamConstructorOptions {
 
 export default class CloudWatchLogStream extends Writable {
   private readonly debug = debug("nice-commander:CloudWatchLogStream");
-  private logGroupName!: string;
-  private logStreamName!: string;
-  private cloudWatchLogs!: CloudWatchLogs;
+  private readonly logGroupName!: string;
+  private readonly logStreamName!: string;
+  private readonly cloudWatchLogs!: CloudWatchLogs;
+  private readonly eventsBuffer: InputLogEvent[] = [];
   private logStreamIsCreated = false;
   private logSubmitIsInFlight = false;
   private sequenceToken: string | undefined = undefined;
-  private eventsBuffer: InputLogEvent[] = [];
 
   constructor({
     awsRegion,

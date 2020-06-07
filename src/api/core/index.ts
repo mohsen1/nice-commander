@@ -275,7 +275,6 @@ export class NiceCommander {
    * Here we manage schedules of each task
    */
   private async schedule() {
-    this.debug("schedule");
     const connection = await this.connectionPromise;
     const taskRepository = connection.getRepository(Task);
     const taskRunRepository = connection.getRepository(TaskRun);
@@ -287,11 +286,6 @@ export class NiceCommander {
         schedule: Not("manual"),
       },
     });
-
-    this.debug(
-      "scheduledTasks",
-      scheduledTasks.map((m) => m.name)
-    );
 
     for (const task of scheduledTasks) {
       const [lastTaskRun] = await taskRunRepository.find({
@@ -665,7 +659,6 @@ export class NiceCommander {
    *    app.use('/admin/commander', middleware);
    */
   public getExpressMiddleware() {
-    this.debug("getExpressMiddleware");
     const router = Router();
 
     let isBootstrapped = false;
