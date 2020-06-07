@@ -41,19 +41,25 @@ export default class CloudWatchLogStream extends Writable {
   }
 
   private async createLogStream() {
+    if (this.logStreamIsCreated) {
+      return this.submitLogs();
+    }
+
     await this.cloudWatchLogs
       .createLogStream({
         logGroupName: this.logGroupName,
         logStreamName: this.logStreamName,
       })
       .promise();
+
     this.logStreamIsCreated = true;
+
+    this.submitLogs();
   }
 
   private submitLogs = _.throttle(async () => {
-    console.log("submitLogs");
-    if (!this.logStreamIsCreated) return;
     if (this.logSubmitIsInFlight) return;
+    if (!this.eventsBuffer.length) return;
 
     try {
       this.logSubmitIsInFlight = true;
@@ -86,11 +92,16 @@ export default class CloudWatchLogStream extends Writable {
     }
   }, 1000);
 
-  _write(chunk: Buffer) {
+  _write(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: (error?: Error | null) => void
+  ) {
     this.eventsBuffer.push({
       message: String(chunk),
       timestamp: Date.now(),
     });
     this.submitLogs();
+    callback(null);
   }
 }

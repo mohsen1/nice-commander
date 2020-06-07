@@ -2,11 +2,11 @@ import React, { useRef } from "react";
 import MonacoEditor, { EditorProps } from "@monaco-editor/react";
 import * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 
-function getHeight(value?: string, maxHeight = 25) {
+function getHeight(value?: string, maxHeight = 25, minHeight = 5) {
   if (!value) return "200px";
   const lines = value.split("\n").length;
 
-  return `${Math.min(lines, maxHeight)}em`;
+  return `${Math.max(Math.min(lines, maxHeight), minHeight)}em`;
 }
 
 function getTheme() {
@@ -40,7 +40,7 @@ const Editor: React.FC<
       options={{
         minimap: { enabled: false },
         scrollBeyondLastColumn: 10,
-        scrollBeyondLastLine: false,
+        scrollBeyondLastLine: true,
         scrollbar: {
           alwaysConsumeMouseWheel: false,
           ...(props?.options?.scrollbar ?? {}),
