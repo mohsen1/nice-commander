@@ -209,7 +209,7 @@ export class NiceCommander {
     const take = 10;
     let skip = 0;
 
-    while (skip + take < all) {
+    while (skip < all) {
       const taskRuns = await taskRunRepository.find({
         take,
         skip,
