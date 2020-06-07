@@ -2,11 +2,10 @@ import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
+import { Container } from "typedi";
 import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
-import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 import { Router } from "express";
-import AWS, { CloudWatchLogs } from "aws-sdk";
 import cp, { ChildProcess } from "child_process";
 import debug from "debug";
 import fs from "fs";
@@ -15,14 +14,14 @@ import path from "path";
 import redis, { RedisClient } from "redis";
 import Redlock from "redlock";
 import timestring from "timestring";
-import { Container } from "typedi";
 
-import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
-import { Task } from "../models/Task";
-import { TaskRun, TaskRunState, InvocationSource } from "../models/TaskRun";
-import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
+import { Task } from "../models/Task";
+import { TaskRun, TaskRunState } from "../models/TaskRun";
+import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
+import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
+import CloudWatchLogStream from "./CloudWatchLogStream";
 
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
@@ -68,35 +67,8 @@ export class NiceCommander {
    * expired signal and try to find the child process in their map and kill the process.
    */
   private readonly childProcesses: Map<string, ChildProcess> = new Map();
-  /** AWS CloudWatch Logs Log Group Name */
-  public logGroupName = "NiceCommander";
-  public cloudWatchLogs!: CloudWatchLogs;
 
   public constructor(public options: Options) {
-    this.logGroupName =
-      options.awsCloudWatchLogsLogGroupName || this.logGroupName;
-
-    this.cloudWatchLogs = new AWS.CloudWatchLogs({
-      region: options.awsRegion,
-      credentials: options.awsCredentials,
-    });
-
-    this.cloudWatchLogs
-      .createLogGroup({
-        logGroupName: this.logGroupName,
-      })
-      .promise()
-      .then(() =>
-        this.debug(
-          "Made CloudWatch Logs Log Group with name",
-          this.logGroupName
-        )
-      )
-      .catch((e) => {
-        if (e.code === "ResourceAlreadyExistsException") return;
-        console.error("Failed to make Log Group named", this.logGroupName, e);
-      });
-
     this.taskDefinitionsFiles = this.readTaskDefinitions(
       options.taskDefinitionsDirectory
     );
@@ -142,7 +114,7 @@ export class NiceCommander {
         this.onTaskTimeoutKeyExpired(message);
       }
 
-      // if key expired as a s resulr of a task run stopping command, try to stop the task run
+      // if key expired as a s result of a task run stopping command, try to stop the task run
       if (message.startsWith(this.REDIS_TASK_STOP_PREFIX)) {
         this.onTaskRunStop(message);
       }
@@ -315,9 +287,6 @@ export class NiceCommander {
       },
     });
 
-    const names = scheduledTasks.map((s) => s.name);
-    console.log("Scheduled tasks", names);
-
     for (const task of scheduledTasks) {
       const [lastTaskRun] = await taskRunRepository.find({
         where: { task, endTime: Not(IsNull()) },
@@ -326,8 +295,6 @@ export class NiceCommander {
         },
         take: 1,
       });
-
-      console.log("lastTaskRun", lastTaskRun?.startTime);
 
       const now = Date.now();
       const scheduleMs = timestring(task.schedule, "ms");
@@ -534,15 +501,15 @@ export class NiceCommander {
       const lockTTL = taskRun.task.timeoutAfter + 1000;
       await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
-      await this.cloudWatchLogs
-        .createLogStream({
-          logGroupName: this.logGroupName,
-          logStreamName: taskRun.getUniqueId(
-            this.NODE_ENV,
-            String(this.options.sqlConnectionOptions.database)
-          ),
-        })
-        .promise();
+      const cloudWatchLogsStream = new CloudWatchLogStream({
+        awsRegion: this.options.awsRegion,
+        credentials: this.options.awsCredentials,
+        logGroupName: this.options.awsCloudWatchLogsLogGroupName,
+        logStreamName: taskRun.getUniqueId(
+          this.NODE_ENV,
+          String(this.options.sqlConnectionOptions.database)
+        ),
+      });
 
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
@@ -564,57 +531,9 @@ export class NiceCommander {
       // Store the child process
       this.childProcesses.set(String(taskRun.id), child);
 
-      // TODO: Refactor this into a Node.js Stream so we can pipe stdout of child into it.
-      let logSubmitIsInFlight = false;
-      let sequenceToken: string | undefined;
-      const eventsBuffer: InputLogEvent[] = [];
-
-      const submitLogs = _.throttle(async () => {
-        if (logSubmitIsInFlight) return;
-
-        try {
-          logSubmitIsInFlight = true;
-
-          // Drain the logs buffer
-          const logEvents: InputLogEvent[] = [];
-          while (eventsBuffer.length) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            logEvents.push(eventsBuffer.shift()!);
-          }
-
-          const data = await this.cloudWatchLogs
-            .putLogEvents({
-              sequenceToken,
-              logGroupName: this.logGroupName,
-              logStreamName: taskRun.getUniqueId(
-                this.NODE_ENV,
-                String(this.options.sqlConnectionOptions.database)
-              ),
-              logEvents,
-            })
-            .promise();
-
-          sequenceToken = data?.nextSequenceToken;
-        } catch (e) {
-          this.debug("Error putting logs in CloudWatch Logs", e);
-        } finally {
-          logSubmitIsInFlight = false;
-
-          if (eventsBuffer.length) {
-            submitLogs();
-          }
-        }
-      }, 1000);
-
-      child.stdout?.on("data", async (chunk) => {
-        eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
-        submitLogs();
-      });
-
-      child.stderr?.on("data", async (chunk) => {
-        eventsBuffer.push({ message: String(chunk), timestamp: Date.now() });
-        submitLogs();
-      });
+      // Pipe to CloudWatchLogs
+      child.stdout?.pipe(cloudWatchLogsStream);
+      child.stderr?.pipe(cloudWatchLogsStream);
 
       // Pass through logs to stdout/stderr
       if (this.options.logToStdout) {

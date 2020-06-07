@@ -37,6 +37,7 @@ const { middleware, startTask } = createMiddleware({
   awsCredentials,
   mountPath,
   redisConnectionOptions: config.get("redis"),
+  awsCloudWatchLogsLogGroupName: "NiceCommander",
   sqlConnectionOptions: {
     type: "mysql",
     // eslint-disable-next-line @typescript-eslint/ban-types
