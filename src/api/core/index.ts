@@ -373,7 +373,7 @@ export class NiceCommander {
     if (
       taskRun &&
       taskRun.state === TaskRun.TaskRunState.RUNNING &&
-      this.childProcesses.has(taskRun.id)
+      this.childProcesses.has(String(taskRun.id))
     ) {
       await this.endTaskRun(TaskRun.TaskRunState.TIMED_OUT, taskRun, undefined);
 

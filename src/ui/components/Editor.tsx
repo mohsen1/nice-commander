@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import MonacoEditor, { EditorProps } from "@monaco-editor/react";
 import * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 
-function getHeight(value?: string, maxHeight = 25, minHeight = 5) {
+function getHeight(value?: string, maxHeight = 25, minHeight = 10) {
   if (!value) return "200px";
   const lines = value.split("\n").length;
 
@@ -40,7 +40,7 @@ const Editor: React.FC<
       options={{
         minimap: { enabled: false },
         scrollBeyondLastColumn: 10,
-        scrollBeyondLastLine: true,
+        scrollBeyondLastLine: false,
         scrollbar: {
           alwaysConsumeMouseWheel: false,
           ...(props?.options?.scrollbar ?? {}),
