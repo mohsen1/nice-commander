@@ -97,10 +97,13 @@ export default class CloudWatchLogStream extends Writable {
     _encoding: BufferEncoding,
     callback: (error?: Error | null) => void
   ) {
-    this.eventsBuffer.push({
-      message: String(chunk),
-      timestamp: Date.now(),
-    });
+    String(chunk)
+      .split("\n")
+      .map((message) => ({
+        message,
+        timestamp: Date.now(),
+      }))
+      .forEach((event) => this.eventsBuffer.push(event));
     this.submitLogs();
     callback(null);
   }
