@@ -525,6 +525,10 @@ export class NiceCommander {
         [taskDefinitionFile.filePath, taskRun.payload],
         {
           stdio: "pipe",
+          execArgv: process.execArgv.filter(
+            // See https://github.com/nodejs/node/issues/14325
+            (opt) => !opt.startsWith("--inspect")
+          ),
         }
       );
 
