@@ -64,7 +64,7 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
       ({ message, timestamp }) =>
         `${new Date(timestamp).toLocaleTimeString()} ${message}`
     )
-    .join("");
+    .join("\n");
 
   return (
     <div>

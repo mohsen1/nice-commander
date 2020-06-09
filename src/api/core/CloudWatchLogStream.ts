@@ -45,16 +45,19 @@ export default class CloudWatchLogStream extends Writable {
       return this.submitLogs();
     }
 
-    await this.cloudWatchLogs
-      .createLogStream({
-        logGroupName: this.logGroupName,
-        logStreamName: this.logStreamName,
-      })
-      .promise();
+    try {
+      await this.cloudWatchLogs
+        .createLogStream({
+          logGroupName: this.logGroupName,
+          logStreamName: this.logStreamName,
+        })
+        .promise();
 
-    this.logStreamIsCreated = true;
-
-    this.submitLogs();
+      this.logStreamIsCreated = true;
+      this.submitLogs();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   private submitLogs = _.throttle(async () => {
@@ -98,9 +101,9 @@ export default class CloudWatchLogStream extends Writable {
     _encoding: BufferEncoding,
     callback: (error?: Error | null) => void
   ) {
-    this.debug("_write", String(chunk));
     String(chunk)
       .split("\n")
+      .filter(Boolean) // do not allow logging empty lines
       .map((message) => ({
         message,
         timestamp: Date.now(),
