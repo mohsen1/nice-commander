@@ -14,10 +14,11 @@
     "prod": "NODE_ENV=production nodemon --watch dist --ext js dist/examples/basic/server.js",
     "tsc-watch": "tsc --watch",
     "example-server": "DEBUG=nice-commander nodemon --inspect --delay 0.3 --ext js --watch dist dist/examples/basic/server.js",
+    "cluster-server": "pm2 start --no-daemon --watch -i 4 dist/examples/cluster/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "lint": "prettier -l '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx",
-    "prepare": "rm -rf src/ui/.next && next build src/ui && tsc",
+    "prepare": "rm -rf src/ui/.next && rm -rf dist && next build src/ui && tsc",
     "test": "jest"
   },
   "dependencies": {
@@ -78,6 +79,7 @@
     "jest": "^26.0.1",
     "monaco-editor": "^0.19.0",
     "nodemon": "^2.0.2",
+    "pm2": "^4.4.0",
     "prettier": "^2.0.5",
     "prop-types": "^15.7.2",
     "tree-kill": "^1.2.2",
