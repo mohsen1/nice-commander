@@ -40,7 +40,7 @@ export default class CloudWatchLogStream extends Writable {
     this.createLogStream();
   }
 
-  private async createLogStream() {
+  public async createLogStream() {
     if (this.logStreamIsCreated) {
       return this.submitLogs();
     }
@@ -58,6 +58,7 @@ export default class CloudWatchLogStream extends Writable {
   }
 
   private submitLogs = _.throttle(async () => {
+    if (!this.logStreamIsCreated) return;
     if (this.logSubmitIsInFlight) return;
     if (!this.eventsBuffer.length) return;
 
@@ -97,6 +98,7 @@ export default class CloudWatchLogStream extends Writable {
     _encoding: BufferEncoding,
     callback: (error?: Error | null) => void
   ) {
+    this.debug("_write", String(chunk));
     String(chunk)
       .split("\n")
       .map((message) => ({

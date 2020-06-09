@@ -343,16 +343,18 @@ export class NiceCommander {
 
   private async onTaskScheduleKeyExpired(message: string) {
     this.debug("onTaskScheduleKeyExpired", message);
+
+    const connection = await this.connectionPromise;
+    const taskRepository = connection.getRepository(Task);
+    const taskRunRepository = connection.getRepository(TaskRun);
+
+    const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
+
     try {
       // Avoid other instances from responding
-      this.redLock.lock(message, 1000);
+      await this.redLock.lock(`onTaskScheduleKeyExpired-${taskId}`, 1000);
 
-      const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
-      const connection = await this.connectionPromise;
-      const taskRepository = connection.getRepository(Task);
-      const taskRunRepository = connection.getRepository(TaskRun);
       const task = await taskRepository.findOne(taskId);
-
       if (task) {
         this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
         const taskRun = new TaskRun();
@@ -517,6 +519,9 @@ export class NiceCommander {
           String(this.options.sqlConnectionOptions.database)
         ),
       });
+      await cloudWatchLogsStream.createLogStream();
+
+      this.debug("Stream is ready");
 
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(

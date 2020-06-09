@@ -14,7 +14,7 @@
     "prod": "NODE_ENV=production nodemon --watch dist --ext js dist/examples/basic/server.js",
     "tsc-watch": "tsc --watch",
     "example-server": "DEBUG=nice-commander nodemon --inspect --delay 0.3 --ext js --watch dist dist/examples/basic/server.js",
-    "cluster-server": "pm2 start --no-daemon --watch -i 2 dist/examples/cluster/server.js",
+    "cluster-server": "pm2 start --no-daemon --watch -i 4 dist/examples/cluster/server.js",
     "start": "concurrently npm:tsc-watch npm:example-server",
     "fix": "prettier --write '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "lint": "prettier -l '**/*.{ts,tsx,yml,js,.md}' && yarn eslint . --ext .js,.jsx,.ts,.tsx",

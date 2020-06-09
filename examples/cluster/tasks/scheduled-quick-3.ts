@@ -2,7 +2,7 @@ import { TaskDefinition } from "../../../src";
 
 // A simple manual task
 const task: TaskDefinition = {
-  name: "Scheduled Quick 1",
+  name: "Scheduled Quick 3",
   description: "Very frequent but completes quickly",
   async run(payload) {
     const wait = (amount: number) =>
