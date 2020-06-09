@@ -11,40 +11,46 @@ const awsCredentials = new AWS.SharedIniFileCredentials({
 
 import { createMiddleware } from "../../src/api/core";
 
-if (cluster.isMaster) {
-  console.log(`[pid=${process.pid}] Master is running`);
+const app = express();
 
-  // Fork workers.
-  for (let i = 0; i < os.cpus().length; i++) {
-    cluster.fork();
-  }
+const mountPath = "/cluster";
+const { middleware } = createMiddleware({
+  awsRegion: "us-east-2",
+  awsCredentials,
+  mountPath,
+  redisConnectionOptions: config.get("redis"),
+  awsCloudWatchLogsLogGroupName: "NiceCommander",
+  sqlConnectionOptions: {
+    type: "mysql",
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    ...config.get<object>("db"),
+    name: "cluster_nice_commander",
+  },
+  taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
+});
+app.use(mountPath, middleware);
 
-  cluster.on("exit", (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died`);
-  });
-} else {
-  const app = express();
+app.listen(3000, () =>
+  console.info(
+    `[pid=${process.pid}] Worker is listening on http://localhost:3000`
+  )
+);
 
-  const mountPath = "/";
-  const { middleware } = createMiddleware({
-    awsRegion: "us-east-2",
-    awsCredentials,
-    mountPath,
-    redisConnectionOptions: config.get("redis"),
-    awsCloudWatchLogsLogGroupName: "NiceCommander",
-    sqlConnectionOptions: {
-      type: "mysql",
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      ...config.get<object>("db"),
-      name: "cluster_nice_commander",
-    },
-    taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
-  });
-  app.use(mountPath, middleware);
+// startThread();
+// if (process.env.SINGLE_THREAD) {
+// } else {
+//   if (cluster.isMaster) {
+//     console.log(`[pid=${process.pid}] Master is running`);
 
-  app.listen(3000, () =>
-    console.info(
-      `[pid=${process.pid}] Worker is listening on http://localhost:3000`
-    )
-  );
-}
+//     // Fork workers.
+//     for (let i = 0; i < os.cpus().length; i++) {
+//       cluster.fork();
+//     }
+
+//     cluster.on("exit", (worker, code, signal) => {
+//       console.log(`worker ${worker.process.pid} died`);
+//     });
+//   } else {
+//     startThread();
+//   }
+// }

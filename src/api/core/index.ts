@@ -343,24 +343,31 @@ export class NiceCommander {
 
   private async onTaskScheduleKeyExpired(message: string) {
     this.debug("onTaskScheduleKeyExpired", message);
-    const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
-    const connection = await this.connectionPromise;
-    const taskRepository = connection.getRepository(Task);
-    const taskRunRepository = connection.getRepository(TaskRun);
-    const task = await taskRepository.findOne(taskId);
+    try {
+      // Avoid other instances from responding
+      this.redLock.lock(message, 1000);
 
-    if (task) {
-      this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
-      const taskRun = new TaskRun();
-      taskRun.task = task;
-      taskRun.startTime = Date.now();
-      taskRun.state = TaskRun.TaskRunState.RUNNING;
-      taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
-      await taskRunRepository.save(taskRun);
-      this.startTask(taskRun);
+      const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
+      const connection = await this.connectionPromise;
+      const taskRepository = connection.getRepository(Task);
+      const taskRunRepository = connection.getRepository(TaskRun);
+      const task = await taskRepository.findOne(taskId);
 
-      // Schedule the next run
-      this.scheduleTask(task, timestring(task.schedule, "ms"));
+      if (task) {
+        this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
+        const taskRun = new TaskRun();
+        taskRun.task = task;
+        taskRun.startTime = Date.now();
+        taskRun.state = TaskRun.TaskRunState.RUNNING;
+        taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
+        await taskRunRepository.save(taskRun);
+        this.startTask(taskRun);
+
+        // Schedule the next run
+        this.scheduleTask(task, timestring(task.schedule, "ms"));
+      }
+    } catch {
+      // ignore lock acquisition error
     }
   }
 
