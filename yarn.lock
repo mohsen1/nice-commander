@@ -2570,16 +2570,6 @@
     semver "^7.3.2"
     tsutils "^3.17.1"
 
-"@typescript-eslint/experimental-utils@3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/experimental-utils/-/experimental-utils-3.1.0.tgz#2d5dba7c2ac2a3da3bfa3f461ff64de38587a872"
-  integrity sha512-Zf8JVC2K1svqPIk1CB/ehCiWPaERJBBokbMfNTNRczCbQSlQXaXtO/7OfYz9wZaecNvdSvVADt6/XQuIxhC79w==
-  dependencies:
-    "@types/json-schema" "^7.0.3"
-    "@typescript-eslint/typescript-estree" "3.1.0"
-    eslint-scope "^5.0.0"
-    eslint-utils "^2.0.0"
-
 "@typescript-eslint/experimental-utils@3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/experimental-utils/-/experimental-utils-3.2.0.tgz#4dab8fc9f44f059ec073470a81bb4d7d7d51e6c5"
@@ -2599,19 +2589,6 @@
     "@typescript-eslint/experimental-utils" "3.2.0"
     "@typescript-eslint/typescript-estree" "3.2.0"
     eslint-visitor-keys "^1.1.0"
-
-"@typescript-eslint/typescript-estree@3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/typescript-estree/-/typescript-estree-3.1.0.tgz#eaff52d31e615e05b894f8b9d2c3d8af152a5dd2"
-  integrity sha512-+4nfYauqeQvK55PgFrmBWFVYb6IskLyOosYEmhH3mSVhfBp9AIJnjExdgDmKWoOBHRcPM8Ihfm2BFpZf0euUZQ==
-  dependencies:
-    debug "^4.1.1"
-    eslint-visitor-keys "^1.1.0"
-    glob "^7.1.6"
-    is-glob "^4.0.1"
-    lodash "^4.17.15"
-    semver "^7.3.2"
-    tsutils "^3.17.1"
 
 "@typescript-eslint/typescript-estree@3.2.0":
   version "3.2.0"
@@ -3174,10 +3151,10 @@ apollo-server-caching@^0.5.1:
   dependencies:
     lru-cache "^5.0.0"
 
-apollo-server-core@^2.14.2:
-  version "2.14.2"
-  resolved "https://registry.yarnpkg.com/apollo-server-core/-/apollo-server-core-2.14.2.tgz#4ab055b96b8be7821a726c81e8aa412deb7f3644"
-  integrity sha512-8G6Aoz+k+ecuQco1KNLFbMrxhe/8uR4AOaOYEvT/N5m/6lrkPYzvBAxbpRIub5AxEwpBPcIrI452rR3PD9DItA==
+apollo-server-core@^2.14.3:
+  version "2.14.3"
+  resolved "https://registry.yarnpkg.com/apollo-server-core/-/apollo-server-core-2.14.3.tgz#64028d2faec17fc94d9d9c275f4da790b6ce57ce"
+  integrity sha512-A9RkWuHFZ04uEnXof5V02T7wfhUel7Hx9LpEN4N59mXTpb7ewW+cb0u+J+SP+Y4vDhVqaHCGoveRVKy6X2kLhw==
   dependencies:
     "@apollographql/apollo-tools" "^0.4.3"
     "@apollographql/graphql-playground-html" "1.6.24"
@@ -3216,9 +3193,9 @@ apollo-server-errors@^2.4.1:
   integrity sha512-7oEd6pUxqyWYUbQ9TA8tM0NU/3aGtXSEibo6+txUkuHe7QaxfZ2wHRp+pfT1LC1K3RXYjKj61/C2xEO19s3Kdg==
 
 apollo-server-express@^2.9.16:
-  version "2.14.2"
-  resolved "https://registry.yarnpkg.com/apollo-server-express/-/apollo-server-express-2.14.2.tgz#662dfeb9c794c1eca59dd93e57e74487a8195ae6"
-  integrity sha512-iYyZm0kQqkM561i9l0WC9HbJsGZJbHP9bhnWaa1Itd+yNBS2AJFp6mRR3hQacsWXUw7ewaKAracMIggvfSH5Aw==
+  version "2.14.3"
+  resolved "https://registry.yarnpkg.com/apollo-server-express/-/apollo-server-express-2.14.3.tgz#5f5d68356b4e402105fb532dae77bf075eba0735"
+  integrity sha512-35PZXG6sQYB0YT+TBZ5KRxyWqknVnevuHyPG5XSAhMtWsVF2ySMzRPs6JdQTi0p2jlFTo5pt4P6FT3hRu0EFUw==
   dependencies:
     "@apollographql/graphql-playground-html" "1.6.24"
     "@types/accepts" "^1.3.5"
@@ -3226,7 +3203,7 @@ apollo-server-express@^2.9.16:
     "@types/cors" "^2.8.4"
     "@types/express" "4.17.4"
     accepts "^1.3.5"
-    apollo-server-core "^2.14.2"
+    apollo-server-core "^2.14.3"
     apollo-server-types "^0.5.0"
     body-parser "^1.18.3"
     cors "^2.8.4"
