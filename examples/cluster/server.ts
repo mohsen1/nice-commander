@@ -1,8 +1,6 @@
 import express from "express";
 import path from "path";
 import config from "config";
-import os from "os";
-import cluster from "cluster";
 import AWS from "aws-sdk";
 
 const awsCredentials = new AWS.SharedIniFileCredentials({
@@ -35,22 +33,3 @@ app.listen(3000, () =>
     `[pid=${process.pid}] Worker is listening on http://localhost:3000`
   )
 );
-
-// startThread();
-// if (process.env.SINGLE_THREAD) {
-// } else {
-//   if (cluster.isMaster) {
-//     console.log(`[pid=${process.pid}] Master is running`);
-
-//     // Fork workers.
-//     for (let i = 0; i < os.cpus().length; i++) {
-//       cluster.fork();
-//     }
-
-//     cluster.on("exit", (worker, code, signal) => {
-//       console.log(`worker ${worker.process.pid} died`);
-//     });
-//   } else {
-//     startThread();
-//   }
-// }

@@ -521,8 +521,6 @@ export class NiceCommander {
       });
       await cloudWatchLogsStream.createLogStream();
 
-      this.debug("Stream is ready");
-
       // Add a Redis key for noticing when task run is timed out
       this.redisClient.set(
         `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
