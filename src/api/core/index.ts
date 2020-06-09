@@ -682,8 +682,13 @@ export class NiceCommander {
       // Sync task definitions
       await this.sync(this.taskDefinitionsFiles);
 
-      // Schedule tasks
-      await this.schedule();
+      try {
+        this.redLock.lock("schedule", 10_000);
+        // Schedule tasks
+        await this.schedule();
+      } catch {
+        // ignore failing to acquire lock for schedule
+      }
 
       // API
       const middleware = await this.getApolloServerMiddleware();
