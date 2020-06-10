@@ -495,105 +495,114 @@ export class NiceCommander {
    * @param taskRun The TaskRun model instance. This TaskRun instance should be set in the state of "RUNNING"
    * @param publishLogs Logging pub-sub
    */
-  public async startTask(taskRun: TaskRun) {
-    const taskDefinitionFile = this.taskDefinitionsFiles.find(
-      ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
-    );
-
-    if (!taskRun) {
-      throw new Error("Can not find task run model");
-    }
-
-    if (!taskDefinitionFile) {
-      throw new Error("Can not find task definition");
-    }
-
-    // Try to get a lock for this task run
-    try {
-      // Add one second to task timeout for safety
-      const lockTTL = taskRun.task.timeoutAfter + 1000;
-      await this.redLock.lock(taskRun.redisLockKey, lockTTL);
-
-      const cloudWatchLogsStream = new CloudWatchLogStream({
-        awsRegion: this.options.awsRegion,
-        credentials: this.options.awsCredentials,
-        logGroupName: this.options.awsCloudWatchLogsLogGroupName,
-        logStreamName: taskRun.getUniqueId(
-          this.NODE_ENV,
-          String(this.options.sqlConnectionOptions.database)
-        ),
-      });
-      await cloudWatchLogsStream.createLogStream();
-
-      // Add a Redis key for noticing when task run is timed out
-      this.redisClient.set(
-        `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
-        taskRun.id,
-        "PX",
-        taskRun.task.timeoutAfter
+  public startTask(taskRun: TaskRun) {
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise(async (resolve, reject) => {
+      const taskDefinitionFile = this.taskDefinitionsFiles.find(
+        ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
       );
 
-      // Create a child process
-      const child = cp.fork(
-        this.invokeFile,
-        [taskDefinitionFile.filePath, taskRun.payload],
-        {
-          stdio: "pipe",
-          execArgv: process.execArgv.filter(
-            // See https://github.com/nodejs/node/issues/14325
-            (opt) => !opt.startsWith("--inspect")
-          ),
-        }
-      );
-
-      // Store the child process
-      this.childProcesses.set(String(taskRun.id), child);
-
-      // Pipe to CloudWatchLogs
-      child.stdout?.pipe(cloudWatchLogsStream);
-      child.stderr?.pipe(cloudWatchLogsStream);
-
-      // Pass through logs to stdout/stderr
-      if (this.options.logToStdout) {
-        child.stdout?.pipe(process.stdout);
-        child.stderr?.pipe(process.stderr);
+      if (!taskRun) {
+        throw new Error("Can not find task run model");
       }
 
-      child.on("exit", async (code, signal) => {
-        // Fetch a fresh instance of taskRun because there might be state changes outside of
-        // this process that has happened to the taskRun
-        const connection = await this.connectionPromise;
-        const taskRunRepository = connection.getRepository(TaskRun);
-        const freshTaskRun = await taskRunRepository.findOne(taskRun.id);
+      if (!taskDefinitionFile) {
+        throw new Error("Can not find task definition");
+      }
 
-        // Skip ending TaskRun if it was timed out or was killed
-        if (
-          !freshTaskRun ||
-          freshTaskRun.state === TaskRun.TaskRunState.TIMED_OUT ||
-          freshTaskRun.state === TaskRun.TaskRunState.KILLED
-        ) {
-          return;
+      // Try to get a lock for this task run
+      try {
+        // Add one second to task timeout for safety
+        const lockTTL = taskRun.task.timeoutAfter + 1000;
+        await this.redLock.lock(taskRun.redisLockKey, lockTTL);
+
+        const cloudWatchLogsStream = new CloudWatchLogStream({
+          awsRegion: this.options.awsRegion,
+          credentials: this.options.awsCredentials,
+          logGroupName: this.options.awsCloudWatchLogsLogGroupName,
+          logStreamName: taskRun.getUniqueId(
+            this.NODE_ENV,
+            String(this.options.sqlConnectionOptions.database)
+          ),
+        });
+        await cloudWatchLogsStream.createLogStream();
+
+        // Add a Redis key for noticing when task run is timed out
+        this.redisClient.set(
+          `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
+          taskRun.id,
+          "PX",
+          taskRun.task.timeoutAfter
+        );
+
+        // Create a child process
+        const child = cp.fork(
+          this.invokeFile,
+          [taskDefinitionFile.filePath, taskRun.payload],
+          {
+            stdio: "pipe",
+            execArgv: process.execArgv.filter(
+              // See https://github.com/nodejs/node/issues/14325
+              (opt) => !opt.startsWith("--inspect")
+            ),
+          }
+        );
+
+        // Store the child process
+        this.childProcesses.set(String(taskRun.id), child);
+
+        // Pipe to CloudWatchLogs
+        child.stdout?.pipe(cloudWatchLogsStream);
+        child.stderr?.pipe(cloudWatchLogsStream);
+
+        // Pass through logs to stdout/stderr
+        if (this.options.logToStdout) {
+          child.stdout?.pipe(process.stdout);
+          child.stderr?.pipe(process.stderr);
         }
 
-        // Delete the timeout key for this task run
-        this.redisClient.del(
-          `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
-          taskRun.id
-        );
+        child.on("exit", async (code, signal) => {
+          // Fetch a fresh instance of taskRun because there might be state changes outside of
+          // this process that has happened to the taskRun
+          const connection = await this.connectionPromise;
+          const taskRunRepository = connection.getRepository(TaskRun);
+          const freshTaskRun = await taskRunRepository.findOne(taskRun.id);
 
-        // End the task
-        this.endTaskRun(
-          code === 0
-            ? TaskRun.TaskRunState.FINISHED
-            : TaskRun.TaskRunState.ERROR,
-          freshTaskRun,
-          code,
-          signal
-        );
-      });
-    } catch {
-      // ignore failing to acquire a lock, this is task run is probably run by another host
-    }
+          // Skip ending TaskRun if it was timed out or was killed
+          if (
+            !freshTaskRun ||
+            freshTaskRun.state === TaskRun.TaskRunState.TIMED_OUT ||
+            freshTaskRun.state === TaskRun.TaskRunState.KILLED
+          ) {
+            return;
+          }
+
+          // Delete the timeout key for this task run
+          this.redisClient.del(
+            `${this.REDIS_TASK_TIMEOUT_PREFIX}${taskRun.id}`,
+            taskRun.id
+          );
+
+          // End the task
+          this.endTaskRun(
+            code === 0
+              ? TaskRun.TaskRunState.FINISHED
+              : TaskRun.TaskRunState.ERROR,
+            freshTaskRun,
+            code,
+            signal
+          );
+
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Child process existed with code ${code}`));
+          }
+        });
+      } catch {
+        // ignore failing to acquire a lock, this is task run is probably run by another host
+      }
+    });
   }
 
   /**

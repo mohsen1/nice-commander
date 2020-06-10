@@ -68,7 +68,7 @@ export default class TasksRunResolver {
     await this.repository.save(taskRun);
 
     // start the task
-    await this.niceCommander.startTask(taskRun);
+    this.niceCommander.startTask(taskRun);
 
     // Save to DB
     await this.repository.save(taskRun);
