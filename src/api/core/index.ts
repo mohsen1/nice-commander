@@ -613,6 +613,18 @@ export class NiceCommander {
       1
     );
 
+    // if in 5 seconds the task is still running it is probably because the
+    // child process is not attached to any of instances (usually as result of a deploy before job finishes)
+    // We're making sure the db row for this job is marked as killed if it is still in running state
+    // 5 seconds after sending the kill signal
+    setTimeout(async () => {
+      if (taskRun.state === TaskRunState.RUNNING) {
+        taskRun.state = TaskRunState.KILLED;
+        const connection = await this.connectionPromise;
+        await connection.getRepository(TaskRun).save(taskRun);
+      }
+    }, 5_000);
+
     return true;
   }
 
