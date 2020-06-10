@@ -332,13 +332,17 @@ export class NiceCommander {
    * @param inMs Time in milliseconds
    */
   private async scheduleTask(task: Task, inMs: number) {
-    // fire and forget
-    this.redisClient.set(
-      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
-      task.id,
-      "PX",
-      inMs
-    );
+    if (
+      !this.redisClient.exists(`${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`)
+    ) {
+      // fire and forget
+      this.redisClient.set(
+        `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,
+        task.id,
+        "PX",
+        inMs
+      );
+    }
   }
 
   private async onTaskScheduleKeyExpired(message: string) {
