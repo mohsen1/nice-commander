@@ -1441,12 +1441,12 @@
   integrity sha512-Qv4LTqO11jepd5Qmlp3M1YEjBumoTHcHFdgPTQ+sFlIL5myi/7xu/POwP7IRu6odBdmLXdtIs1D6TuW6kbwbbg==
 
 "@graphql-codegen/cli@^1.12.1":
-  version "1.15.1"
-  resolved "https://registry.yarnpkg.com/@graphql-codegen/cli/-/cli-1.15.1.tgz#2c858af9b425dde5b3fa23ab80952cbf1f78470d"
-  integrity sha512-UQdeNFpdvYdirtm3rnClGItS0xyJImaSNpRorEXZPfuixeDr6q24EmuxFg7W+oCzSOSHHx3Vu75H4r/EFqH/xA==
+  version "1.15.2"
+  resolved "https://registry.yarnpkg.com/@graphql-codegen/cli/-/cli-1.15.2.tgz#7513fdfbcd998131c37719044368ee1c2dea29ba"
+  integrity sha512-eEoChXpBGXI+4gAUoAe3c+xc1bXoDBwO0xiNqZeDFFAe4gh3qNzjhYUuiWLYDn56MOtgeGPAQcn6yAMHrH5M8Q==
   dependencies:
-    "@graphql-codegen/core" "1.15.1"
-    "@graphql-codegen/plugin-helpers" "1.15.1"
+    "@graphql-codegen/core" "1.15.2"
+    "@graphql-codegen/plugin-helpers" "1.15.2"
     "@graphql-tools/apollo-engine-loader" "^6.0.0"
     "@graphql-tools/code-file-loader" "^6.0.0"
     "@graphql-tools/git-loader" "^6.0.0"
@@ -1459,7 +1459,7 @@
     "@graphql-tools/utils" "^6.0.0"
     ansi-escapes "4.3.1"
     camel-case "4.1.1"
-    chalk "4.0.0"
+    chalk "4.1.0"
     chokidar "3.4.0"
     common-tags "1.8.0"
     constant-case "3.0.3"
@@ -1489,20 +1489,20 @@
     wrap-ansi "7.0.0"
     yargs "15.3.1"
 
-"@graphql-codegen/core@1.15.1":
-  version "1.15.1"
-  resolved "https://registry.yarnpkg.com/@graphql-codegen/core/-/core-1.15.1.tgz#a14d3c8a0100e0aa90df98673f67ae232ec1e0e3"
-  integrity sha512-LxtAFtKECkZPZeapIbUW8SSAxO9yRyIsYpg1+1gnv4GZw/0j6johXJ5Ms64Q6dZt69oMMYUIWmwNcGa/ccRILA==
+"@graphql-codegen/core@1.15.2":
+  version "1.15.2"
+  resolved "https://registry.yarnpkg.com/@graphql-codegen/core/-/core-1.15.2.tgz#62817e652032528954b9a4c4d3c0a1ed406b2644"
+  integrity sha512-hZh68w4C1hGi/8F6oSK5cOzI03GKybN7unDtF2XWBvTevLVBZrVk/8RQJKLZYgx+ldGdcm2wbf4T6HPWo7w1Kg==
   dependencies:
-    "@graphql-codegen/plugin-helpers" "1.15.1"
+    "@graphql-codegen/plugin-helpers" "1.15.2"
     "@graphql-tools/merge" "^6.0.0"
     "@graphql-tools/utils" "^6.0.0"
     tslib "~2.0.0"
 
-"@graphql-codegen/plugin-helpers@1.15.1":
-  version "1.15.1"
-  resolved "https://registry.yarnpkg.com/@graphql-codegen/plugin-helpers/-/plugin-helpers-1.15.1.tgz#7fce2f93cf42199ca977018bcb8f67e946d5503a"
-  integrity sha512-DnLD+s4ng+rqbqrcHtV0/jtn/bYSUTqL3tpqPDeIhsqmdDSAtOtelVCeTtPHAJGOO7RI6BQB6rXm/ZgaCObIAg==
+"@graphql-codegen/plugin-helpers@1.15.2":
+  version "1.15.2"
+  resolved "https://registry.yarnpkg.com/@graphql-codegen/plugin-helpers/-/plugin-helpers-1.15.2.tgz#102d93094858f10537911bd3c788f730f0f74974"
+  integrity sha512-5bvgNrLEtXj0tmyGj0I2JfxbjL1wkOKcjTubGDFfmbOR4aGOCCJPCgTtoCyCX8qbazW4LOsVInWieKEoEGUzYg==
   dependencies:
     "@graphql-tools/utils" "^6.0.0"
     camel-case "4.1.1"
@@ -3998,10 +3998,18 @@ chalk@3.0.0, chalk@^3.0.0, chalk@~3.0.0:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chalk@4.0.0, chalk@^4.0.0:
+chalk@4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.0.0.tgz#6e98081ed2d17faab615eb52ac66ec1fe6209e72"
   integrity sha512-N9oWFcegS0sFr9oh1oz2d7Npos6vNoWW9HvtCg5N1KRFpUhaAhvTv5Y58g880fZaEYSNm3qDz8SU1UrGvp+n7A==
+  dependencies:
+    ansi-styles "^4.1.0"
+    supports-color "^7.1.0"
+
+chalk@4.1.0, chalk@^4.0.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.0.tgz#4e14870a618d9e2edd97dd8345fd9d9dc315646a"
+  integrity sha512-qwx12AxXe2Q5xQ43Ac//I6v5aXTipYrSESdOgzrN+9XjgEpyjpKuvSGaN4qE93f7TQTlerQQ8S+EQ0EyDoVL1A==
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
@@ -12971,14 +12979,6 @@ yargs-parser@13.1.2, yargs-parser@^13.1.2:
     camelcase "^5.0.0"
     decamelize "^1.2.0"
 
-yargs-parser@^13.1.1:
-  version "13.1.1"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-13.1.1.tgz#d26058532aa06d365fe091f6a1fc06b2f7e5eca0"
-  integrity sha512-oVAVsHz6uFrg3XQheFII8ESO2ssAf9luWuAd6Wexsu4F3OtIW0o8IribPXYrD4WC24LWtPrJlGy87y5udK+dxQ==
-  dependencies:
-    camelcase "^5.0.0"
-    decamelize "^1.2.0"
-
 yargs-parser@^18.1.1:
   version "18.1.3"
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-18.1.3.tgz#be68c4975c6b2abf469236b0c870362fab09a7b0"
@@ -12996,7 +12996,7 @@ yargs-unparser@1.6.0:
     lodash "^4.17.15"
     yargs "^13.3.0"
 
-yargs@13.3.2:
+yargs@13.3.2, yargs@^13.2.1, yargs@^13.3.0:
   version "13.3.2"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-13.3.2.tgz#ad7ffefec1aa59565ac915f82dccb38a9c31a2dd"
   integrity sha512-AX3Zw5iPruN5ie6xGRIDgqkT+ZhnRlZMLMHAs8tg7nRruy2Nb+i5o9bwghAogtM08q1dpr2LVoS8KSTMYpWXUw==
@@ -13028,22 +13028,6 @@ yargs@15.3.1, yargs@^15.0.0, yargs@^15.3.1:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^18.1.1"
-
-yargs@^13.2.1, yargs@^13.3.0:
-  version "13.3.0"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-13.3.0.tgz#4c657a55e07e5f2cf947f8a366567c04a0dedc83"
-  integrity sha512-2eehun/8ALW8TLoIl7MVaRUrg+yCnenu8B4kBlRxj3GJGDKU1Og7sMXPNm1BYyM1DOJmTZ4YeN/Nwxv+8XJsUA==
-  dependencies:
-    cliui "^5.0.0"
-    find-up "^3.0.0"
-    get-caller-file "^2.0.1"
-    require-directory "^2.1.1"
-    require-main-filename "^2.0.0"
-    set-blocking "^2.0.0"
-    string-width "^3.0.0"
-    which-module "^2.0.0"
-    y18n "^4.0.0"
-    yargs-parser "^13.1.1"
 
 zen-observable-ts@^0.8.21:
   version "0.8.21"
