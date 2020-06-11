@@ -42,7 +42,7 @@ const TaskList = () => {
           }[];
         }) => (
           <TaskListItem
-            key={task.name}
+            key={task.id}
             id={task.id}
             name={task.name}
             runs={task.runs}

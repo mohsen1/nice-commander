@@ -19,8 +19,8 @@ export class Task {
   @DeleteDateColumn()
   public deletedAt!: Date;
 
-  @Field({ description: "Task name" })
-  @Column()
+  @Field({ description: "Task name (unique)" })
+  @Column({ unique: true })
   public name!: string;
 
   @Field({ description: "Task description" })
