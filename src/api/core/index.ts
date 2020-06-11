@@ -67,6 +67,8 @@ export class NiceCommander {
    * expired signal and try to find the child process in their map and kill the process.
    */
   private readonly childProcesses: Map<string, ChildProcess> = new Map();
+  private isBootstrapped = false;
+  private bootstrapError: Error | null = null;
 
   public constructor(public options: Options) {
     this.taskDefinitionsFiles = this.readTaskDefinitions(
@@ -498,6 +500,7 @@ export class NiceCommander {
   public startTask(taskRun: TaskRun) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
+      await this.bootstrap();
       const taskDefinitionFile = this.taskDefinitionsFiles.find(
         ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
       );
@@ -691,6 +694,20 @@ export class NiceCommander {
     return handle;
   }
 
+  private bootstrap = async () => {
+    if (this.isBootstrapped) {
+      return;
+    }
+
+    // Sync task definitions
+    await this.sync(this.taskDefinitionsFiles);
+
+    // Schedule tasks
+    await this.schedule();
+
+    this.isBootstrapped = true;
+  };
+
   /**
    * Get express middleware to be mounted in your app
    *
@@ -700,42 +717,13 @@ export class NiceCommander {
   public getExpressMiddleware() {
     const router = Router();
 
-    let isBootstrapped = false;
-    let bootstrapError: Error | null = null;
-
-    const bootstrap = async () => {
-      // Sync task definitions
-      await this.sync(this.taskDefinitionsFiles);
-
-      try {
-        this.redLock.lock("schedule", 10_000);
-        // Schedule tasks
-        await this.schedule();
-      } catch {
-        // ignore failing to acquire lock for schedule
-      }
-
-      // API
-      const middleware = await this.getApolloServerMiddleware();
-      router.use(middleware);
-
-      // UI
-      const handler = await this.getNextJsRequestHandler(
-        this.options.mountPath
-      );
-      router.all("*", (req, res) => handler(req, res));
-
-      isBootstrapped = true;
-    };
-
-    bootstrap().catch((e) => (bootstrapError = e));
-
+    // Before this is instance ready we simply return a plain response
     router.all("*", (_, res, next) => {
-      if (bootstrapError) {
-        return next(bootstrapError);
+      if (this.bootstrapError) {
+        return next(this.bootstrapError);
       }
 
-      if (isBootstrapped) {
+      if (this.isBootstrapped) {
         return next();
       }
 
@@ -750,6 +738,20 @@ export class NiceCommander {
           </html>`
       );
     });
+
+    this.bootstrap()
+      .catch((e) => (this.bootstrapError = e))
+      .then(async () => {
+        // API
+        const middleware = await this.getApolloServerMiddleware();
+        router.use(middleware);
+
+        // UI
+        const handler = await this.getNextJsRequestHandler(
+          this.options.mountPath
+        );
+        router.all("*", (req, res) => handler(req, res));
+      });
 
     return router;
   }
