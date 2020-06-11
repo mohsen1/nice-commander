@@ -17,7 +17,7 @@ export default class TasksResolver {
   @Query((returns) => [Task], { description: "Get a list of tasks" })
   async tasks(
     @Arg("take", (type) => Int, {
-      defaultValue: 10,
+      defaultValue: 1_000,
       nullable: true,
       description: "How many to take",
     })
@@ -29,7 +29,7 @@ export default class TasksResolver {
     })
     skip: number
   ) {
-    assertNumberArgumentIsInRange("take", take, 1, 500);
+    assertNumberArgumentIsInRange("take", take, 1, 5000);
     assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
 
     const tasks = await this.repository.find({
