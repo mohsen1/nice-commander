@@ -148,7 +148,6 @@ export class NiceCommander {
       this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
     });
-    this.bootstrap();
   }
 
   /**
