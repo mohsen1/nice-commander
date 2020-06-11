@@ -14,6 +14,7 @@ import path from "path";
 import redis, { RedisClient } from "redis";
 import Redlock from "redlock";
 import timestring from "timestring";
+import { promisify } from "util";
 
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
@@ -147,6 +148,7 @@ export class NiceCommander {
       this.debug(`Connection ${connection.name} is created successfully.`);
       return connection;
     });
+    this.bootstrap();
   }
 
   /**
@@ -334,9 +336,11 @@ export class NiceCommander {
    * @param inMs Time in milliseconds
    */
   private async scheduleTask(task: Task, inMs: number) {
-    if (
-      !this.redisClient.exists(`${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`)
-    ) {
+    const pttl = await promisify(this.redisClient.pttl).bind(this.redisClient)(
+      `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`
+    );
+
+    if (pttl <= 0) {
       // fire and forget
       this.redisClient.set(
         `${this.REDIS_TASK_SCHEDULE_PREFIX}${task.id}`,

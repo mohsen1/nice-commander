@@ -19,6 +19,7 @@
     "Keyspace",
     "Redlock",
     "keyevent",
+    "pttl",
     "timestring",
     "typedi",
     "typeorm",
