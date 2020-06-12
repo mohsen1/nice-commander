@@ -12,9 +12,10 @@ import fs from "fs";
 import next from "next";
 import path from "path";
 import redis, { RedisClient } from "redis";
-import Redlock from "redlock";
+import Redlock, { Lock } from "redlock";
 import timestring from "timestring";
 import { promisify } from "util";
+import os from "os";
 
 import { Options } from "./Options";
 import { rand } from "../resolvers/util";
@@ -371,6 +372,9 @@ export class NiceCommander {
         taskRun.startTime = Date.now();
         taskRun.state = TaskRun.TaskRunState.RUNNING;
         taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
+        taskRun.hostname = os.hostname();
+        taskRun.freemem = os.freemem();
+        taskRun.loadavg = os.loadavg().join(", ");
         await taskRunRepository.save(taskRun);
         this.startTask(taskRun);
 
@@ -474,6 +478,9 @@ export class NiceCommander {
     taskRun.invocationSource = invocationSource;
     taskRun.state = TaskRun.TaskRunState.RUNNING;
     taskRun.task = task;
+    taskRun.hostname = os.hostname();
+    taskRun.freemem = os.freemem();
+    taskRun.loadavg = os.loadavg().join(", ");
 
     await taskRunRepository.save(taskRun);
     this.startTask(taskRun);
@@ -703,10 +710,30 @@ export class NiceCommander {
     }
 
     // Sync task definitions
-    await this.sync(this.taskDefinitionsFiles);
+    let syncLock: Lock | null = null;
+    try {
+      syncLock = await this.redLock.lock("NiceCommander:sync", 60_000);
+      await this.sync(this.taskDefinitionsFiles);
+    } catch {
+      // ignore
+    } finally {
+      if (syncLock) {
+        await this.redLock.unlock(syncLock);
+      }
+    }
 
     // Schedule tasks
-    await this.schedule();
+    let scheduleLock: Lock | null = null;
+    try {
+      scheduleLock = await this.redLock.lock("NiceCommander:schedule", 60_000);
+      await this.schedule();
+    } catch {
+      // ignore
+    } finally {
+      if (scheduleLock) {
+        await this.redLock.unlock(scheduleLock);
+      }
+    }
 
     this.isBootstrapped = true;
   };

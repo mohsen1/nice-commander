@@ -1,6 +1,7 @@
 import { Resolver, Query, Arg, Int, Mutation, Ctx } from "type-graphql";
 import { Connection } from "typeorm-plus";
 import { Service, Inject } from "typedi";
+import os from "os";
 
 import { TaskRun } from "../models/TaskRun";
 import { Task } from "../models/Task";
@@ -63,6 +64,9 @@ export default class TasksRunResolver {
     taskRun.payload = payload;
     taskRun.runnerEmail = ctx?.viewer?.email;
     taskRun.runnerName = ctx?.viewer?.name;
+    taskRun.hostname = os.hostname();
+    taskRun.freemem = os.freemem();
+    taskRun.loadavg = os.loadavg().join(", ");
 
     // Store initial states of the task run
     await this.repository.save(taskRun);

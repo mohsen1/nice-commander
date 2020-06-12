@@ -70,6 +70,21 @@ export class TaskRun {
   @Column({ default: "{}" })
   public payload!: string;
 
+  @Field((type) => String, { description: "hostname" })
+  @Column()
+  public hostname!: string;
+
+  @Field((type) => String, {
+    description:
+      "System load average, an array containing the 1, 5, and 15 minute load averages.",
+  })
+  @Column()
+  public loadavg!: string;
+
+  @Field((type) => Number, { description: "System free memory in bytes" })
+  @Column()
+  public freemem!: number;
+
   @Field((type) => Int, { description: "Exit Code", nullable: true })
   @Column({ nullable: true, type: "int" })
   public exitCode!: number | null;

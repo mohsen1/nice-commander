@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useQuery, useMutation } from "react-apollo";
 import Link from "next/link";
 import { Card, Elevation, ButtonGroup, Button } from "@blueprintjs/core";
+import prettyBytes from "pretty-bytes";
 
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
@@ -32,6 +33,9 @@ const getTaskRunQuery = gql`
       invocationSource
       runnerName
       runnerEmail
+      hostname
+      freemem
+      loadavg
       task {
         name
         id
@@ -79,7 +83,7 @@ const TaskRunPage: React.FC = () => {
             href={`${appContext?.baseUrl}/tasks/${taskName}`}
           >
             <a>
-              {taskName} - {new Date(data?.taskRun.startTime).toLocaleString()}
+              {data?.taskRun?.state}: {taskName}
             </a>
           </Link>
         </H3>
@@ -108,15 +112,35 @@ const TaskRunPage: React.FC = () => {
             )}
           </ButtonGroup>
         </p>
+        {data?.taskRun.runnerName && (
+          <p>
+            Started by:{" "}
+            <a href={`mailto://${data?.taskRun.runnerEmail}`}>
+              {data?.taskRun.runnerName}{" "}
+            </a>
+          </p>
+        )}
+
         <p>
-          Started by:{" "}
-          <a href={`mailto://${data?.taskRun.runnerEmail}`}>
-            {data?.taskRun.runnerName}{" "}
-          </a>
+          Hostname: <span>{data?.taskRun.hostname}</span>
         </p>
         <p>
-          Status: <span>{data?.taskRun.state}</span>
+          System free memory:{" "}
+          <span>
+            {data?.taskRun?.freemem && prettyBytes(data?.taskRun?.freemem)}
+          </span>
         </p>
+        {data?.taskRun?.loadavg && (
+          <p>
+            System load average:{" "}
+            <span>
+              {data?.taskRun?.loadavg
+                .split(", ")
+                .map((la) => parseFloat(la).toFixed(2) + "%")
+                .join(", ")}
+            </span>
+          </p>
+        )}
         <p>
           Runtime:{" "}
           {displayTaskRunDuration(
@@ -127,8 +151,8 @@ const TaskRunPage: React.FC = () => {
         <p>Invocation source: {data?.taskRun.invocationSource}</p>
         {data?.taskRun.startTime && (
           <p>
-            Started at {new Date(data?.taskRun.startTime).toISOString()} -{" "}
-            {new Date(data?.taskRun.startTime).getTime()}
+            Started at {new Date(data?.taskRun.startTime).toLocaleString()}{" "}
+            <code>{new Date(data?.taskRun.startTime).getTime()}</code>
           </p>
         )}
         <p>Payload</p>
