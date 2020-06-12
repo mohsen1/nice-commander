@@ -32,6 +32,7 @@ const getTaskRunQuery = gql`
       invocationSource
       runnerName
       runnerEmail
+      hostname
       task {
         name
         id
@@ -108,14 +109,19 @@ const TaskRunPage: React.FC = () => {
             )}
           </ButtonGroup>
         </p>
-        <p>
-          Started by:{" "}
-          <a href={`mailto://${data?.taskRun.runnerEmail}`}>
-            {data?.taskRun.runnerName}{" "}
-          </a>
-        </p>
+        {data?.taskRun.runnerName && (
+          <p>
+            Started by:{" "}
+            <a href={`mailto://${data?.taskRun.runnerEmail}`}>
+              {data?.taskRun.runnerName}{" "}
+            </a>
+          </p>
+        )}
         <p>
           Status: <span>{data?.taskRun.state}</span>
+        </p>
+        <p>
+          Hostname: <span>{data?.taskRun.hostname}</span>
         </p>
         <p>
           Runtime:{" "}
