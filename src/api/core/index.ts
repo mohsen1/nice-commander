@@ -725,7 +725,7 @@ export class NiceCommander {
     // Schedule tasks
     let scheduleLock: Lock | null = null;
     try {
-      scheduleLock = await this.redLock.lock("NiceCommander:sync", 60_000);
+      scheduleLock = await this.redLock.lock("NiceCommander:schedule", 60_000);
       await this.schedule();
     } catch {
       // ignore
