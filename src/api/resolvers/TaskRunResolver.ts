@@ -66,7 +66,7 @@ export default class TasksRunResolver {
     taskRun.runnerName = ctx?.viewer?.name;
     taskRun.hostname = os.hostname();
     taskRun.freemem = os.freemem();
-    taskRun.loadavg = os.loadavg();
+    taskRun.loadavg = os.loadavg().join(", ");
 
     // Store initial states of the task run
     await this.repository.save(taskRun);

@@ -374,7 +374,7 @@ export class NiceCommander {
         taskRun.invocationSource = TaskRun.InvocationSource.SCHEDULED;
         taskRun.hostname = os.hostname();
         taskRun.freemem = os.freemem();
-        taskRun.loadavg = os.loadavg();
+        taskRun.loadavg = os.loadavg().join(", ");
         await taskRunRepository.save(taskRun);
         this.startTask(taskRun);
 
@@ -480,7 +480,7 @@ export class NiceCommander {
     taskRun.task = task;
     taskRun.hostname = os.hostname();
     taskRun.freemem = os.freemem();
-    taskRun.loadavg = os.loadavg();
+    taskRun.loadavg = os.loadavg().join(", ");
 
     await taskRunRepository.save(taskRun);
     this.startTask(taskRun);

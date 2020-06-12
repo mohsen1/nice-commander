@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useQuery, useMutation } from "react-apollo";
 import Link from "next/link";
 import { Card, Elevation, ButtonGroup, Button } from "@blueprintjs/core";
+import prettyBytes from "pretty-bytes";
 
 import MainLayout from "../../../../layouts/MainLayout";
 import ErrorPresenter from "../../../../components/ErrorPresentor";
@@ -33,6 +34,8 @@ const getTaskRunQuery = gql`
       runnerName
       runnerEmail
       hostname
+      freemem
+      loadavg
       task {
         name
         id
@@ -122,6 +125,12 @@ const TaskRunPage: React.FC = () => {
         </p>
         <p>
           Hostname: <span>{data?.taskRun.hostname}</span>
+        </p>
+        <p>
+          System free memory: <span>{prettyBytes(data?.taskRun.freemem)}</span>
+        </p>
+        <p>
+          System load average: <span>{data?.taskRun?.loadavg}</span>
         </p>
         <p>
           Runtime:{" "}

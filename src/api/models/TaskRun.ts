@@ -74,12 +74,12 @@ export class TaskRun {
   @Column()
   public hostname!: string;
 
-  @Field((type) => [Number], {
+  @Field((type) => String, {
     description:
       "System load average, an array containing the 1, 5, and 15 minute load averages.",
   })
   @Column()
-  public loadavg!: number[];
+  public loadavg!: string;
 
   @Field((type) => Number, { description: "System free memory in bytes" })
   @Column()
