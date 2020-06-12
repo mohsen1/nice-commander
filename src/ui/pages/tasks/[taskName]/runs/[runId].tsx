@@ -83,7 +83,7 @@ const TaskRunPage: React.FC = () => {
             href={`${appContext?.baseUrl}/tasks/${taskName}`}
           >
             <a>
-              {taskName} - {new Date(data?.taskRun.startTime).toLocaleString()}
+              {data?.taskRun?.state}: {taskName}
             </a>
           </Link>
         </H3>
@@ -120,18 +120,27 @@ const TaskRunPage: React.FC = () => {
             </a>
           </p>
         )}
-        <p>
-          Status: <span>{data?.taskRun.state}</span>
-        </p>
+
         <p>
           Hostname: <span>{data?.taskRun.hostname}</span>
         </p>
         <p>
-          System free memory: <span>{prettyBytes(data?.taskRun.freemem)}</span>
+          System free memory:{" "}
+          <span>
+            {data?.taskRun?.freemem && prettyBytes(data?.taskRun?.freemem)}
+          </span>
         </p>
-        <p>
-          System load average: <span>{data?.taskRun?.loadavg}</span>
-        </p>
+        {data?.taskRun?.loadavg && (
+          <p>
+            System load average:{" "}
+            <span>
+              {data?.taskRun?.loadavg
+                .split(", ")
+                .map((la) => parseFloat(la).toFixed(2) + "%")
+                .join(", ")}
+            </span>
+          </p>
+        )}
         <p>
           Runtime:{" "}
           {displayTaskRunDuration(
@@ -142,8 +151,8 @@ const TaskRunPage: React.FC = () => {
         <p>Invocation source: {data?.taskRun.invocationSource}</p>
         {data?.taskRun.startTime && (
           <p>
-            Started at {new Date(data?.taskRun.startTime).toISOString()} -{" "}
-            {new Date(data?.taskRun.startTime).getTime()}
+            Started at {new Date(data?.taskRun.startTime).toLocaleString()}{" "}
+            <code>{new Date(data?.taskRun.startTime).getTime()}</code>
           </p>
         )}
         <p>Payload</p>
