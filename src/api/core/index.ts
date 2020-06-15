@@ -186,7 +186,11 @@ export class NiceCommander {
       task.schedule = taskDefinitionFile.taskDefinition.schedule || "manual";
       task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
 
-      await taskRepository.save(task);
+      try {
+        await taskRepository.save(task);
+      } catch (e) {
+        this.debug(`Failed to save task named ${task.name}`, e);
+      }
     }
 
     // handle deleted tasks that exist in db but not on FS
