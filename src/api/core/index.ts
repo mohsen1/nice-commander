@@ -363,12 +363,24 @@ export class NiceCommander {
     const taskRunRepository = connection.getRepository(TaskRun);
 
     const taskId = message.replace(this.REDIS_TASK_SCHEDULE_PREFIX, "");
+    const task = await taskRepository.findOne(taskId);
+
+    const taskDefinitionFile = this.taskDefinitionsFiles.find(
+      ({ taskDefinition }) => taskDefinition.name === task?.name
+    );
+
+    if (
+      taskDefinitionFile?.taskDefinition.shouldHostRun &&
+      !(await taskDefinitionFile.taskDefinition.shouldHostRun())
+    ) {
+      // This host is not suppose to run this task
+      return;
+    }
 
     try {
       // Avoid other instances from responding
       await this.redLock.lock(`onTaskScheduleKeyExpired-${taskId}`, 1000);
 
-      const task = await taskRepository.findOne(taskId);
       if (task) {
         this.debug(`Starting task "${task.name}" on schedule on ${new Date()}`);
         const taskRun = new TaskRun();
@@ -518,6 +530,18 @@ export class NiceCommander {
       const taskDefinitionFile = this.taskDefinitionsFiles.find(
         ({ taskDefinition }) => taskDefinition.name === taskRun.task.name
       );
+
+      // if this host is not suppose to run this task short-circuit quit
+      if (
+        taskDefinitionFile?.taskDefinition.shouldHostRun &&
+        !(await taskDefinitionFile?.taskDefinition.shouldHostRun())
+      ) {
+        await this.endTaskRun(TaskRunState.ERROR, taskRun);
+
+        throw new Error(
+          `${os.hostname()} is not capable of running this task.`
+        );
+      }
 
       if (!taskRun) {
         throw new Error("Can not find task run model");

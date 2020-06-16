@@ -16,6 +16,9 @@ const task: TaskDefinition = {
   },
   timeoutAfter: "5 seconds",
   schedule: "manual",
+  shouldHostRun: async () => {
+    return false;
+  },
 };
 
 export default task;

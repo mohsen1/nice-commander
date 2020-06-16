@@ -36,6 +36,13 @@ export interface TaskDefinition {
    * @see https://www.npmjs.com/package/timestring
    */
   schedule?: "manual" | string;
+
+  /**
+   * Optional function for checking if a host should run a task.
+   * This is useful for not running tasks on hosts that are overused or are configured in a way
+   * that should not be used for running this specific task. For instance staging environment.
+   */
+  shouldHostRun?(): Promise<boolean>;
 }
 
 export class TaskDefinitionValidationError extends Error {}
