@@ -20,6 +20,12 @@ export interface Options {
   taskDefinitionsDirectory: string;
 
   /**
+   * Only read task definitions from database. Do not create new task task definitions
+   * from task files.
+   */
+  readonlyMode?: boolean;
+
+  /**
    * At what path this middleware is mounted?
    * This is used to make URLs of static assets used in UI
    */

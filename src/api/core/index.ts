@@ -738,15 +738,17 @@ export class NiceCommander {
     }
 
     // Sync task definitions
-    let syncLock: Lock | null = null;
-    try {
-      syncLock = await this.redLock.lock("NiceCommander:sync", 60_000);
-      await this.sync(this.taskDefinitionsFiles);
-    } catch {
-      // ignore
-    } finally {
-      if (syncLock) {
-        await this.redLock.unlock(syncLock);
+    if (!this.options.readonlyMode) {
+      let syncLock: Lock | null = null;
+      try {
+        syncLock = await this.redLock.lock("NiceCommander:sync", 60_000);
+        await this.sync(this.taskDefinitionsFiles);
+      } catch {
+        // ignore
+      } finally {
+        if (syncLock) {
+          await this.redLock.unlock(syncLock);
+        }
       }
     }
 
