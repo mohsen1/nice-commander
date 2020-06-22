@@ -26,6 +26,15 @@ export interface Options {
   readonlyMode?: boolean;
 
   /**
+   * How to treat Unhandled Promise Rejection errors globally? Each task definition can override this value by providing
+   * the `unhandledRejections` option in the task definition level.
+   *
+   * @see https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
+   * @default "strict"
+   */
+  unhandledRejections?: "strict" | "warn" | "none";
+
+  /**
    * At what path this middleware is mounted?
    * This is used to make URLs of static assets used in UI
    */
