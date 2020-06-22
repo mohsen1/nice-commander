@@ -41,6 +41,13 @@ export class Task {
   @Column()
   public timeoutAfterDescription!: string;
 
+  @Field((type) => String, {
+    description: "Unhandled Promise Rejections behavior",
+    nullable: true,
+  })
+  @Column({ nullable: true })
+  public unhandledRejections?: string;
+
   @Field((type) => [TaskRun], {
     description: "List of task runs",
     defaultValue: [],

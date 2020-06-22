@@ -35,6 +35,8 @@ const getTaskRunQuery = gql`
       runnerEmail
       hostname
       freemem
+      exitCode
+      exitSignal
       loadavg
       task {
         name
@@ -43,6 +45,22 @@ const getTaskRunQuery = gql`
     }
   }
 `;
+
+const TaskRunDetail: React.FC<{
+  title: string;
+  value?: string;
+  metadata?: string;
+}> = ({ title, value, metadata }) => {
+  if (!value) return null;
+
+  return (
+    <p>
+      <b>{title}: </b>
+      <span>{value}</span>
+      {metadata && <span> ({metadata})</span>}
+    </p>
+  );
+};
 
 const TaskRunPage: React.FC = () => {
   const { taskName, runId } = useRouter().query;
@@ -87,74 +105,69 @@ const TaskRunPage: React.FC = () => {
             </a>
           </Link>
         </H3>
-        <p>
-          <ButtonGroup>
-            {data?.taskRun?.state === "RUNNING" && (
-              <Button
-                text="stop"
-                intent="danger"
-                icon="stop"
-                onClick={() =>
-                  stopTaskRun({
-                    variables: {
-                      taskRunId: data?.taskRun?.id,
-                    },
-                  })
-                }
-              />
-            )}
-            {data?.taskRun?.state !== "RUNNING" && (
-              <RunButton
-                text="Run again"
-                taskId={data?.taskRun?.task?.id}
-                taskName={data?.taskRun?.task?.name}
-              />
-            )}
-          </ButtonGroup>
-        </p>
-        {data?.taskRun.runnerName && (
-          <p>
-            Started by:{" "}
-            <a href={`mailto://${data?.taskRun.runnerEmail}`}>
-              {data?.taskRun.runnerName}{" "}
-            </a>
-          </p>
-        )}
 
-        <p>
-          Hostname: <span>{data?.taskRun.hostname}</span>
-        </p>
-        <p>
-          System free memory:{" "}
-          <span>
-            {data?.taskRun?.freemem && prettyBytes(data?.taskRun?.freemem)}
-          </span>
-        </p>
-        {data?.taskRun?.loadavg && (
-          <p>
-            System load average:{" "}
-            <span>
-              {data?.taskRun?.loadavg
-                .split(", ")
-                .map((la) => parseFloat(la).toFixed(2) + "%")
-                .join(", ")}
-            </span>
-          </p>
-        )}
-        <p>
-          Runtime:{" "}
-          {displayTaskRunDuration(
+        <ButtonGroup style={{ marginBottom: "1rem" }}>
+          {data?.taskRun?.state === "RUNNING" && (
+            <Button
+              text="stop"
+              intent="danger"
+              icon="stop"
+              onClick={() =>
+                stopTaskRun({
+                  variables: {
+                    taskRunId: data?.taskRun?.id,
+                  },
+                })
+              }
+            />
+          )}
+          {data?.taskRun?.state !== "RUNNING" && (
+            <RunButton
+              text="Run again"
+              taskId={data?.taskRun?.task?.id}
+              taskName={data?.taskRun?.task?.name}
+            />
+          )}
+        </ButtonGroup>
+        <TaskRunDetail
+          title="Started by"
+          value={data?.taskRun.runnerName}
+          metadata={data?.taskRun.runnerEmail}
+        />
+        <TaskRunDetail title="Hostname" value={data?.taskRun.hostname} />
+        <TaskRunDetail
+          title="System free memory"
+          value={data?.taskRun?.freemem && prettyBytes(data?.taskRun?.freemem)}
+        />
+        <TaskRunDetail
+          title="System load average"
+          value={data?.taskRun?.loadavg
+            .split(", ")
+            .map((la) => parseFloat(la).toFixed(2) + "%")
+            .join(", ")}
+        />
+
+        <TaskRunDetail
+          title="Duration"
+          value={displayTaskRunDuration(
             data?.taskRun.startTime,
             data?.taskRun.endTime
           )}
-        </p>
-        <p>Invocation source: {data?.taskRun.invocationSource}</p>
-        {data?.taskRun.startTime && (
-          <p>
-            Started at {new Date(data?.taskRun.startTime).toLocaleString()}{" "}
-            <code>{new Date(data?.taskRun.startTime).getTime()}</code>
-          </p>
-        )}
+        />
+        <TaskRunDetail
+          title="Invocation source"
+          value={data?.taskRun.invocationSource}
+        />
+
+        <TaskRunDetail title="Exit code" value={data?.taskRun?.exitCode} />
+        <TaskRunDetail title="Exit signal" value={data?.taskRun?.exitSignal} />
+
+        <TaskRunDetail
+          title="Start time"
+          value={new Date(data?.taskRun.startTime).toLocaleString()}
+          metadata={new Date(data?.taskRun.startTime).getTime().toFixed()}
+        />
+
         <p>Payload</p>
         <pre>{data?.taskRun.payload}</pre>
       </Card>

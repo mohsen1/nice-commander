@@ -43,6 +43,15 @@ export interface TaskDefinition {
    * that should not be used for running this specific task. For instance staging environment.
    */
   shouldHostRun?(): Promise<boolean>;
+
+  /**
+   * How to treat Unhandled Promise Rejection errors? This value can be set globally for all tasks in NiceCommander
+   * options. This value will override the global setting.
+   *
+   * @see https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
+   * @default "strict"
+   */
+  unhandledRejections?: "strict" | "warn" | "none";
 }
 
 export class TaskDefinitionValidationError extends Error {}

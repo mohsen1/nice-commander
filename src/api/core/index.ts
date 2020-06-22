@@ -93,12 +93,15 @@ export class NiceCommander {
       this.redisSubscriber.config("SET", "notify-keyspace-events", "Ex");
     }
 
+    // Set option defaults
     if (!options.getUser) {
       this.options.getUser = async (req) => ({
         name: req?.user?.name,
         email: req?.user?.email,
       });
     }
+    this.options.unhandledRejections =
+      this.options.unhandledRejections || "strict";
 
     // Subscribe to key expiration messages
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
@@ -185,6 +188,8 @@ export class NiceCommander {
         taskDefinitionFile.taskDefinition.description ?? "No description";
       task.schedule = taskDefinitionFile.taskDefinition.schedule || "manual";
       task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
+      task.unhandledRejections =
+        taskDefinitionFile.taskDefinition.unhandledRejections;
 
       try {
         await taskRepository.save(task);
@@ -582,10 +587,20 @@ export class NiceCommander {
           [taskDefinitionFile.filePath, taskRun.payload],
           {
             stdio: "pipe",
-            execArgv: process.execArgv.filter(
-              // See https://github.com/nodejs/node/issues/14325
-              (opt) => !opt.startsWith("--inspect")
-            ),
+            execArgv: process.execArgv
+              .filter(
+                // See https://github.com/nodejs/node/issues/14325
+                (opt) => !opt.startsWith("--inspect")
+              )
+
+              // Explicitly set --unhandled-rejections
+              .filter((arg) => arg.startsWith("--unhandled-rejections"))
+              .concat(
+                `--unhandled-rejections=${
+                  taskRun.task.unhandledRejections ??
+                  this.options.unhandledRejections
+                }`
+              ),
           }
         );
 
