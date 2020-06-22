@@ -594,7 +594,7 @@ export class NiceCommander {
               )
 
               // Explicitly set --unhandled-rejections
-              .filter((arg) => arg.startsWith("--unhandled-rejections"))
+              .filter((arg) => !arg.startsWith("--unhandled-rejections"))
               .concat(
                 `--unhandled-rejections=${
                   taskRun.task.unhandledRejections ??
