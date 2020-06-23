@@ -100,8 +100,6 @@ export class NiceCommander {
         email: req?.user?.email,
       });
     }
-    this.options.unhandledRejections =
-      this.options.unhandledRejections || "strict";
 
     // Subscribe to key expiration messages
     this.redisSubscriber.subscribe(this.REDIS_KEY_EXPIRED_CHANNEL);
@@ -581,6 +579,8 @@ export class NiceCommander {
           taskRun.task.timeoutAfter
         );
 
+        const unhandledRejections =
+          taskRun.task.unhandledRejections ?? this.options.unhandledRejections;
         // Create a child process
         const child = cp.fork(
           this.invokeFile,
@@ -596,10 +596,9 @@ export class NiceCommander {
               // Explicitly set --unhandled-rejections
               .filter((arg) => !arg.startsWith("--unhandled-rejections"))
               .concat(
-                `--unhandled-rejections=${
-                  taskRun.task.unhandledRejections ??
-                  this.options.unhandledRejections
-                }`
+                unhandledRejections
+                  ? `--unhandled-rejections=${unhandledRejections}`
+                  : []
               ),
           }
         );

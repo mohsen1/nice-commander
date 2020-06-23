@@ -15,6 +15,7 @@ const task: TaskDefinition = {
   },
   timeoutAfter: "1 minute",
   schedule: "manual",
+  unhandledRejections: "strict",
 };
 
 export default task;
