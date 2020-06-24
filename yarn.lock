@@ -8686,10 +8686,10 @@ moment-timezone@^0.5.x:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.26.0.tgz#5e1f82c6bafca6e83e808b30c8705eed0dcbd39a"
   integrity sha512-oIixUO+OamkUkwjhAVE18rAMfRJNsNe/Stid/gwHSOfHrOtw9EhAY2AHvdKZ/k/MggcYELFCJz/Sn2pL8b8JMw==
 
-monaco-editor@^0.19.0:
-  version "0.19.3"
-  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.19.3.tgz#1c994b3186c00650dbcd034d5370d46bf56c0663"
-  integrity sha512-2n1vJBVQF2Hhi7+r1mMeYsmlf18hjVb6E0v5SoMZyb4aeOmYPKun+CE3gYpiNA1KEvtSdaDHFBqH9d7Wd9vREg==
+monaco-editor@^0.20.0:
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.20.0.tgz#5d5009343a550124426cb4d965a4d27a348b4dea"
+  integrity sha512-hkvf4EtPJRMQlPC3UbMoRs0vTAFAYdzFQ+gpMb8A+9znae1c43q8Mab9iVsgTcg/4PNiLGGn3SlDIa8uvK1FIQ==
 
 move-concurrently@^1.0.1:
   version "1.0.1"
