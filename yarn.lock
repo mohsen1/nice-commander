@@ -1939,9 +1939,9 @@
   integrity sha512-44DWNv5gDR9EwrCTVQ4ZC99yPqVS0VCWrYIBl45qNR8XQy+4lbl0IQG8kBDf6NHwj4Ib4c2z1Fq1IUJOCbkZcw==
 
 "@monaco-editor/react@^3.0.1":
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/@monaco-editor/react/-/react-3.2.1.tgz#3482636873c4739a8e7e9a5e09dd0718920f2c6b"
-  integrity sha512-x9ae9fnX9J3zqyB4Df2+hSBzc9xLL6V0LQ6VZP0gqGJw+KnJeNA+/3vHwUGqcVrcKRK3HrEM3TT/tRguJfyjEA==
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/@monaco-editor/react/-/react-3.3.2.tgz#8bf8330a8b2643b757900901627a0bb04910380d"
+  integrity sha512-CeqsEBNwYoNmyWyOwJBQB/vArqOJ2L0hg5rpb7TUOwJHNPeccwT8UGc8m8pqyKqyETCv736iIT2jhFJt6BPjvg==
 
 "@next/react-dev-overlay@9.4.4":
   version "9.4.4"
