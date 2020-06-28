@@ -1,4 +1,13 @@
-import { Resolver, Query, Arg, Int, Mutation, Ctx } from "type-graphql";
+import {
+  Resolver,
+  Query,
+  Arg,
+  Int,
+  Mutation,
+  Ctx,
+  FieldResolver,
+  Root,
+} from "type-graphql";
 import { Connection } from "typeorm-plus";
 import { Service, Inject } from "typedi";
 import os from "os";
@@ -30,6 +39,14 @@ export default class TasksRunResolver {
   private get taskRepository() {
     const taskRepository = this.connection.getRepository(Task);
     return taskRepository;
+  }
+
+  @FieldResolver((type) => String)
+  uniqueId(@Root() taskRun: TaskRun) {
+    return taskRun.getUniqueId(
+      this.niceCommander.NODE_ENV,
+      String(this.niceCommander.options.sqlConnectionOptions.database)
+    );
   }
 
   @Mutation((returns) => TaskRun)

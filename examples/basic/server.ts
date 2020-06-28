@@ -44,6 +44,7 @@ const { middleware, startTask } = createMiddleware({
     ...config.get<object>("db"),
   },
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
+  readonlyMode: false,
 });
 
 app.use(mountPath, middleware);

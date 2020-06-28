@@ -5,7 +5,7 @@ import { buildSchema } from "type-graphql";
 import { Container } from "typedi";
 import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
-import { Router } from "express";
+import { Router, Handler } from "express";
 import cp, { ChildProcess } from "child_process";
 import debug from "debug";
 import fs from "fs";
@@ -23,7 +23,8 @@ import { Task } from "../models/Task";
 import { TaskRun, TaskRunState } from "../models/TaskRun";
 import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
-import CloudWatchLogStream from "./CloudWatchLogStream";
+import CloudWatchLogsWritableStream from "./CloudWatchLogsWritableStream";
+import CloudWatchLogsReadableStream from "./CloudWatchLogsReadableStream";
 
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
@@ -560,7 +561,7 @@ export class NiceCommander {
         const lockTTL = taskRun.task.timeoutAfter + 1000;
         await this.redLock.lock(taskRun.redisLockKey, lockTTL);
 
-        const cloudWatchLogsStream = new CloudWatchLogStream({
+        const cloudWatchLogsStream = new CloudWatchLogsWritableStream({
           awsRegion: this.options.awsRegion,
           credentials: this.options.awsCredentials,
           logGroupName: this.options.awsCloudWatchLogsLogGroupName,
@@ -723,6 +724,31 @@ export class NiceCommander {
     return server.getMiddleware({ path: "/graphql" });
   }
 
+  private getRawLogsHandler() {
+    const handler: Handler = (req, res) => {
+      const streamId = req.params.streamId;
+      console.log("Handling", streamId);
+
+      const {
+        awsCredentials,
+        awsRegion,
+        awsCloudWatchLogsLogGroupName,
+      } = this.options;
+
+      const stream = new CloudWatchLogsReadableStream({
+        awsRegion,
+        credentials: awsCredentials,
+        logGroupName: awsCloudWatchLogsLogGroupName,
+        logStreamName: streamId,
+      });
+
+      res.contentType("text/plain");
+      stream.pipe(res);
+    };
+
+    return handler;
+  }
+
   private async getNextJsRequestHandler(mountPath: string) {
     const dev = process.env.DEBUG?.includes("nice-commander");
     const dir = path.resolve(__dirname, "../../../../src/ui");
@@ -819,6 +845,9 @@ export class NiceCommander {
         // API
         const middleware = await this.getApolloServerMiddleware();
         router.use(middleware);
+
+        // Logs
+        router.get("/logs/raw/:streamId", this.getRawLogsHandler());
 
         // UI
         const handler = await this.getNextJsRequestHandler(
