@@ -38,6 +38,7 @@ const getTaskRunQuery = gql`
       exitCode
       exitSignal
       loadavg
+      uniqueId
       task {
         name
         id
@@ -176,6 +177,7 @@ const TaskRunPage: React.FC = () => {
         <LogViewer
           taskRunId={runId as string}
           isRunning={data?.taskRun.state === "RUNNING"}
+          uniqueId={data?.taskRun.uniqueId}
         />
       </Card>
     </MainLayout>

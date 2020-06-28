@@ -4,15 +4,15 @@ import { CloudWatchLogs, Credentials } from "aws-sdk";
 import _ from "lodash";
 import { InputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 
-interface CloudWatchLogStreamConstructorOptions {
+interface CloudWatchLogsWritableStreamOptions {
   awsRegion: string;
   credentials?: Credentials;
   logGroupName: string;
   logStreamName: string;
 }
 
-export default class CloudWatchLogStream extends Writable {
-  private readonly debug = debug("nice-commander:CloudWatchLogStream");
+export default class CloudWatchLogsWritableStream extends Writable {
+  private readonly debug = debug("nice-commander:CloudWatchLogsWritableStream");
   private readonly logGroupName!: string;
   private readonly logStreamName!: string;
   private readonly cloudWatchLogs!: CloudWatchLogs;
@@ -26,7 +26,7 @@ export default class CloudWatchLogStream extends Writable {
     credentials,
     logGroupName,
     logStreamName,
-  }: CloudWatchLogStreamConstructorOptions) {
+  }: CloudWatchLogsWritableStreamOptions) {
     super();
 
     this.logGroupName = logGroupName || this.logGroupName;

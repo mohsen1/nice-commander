@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
 import { uniqBy, sortBy } from "lodash";
@@ -6,6 +6,7 @@ import { Button } from "@blueprintjs/core";
 
 import Editor from "./Editor";
 import ErrorPresenter from "./ErrorPresentor";
+import { AppContext } from "../context/AppContext";
 
 const query = gql`
   query GetLogs($taskRunId: String!, $nextToken: String) {
@@ -19,11 +20,19 @@ const query = gql`
   }
 `;
 
-const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
+interface LogViewerProps {
+  taskRunId: string;
+  isRunning?: boolean;
+  uniqueId: string;
+}
+
+const LogViewer: React.FC<LogViewerProps> = ({
   taskRunId,
   isRunning,
+  uniqueId,
 }) => {
   const pollInterval = 1_000;
+  const appContext = useContext(AppContext);
 
   const [nextToken, setNextToken] = useState<string | undefined>();
   const [isLive, goLive] = useState(isRunning);
@@ -71,10 +80,17 @@ const LogViewer: React.FC<{ taskRunId: string; isRunning?: boolean }> = ({
       <div
         style={{
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
           padding: "10px 0",
         }}
       >
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href={`${appContext.baseUrl}/logs/raw/${uniqueId}`}
+        >
+          Get full raw logs
+        </a>
         <Button
           intent={isLive ? "success" : "primary"}
           icon="refresh"
