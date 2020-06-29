@@ -173,7 +173,7 @@ export default class TasksRunResolver {
       credentials: this.niceCommander.options.awsCredentials,
     });
 
-    return cloudWatchLogs
+    const logsResponse = await cloudWatchLogs
       .getLogEvents({
         logGroupName: this.niceCommander.options.awsCloudWatchLogsLogGroupName,
         logStreamName: taskRun.getUniqueId(
@@ -184,6 +184,18 @@ export default class TasksRunResolver {
         nextToken,
       })
       .promise();
+
+    const logEventSerializer = this.niceCommander.getTaskLogEventSerializer(
+      taskRun.task.name
+    );
+
+    return {
+      ...logsResponse,
+      events: logsResponse.events?.map((event) => ({
+        ...event,
+        message: logEventSerializer(event),
+      })),
+    };
   }
 
   @Mutation((returns) => Boolean)

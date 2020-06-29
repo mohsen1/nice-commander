@@ -23,13 +23,15 @@ const query = gql`
 interface LogViewerProps {
   taskRunId: string;
   isRunning?: boolean;
-  uniqueId: string;
+  logStreamName: string;
+  taskName: string;
 }
 
 const LogViewer: React.FC<LogViewerProps> = ({
   taskRunId,
   isRunning,
-  uniqueId,
+  logStreamName,
+  taskName,
 }) => {
   const pollInterval = 1_000;
   const appContext = useContext(AppContext);
@@ -68,13 +70,6 @@ const LogViewer: React.FC<LogViewerProps> = ({
     return <ErrorPresenter error={error} />;
   }
 
-  const value = allLogs
-    .map(
-      ({ message, timestamp }) =>
-        `${new Date(timestamp).toLocaleTimeString()} ${message}`
-    )
-    .join("\n");
-
   return (
     <div>
       <div
@@ -84,13 +79,23 @@ const LogViewer: React.FC<LogViewerProps> = ({
           padding: "10px 0",
         }}
       >
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href={`${appContext.baseUrl}/logs/raw/${uniqueId}`}
-        >
-          Get full raw logs
-        </a>
+        <span>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href={`${appContext.baseUrl}/logs/${taskName}/${logStreamName}`}
+          >
+            Full logs
+          </a>
+          {" · "}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href={`${appContext.baseUrl}/logs/${taskName}/${logStreamName}?mode=formatted`}
+          >
+            Full logs (formatted)
+          </a>
+        </span>
         <Button
           intent={isLive ? "success" : "primary"}
           icon="refresh"
@@ -112,7 +117,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
       <Editor
         readonly
         maxHeight={25}
-        value={value}
+        value={allLogs.map((l) => l.message).join("")}
         language="log"
         follow={isLive}
       />

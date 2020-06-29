@@ -3,7 +3,7 @@ import debug from "debug";
 import { CloudWatchLogs, Credentials } from "aws-sdk";
 import _ from "lodash";
 import { OutputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
-import os from "os";
+import DEFAULT_EVENT_SERIALIZER from "./DEFAULT_EVENT_SERIALIZER";
 
 type EventSterilizer = (event: OutputLogEvent) => string;
 
@@ -16,10 +16,6 @@ interface CloudWatchLogsReadableStreamOptions {
 }
 
 export default class CloudWatchLogsReadableStream extends Readable {
-  private static DEFAULT_EVENT_SERIALIZER = (event: OutputLogEvent) =>
-    `[${new Date(event.timestamp ?? 0).toISOString()}] ${event.message}${
-      os.EOL
-    }`;
   private readonly debug = debug("nice-commander:CloudWatchLogsReadableStream");
   private readonly logGroupName!: string;
   private readonly logStreamName!: string;
@@ -42,8 +38,7 @@ export default class CloudWatchLogsReadableStream extends Readable {
       region: awsRegion,
       credentials,
     });
-    this.eventSerializer =
-      eventSerializer || CloudWatchLogsReadableStream.DEFAULT_EVENT_SERIALIZER;
+    this.eventSerializer = eventSerializer || DEFAULT_EVENT_SERIALIZER;
   }
 
   async getNewEvents() {

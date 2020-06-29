@@ -25,6 +25,8 @@ import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import CloudWatchLogsWritableStream from "./CloudWatchLogsWritableStream";
 import CloudWatchLogsReadableStream from "./CloudWatchLogsReadableStream";
+import DEFAULT_EVENT_SERIALIZER from "./DEFAULT_EVENT_SERIALIZER";
+import task from "../../../examples/basic/tasks/asyncError";
 
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
@@ -281,6 +283,17 @@ export class NiceCommander {
         };
         return taskDefinitionFile;
       });
+  }
+
+  public getTaskLogEventSerializer(taskName: string) {
+    const taskDefinitionFile = this.taskDefinitionsFiles.find(
+      (tdf) => tdf.taskDefinition.name === taskName
+    );
+
+    return (
+      taskDefinitionFile?.taskDefinition.logEventSerializer ??
+      DEFAULT_EVENT_SERIALIZER
+    );
   }
 
   /**
@@ -726,8 +739,28 @@ export class NiceCommander {
 
   private getRawLogsHandler() {
     const handler: Handler = (req, res) => {
-      const streamId = req.params.streamId;
-      console.log("Handling", streamId);
+      const mode = req.query.mode ?? "raw";
+      const { logStreamName, taskName } = req.params;
+      const taskDefinitionsFile = this.taskDefinitionsFiles.find(
+        (tdf) => tdf.taskDefinition.name === taskName
+      );
+
+      if (!taskDefinitionsFile) {
+        return res.status(404).send();
+      }
+
+      let eventSerializer = DEFAULT_EVENT_SERIALIZER;
+
+      if (mode === "formatted") {
+        if (taskDefinitionsFile.taskDefinition.logEventSerializer) {
+          eventSerializer =
+            taskDefinitionsFile.taskDefinition.logEventSerializer;
+        } else {
+          return res
+            .send(400)
+            .send("This task does not have an event serializer defined");
+        }
+      }
 
       const {
         awsCredentials,
@@ -737,9 +770,10 @@ export class NiceCommander {
 
       const stream = new CloudWatchLogsReadableStream({
         awsRegion,
+        logStreamName,
+        eventSerializer,
         credentials: awsCredentials,
         logGroupName: awsCloudWatchLogsLogGroupName,
-        logStreamName: streamId,
       });
 
       res.contentType("text/plain");
@@ -847,7 +881,7 @@ export class NiceCommander {
         router.use(middleware);
 
         // Logs
-        router.get("/logs/raw/:streamId", this.getRawLogsHandler());
+        router.get("/logs/:taskName/:logStreamName", this.getRawLogsHandler());
 
         // UI
         const handler = await this.getNextJsRequestHandler(
