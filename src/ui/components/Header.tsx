@@ -1,8 +1,8 @@
-import React, { useContext } from "react";
+import React from "react";
 import Link from "next/link";
 import { Navbar, Alignment, Button } from "@blueprintjs/core";
+import getConfig from "next/config";
 
-import { AppContext } from "../context/AppContext";
 import gql from "graphql-tag";
 import { useQuery } from "react-apollo";
 
@@ -16,14 +16,13 @@ const query = gql`
 `;
 
 const Header: React.FC = () => {
-  const appContext = useContext(AppContext);
   const { data } = useQuery(query);
-
+  const { publicRuntimeConfig } = getConfig();
   return (
     <Navbar>
       <Navbar.Group align={Alignment.LEFT}>
         <Navbar.Heading>
-          <Link prefetch={false} as={appContext?.baseUrl} href={"/"}>
+          <Link prefetch={false} href={""}>
             <a>Nice Commander</a>
           </Link>
         </Navbar.Heading>

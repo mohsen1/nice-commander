@@ -1,13 +1,13 @@
 import React from "react";
 import { AppProps } from "next/app";
 import getConfig from "next/config";
+import Head from "next/head";
 
 import "normalize.css/normalize.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
 
 import GlobalStyles from "../themes/global";
-import { AppContext } from "../context/AppContext";
 
 const SetTheme = () => {
   React.useLayoutEffect(() => {
@@ -24,11 +24,14 @@ const NiceCommanderApp = (props: AppProps) => {
   const isServer = typeof window === "undefined";
 
   return (
-    <AppContext.Provider value={{ baseUrl: publicRuntimeConfig.baseUrl }}>
-      <GlobalStyles />
+    <>
+      <Head>
+        <base href={publicRuntimeConfig.baseUrl} />
+        <GlobalStyles />
+      </Head>
       {!isServer && <SetTheme />}
       <Component {...pageProps} />
-    </AppContext.Provider>
+    </>
   );
 };
 

@@ -6,7 +6,6 @@ import { Button } from "@blueprintjs/core";
 
 import Editor from "./Editor";
 import ErrorPresenter from "./ErrorPresentor";
-import { AppContext } from "../context/AppContext";
 
 const query = gql`
   query GetLogs($taskRunId: String!, $nextToken: String) {
@@ -32,7 +31,6 @@ const LogViewer: React.FC<LogViewerProps> = ({
   uniqueId,
 }) => {
   const pollInterval = 1_000;
-  const appContext = useContext(AppContext);
 
   const [nextToken, setNextToken] = useState<string | undefined>();
   const [isLive, goLive] = useState(isRunning);
@@ -84,11 +82,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
           padding: "10px 0",
         }}
       >
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href={`${appContext.baseUrl}/logs/raw/${uniqueId}`}
-        >
+        <a target="_blank" rel="noreferrer" href={`logs/raw/${uniqueId}`}>
           Get full raw logs
         </a>
         <Button

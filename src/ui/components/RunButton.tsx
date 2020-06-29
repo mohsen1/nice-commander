@@ -6,7 +6,6 @@ import Router from "next/router";
 import { Button, Classes, Dialog } from "@blueprintjs/core";
 
 import Editor from "./Editor";
-import { AppContext } from "../context/AppContext";
 
 const InvalidJSONError = styled.p`
   text-align: right;
@@ -28,7 +27,6 @@ const RunTaskPanel: React.FC<{ taskId: string; taskName: string }> = ({
   taskId,
   taskName,
 }) => {
-  const appContext = useContext(AppContext);
   const [editorValue, setEditorValue] = useState(defaultValue);
   const [isValidPayload, setIsValidPayload] = useState<boolean>(true);
 
@@ -79,13 +77,7 @@ const RunTaskPanel: React.FC<{ taskId: string; taskName: string }> = ({
                 taskId,
               },
             });
-            Router.push(
-              appContext.baseUrl +
-                "/tasks/" +
-                taskName +
-                "/runs/" +
-                data?.runTask?.id
-            );
+            Router.push("tasks/" + taskName + "/runs/" + data?.runTask?.id);
           }}
         />
       </Buttons>

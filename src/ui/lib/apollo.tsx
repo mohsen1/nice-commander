@@ -149,7 +149,7 @@ function createIsomorphLink(req: Express.Request) {
 
   if (isBrowser) {
     return new HttpLink({
-      uri: `${window.location.origin}${publicRuntimeConfig.baseUrl}/graphql`,
+      uri: `${window.document.baseURI}/graphql`,
       credentials: "same-origin",
       fetch,
     });

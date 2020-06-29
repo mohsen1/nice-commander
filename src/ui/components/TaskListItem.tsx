@@ -1,10 +1,9 @@
-import React, { useContext } from "react";
+import React from "react";
 import { styled } from "linaria/react";
 import Link from "next/link";
 import { Card, Elevation } from "@blueprintjs/core";
 
 import RunButton from "./RunButton";
-import { AppContext } from "../context/AppContext";
 import { displayTaskRunDuration } from "./utils/time";
 import {
   getForegroundColorForStatus,
@@ -59,14 +58,8 @@ const RunDot: React.FC<{ run: Run }> = ({ run }) => {
 };
 
 const TaskListItem: React.FC<Task> = ({ name, runs, id }) => {
-  const appContext = useContext(AppContext);
-
   return (
-    <Link
-      prefetch={false}
-      as={`${appContext?.baseUrl}/tasks/${name}`}
-      href={`${appContext?.baseUrl}/tasks/[taskName]`}
-    >
+    <Link prefetch={false} as={`tasks/${name}`} href={`tasks/[taskName]`}>
       <ItemRow elevation={Elevation.ZERO} interactive>
         <span>
           <RunButton taskId={id} taskName={name} text={``} />

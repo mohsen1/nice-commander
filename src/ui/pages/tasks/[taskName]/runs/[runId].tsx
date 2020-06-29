@@ -11,7 +11,6 @@ import ErrorPresenter from "../../../../components/ErrorPresentor";
 import RunButton from "../../../../components/RunButton";
 import { withApollo } from "../../../../lib/apollo";
 import { displayTaskRunDuration } from "../../../../components/utils/time";
-import { AppContext } from "../../../../context/AppContext";
 import LogViewer from "../../../../components/LogViewer";
 import { H3, H4 } from "../../../../components/headings";
 import { getBackgroundColorForStatus } from "../../../../components/utils/colors";
@@ -85,8 +84,6 @@ const TaskRunPage: React.FC = () => {
     stopPolling();
   }
 
-  const appContext = useContext(AppContext);
-
   return (
     <MainLayout>
       <Card
@@ -97,10 +94,7 @@ const TaskRunPage: React.FC = () => {
         }}
       >
         <H3>
-          <Link
-            prefetch={false}
-            href={`${appContext?.baseUrl}/tasks/${taskName}`}
-          >
+          <Link prefetch={false} href={`tasks/${taskName}`}>
             <a>
               {data?.taskRun?.state}: {taskName}
             </a>
