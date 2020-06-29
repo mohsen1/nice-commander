@@ -177,7 +177,8 @@ const TaskRunPage: React.FC = () => {
         <LogViewer
           taskRunId={runId as string}
           isRunning={data?.taskRun.state === "RUNNING"}
-          uniqueId={data?.taskRun.uniqueId}
+          logStreamName={data?.taskRun.uniqueId}
+          taskName={data?.taskRun.task.name}
         />
       </Card>
     </MainLayout>

@@ -23,13 +23,15 @@ const query = gql`
 interface LogViewerProps {
   taskRunId: string;
   isRunning?: boolean;
-  uniqueId: string;
+  logStreamName: string;
+  taskName: string;
 }
 
 const LogViewer: React.FC<LogViewerProps> = ({
   taskRunId,
   isRunning,
-  uniqueId,
+  logStreamName,
+  taskName,
 }) => {
   const pollInterval = 1_000;
   const appContext = useContext(AppContext);
@@ -77,13 +79,23 @@ const LogViewer: React.FC<LogViewerProps> = ({
           padding: "10px 0",
         }}
       >
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href={`${appContext.baseUrl}/logs/raw/${uniqueId}`}
-        >
-          Get full raw logs
-        </a>
+        <span>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href={`${appContext.baseUrl}/logs/${taskName}/${logStreamName}`}
+          >
+            Full logs
+          </a>
+          {" · "}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href={`${appContext.baseUrl}/logs/${taskName}/${logStreamName}?mode=formatted`}
+          >
+            Full logs (formatted)
+          </a>
+        </span>
         <Button
           intent={isLive ? "success" : "primary"}
           icon="refresh"
