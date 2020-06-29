@@ -25,6 +25,7 @@ import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
 import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import CloudWatchLogsWritableStream from "./CloudWatchLogsWritableStream";
 import CloudWatchLogsReadableStream from "./CloudWatchLogsReadableStream";
+import DEFAULT_EVENT_SERIALIZER from "./DEFAULT_EVENT_SERIALIZER";
 
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
@@ -281,6 +282,17 @@ export class NiceCommander {
         };
         return taskDefinitionFile;
       });
+  }
+
+  public getTaskLogEventSerializer(taskName: string) {
+    const taskDefinitionFile = this.taskDefinitionsFiles.find(
+      (tdf) => tdf.taskDefinition.name === taskName
+    );
+
+    return (
+      taskDefinitionFile?.taskDefinition.logEventSerializer ??
+      DEFAULT_EVENT_SERIALIZER
+    );
   }
 
   /**

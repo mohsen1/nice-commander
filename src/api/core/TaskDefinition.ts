@@ -1,4 +1,5 @@
 import timestring from "timestring";
+import { OutputLogEvent } from "aws-sdk/clients/cloudwatchlogs";
 
 /**
  * A NiceCommander task definition
@@ -52,6 +53,13 @@ export interface TaskDefinition {
    * @default "strict"
    */
   unhandledRejections?: "strict" | "warn" | "none";
+
+  /**
+   * Serialize logs from this task
+   *
+   * @param logEvent A log event item that includes log message and timestamp
+   */
+  logEventSerializer?(logEvent: OutputLogEvent): string;
 }
 
 export class TaskDefinitionValidationError extends Error {}

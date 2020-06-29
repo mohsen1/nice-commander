@@ -68,13 +68,6 @@ const LogViewer: React.FC<LogViewerProps> = ({
     return <ErrorPresenter error={error} />;
   }
 
-  const value = allLogs
-    .map(
-      ({ message, timestamp }) =>
-        `${new Date(timestamp).toLocaleTimeString()} ${message}`
-    )
-    .join("\n");
-
   return (
     <div>
       <div
@@ -112,7 +105,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
       <Editor
         readonly
         maxHeight={25}
-        value={value}
+        value={allLogs.map((l) => l.message).join("")}
         language="log"
         follow={isLive}
       />
