@@ -26,7 +26,7 @@ import { validateTaskDefinition, TaskDefinition } from "./TaskDefinition";
 import CloudWatchLogsWritableStream from "./CloudWatchLogsWritableStream";
 import CloudWatchLogsReadableStream from "./CloudWatchLogsReadableStream";
 import DEFAULT_EVENT_SERIALIZER from "./DEFAULT_EVENT_SERIALIZER";
-import task from "../../../examples/basic/tasks/asyncError";
+import { readSourceCode } from "./utils";
 
 /** User object for NiceCommander */
 export interface NiceCommanderUser {
@@ -188,7 +188,7 @@ export class NiceCommander {
       task.description =
         taskDefinitionFile.taskDefinition.description ?? "No description";
       task.schedule = taskDefinitionFile.taskDefinition.schedule || "manual";
-      task.code = fs.readFileSync(taskDefinitionFile.filePath).toString();
+      task.code = readSourceCode(taskDefinitionFile.filePath);
       task.unhandledRejections =
         taskDefinitionFile.taskDefinition.unhandledRejections;
 
