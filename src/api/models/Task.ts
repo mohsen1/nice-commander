@@ -5,6 +5,7 @@ import {
   Column,
   OneToMany,
   DeleteDateColumn,
+  Index,
 } from "typeorm-plus";
 
 import { TaskRun } from "./TaskRun";
@@ -21,6 +22,7 @@ export class Task {
 
   @Field({ description: "Task name (unique)" })
   @Column({ unique: true })
+  @Index()
   public name!: string;
 
   @Field({ description: "Task description" })

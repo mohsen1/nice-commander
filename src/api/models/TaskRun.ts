@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  Index,
 } from "typeorm-plus";
 
 import { Task } from "./Task";
@@ -103,6 +104,7 @@ export class TaskRun {
     description: "State of the TaskRun",
     defaultValue: TaskRunState.RUNNING,
   })
+  @Index()
   @Column({
     enum: TaskRunState,
     type: "enum",
