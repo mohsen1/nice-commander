@@ -5,6 +5,7 @@ export default css`
     :root {
       --color-background: white;
       --color-text: black;
+      --color-text-dim: #888;
       --color-accent-bold: #1252bd;
       --color-accent-normal: #c6dbff;
       --color-accent-dim: #e6f1f8;
@@ -28,6 +29,7 @@ export default css`
         /* Absolute black and white is too harsh */
         --color-background: #202020;
         --color-text: #d6d6d6;
+        --color-text-dim: #eee;
         --color-accent-bold: #4878c9;
         --color-accent-normal: #059aff;
         --color-accent-dim: #1e54ae;

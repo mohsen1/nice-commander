@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { styled } from "linaria/react";
 import Link from "next/link";
-import { Card, Elevation } from "@blueprintjs/core";
+import { Card, Elevation, Icon } from "@blueprintjs/core";
 
 import RunButton from "./RunButton";
 import { AppContext } from "../context/AppContext";
@@ -33,6 +33,7 @@ interface Run {
 interface Task {
   name: string;
   id: string;
+  schedule?: string;
   runs: Run[];
 }
 
@@ -53,12 +54,18 @@ const TaskTitle = styled.span`
   margin-left: 1rem;
 `;
 
+const TaskScheduleShortDescription = styled.span`
+  color: var(--color-text-dim);
+  margin-left: 0.5rem;
+  font-style: italic;
+`;
+
 const RunDot: React.FC<{ run: Run }> = ({ run }) => {
   const duration = displayTaskRunDuration(run.startTime, run.endTime);
   return <RunDotSpan status={run.state as Status}>{duration}</RunDotSpan>;
 };
 
-const TaskListItem: React.FC<Task> = ({ name, runs, id }) => {
+const TaskListItem: React.FC<Task> = ({ name, runs, id, schedule }) => {
   const appContext = useContext(AppContext);
 
   return (
@@ -71,6 +78,11 @@ const TaskListItem: React.FC<Task> = ({ name, runs, id }) => {
         <span>
           <RunButton taskId={id} taskName={name} text={``} />
           <TaskTitle>{name}</TaskTitle>
+          {schedule && (
+            <TaskScheduleShortDescription>
+              <Icon icon="history" iconSize={14} /> {schedule}
+            </TaskScheduleShortDescription>
+          )}
         </span>
         <span>
           {runs
