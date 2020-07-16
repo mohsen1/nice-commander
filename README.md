@@ -2,13 +2,7 @@
 
 ![CI](https://github.com/mohsen1/nice-commander/workflows/CI/badge.svg)
 
-NiceCommander run scheduled and one-off tasks in your Node.js server with a nice UI
-
-## Work in progress
-
-This project is not ready for any sort of use yet.
-
-See Github Project for 1.0 for more information.
+NiceCommander runs scheduled and one-off tasks in your Node.js server with a nice UI
 
 ## Quick Start
 
