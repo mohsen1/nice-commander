@@ -79,4 +79,11 @@ export interface Options {
    * @param req Express request object
    */
   getUser?(req: Express.Request): Promise<{ name?: string; email?: string }>;
+
+  /**
+   * Synchronize Database tables. This is useful for when NiceCommander is freshly
+   * installed or being updated. Run it only once and avoid running it in clusters
+   * @default false
+   */
+  synchronizeDB?: boolean;
 }

@@ -1,8 +1,8 @@
 import _ from "lodash";
 import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
-import { buildSchema } from "type-graphql";
-import { Container } from "typedi";
+import { buildSchema, ResolverData } from "type-graphql";
+import { Container, ContainerInstance } from "typedi";
 import { createConnection, Connection, Not, IsNull } from "typeorm-plus";
 import { GraphQLSchema } from "graphql";
 import { Router, Handler } from "express";
@@ -16,9 +16,9 @@ import Redlock, { Lock } from "redlock";
 import timestring from "timestring";
 import { promisify } from "util";
 import os from "os";
+import { v4 as uuidv4 } from "uuid";
 
 import { Options } from "./Options";
-import { rand } from "../resolvers/util";
 import { Task } from "../models/Task";
 import { TaskRun, TaskRunState } from "../models/TaskRun";
 import { TasksResolver, TaskRunResolver, RootResolver } from "../resolvers";
@@ -52,7 +52,7 @@ export interface NiceCommanderContext {
  */
 export class NiceCommander {
   public readonly NODE_ENV = process.env.NODE_ENV || "development";
-  private readonly DB_CONNECTION_NAME = `NiceCommander_${rand()}`;
+  private readonly DB_CONNECTION_NAME = `NiceCommander_${uuidv4()}`;
   private readonly REDIS_TASK_SCHEDULE_PREFIX = "NiceCommander:task:schedule:";
   private readonly REDIS_TASK_TIMEOUT_PREFIX = "NiceCommander:task:timeout:";
   private readonly REDIS_TASK_STOP_PREFIX = "NiceCommander:task:stop:";
@@ -143,7 +143,7 @@ export class NiceCommander {
     this.connectionPromise = createConnection({
       ...options.sqlConnectionOptions,
       name: this.DB_CONNECTION_NAME,
-      synchronize: true,
+      synchronize: this.options.synchronizeDB,
       logging: false,
       entities: [
         path.resolve(__dirname, "../models/Task.js"),
@@ -709,29 +709,58 @@ export class NiceCommander {
   private async getApolloServerMiddleware() {
     const connection = await this.connectionPromise;
 
-    Container.set({
-      id: "connection",
-      factory: () => connection,
-    });
-    Container.set({
-      id: "niceCommander",
-      factory: () => this,
-    });
-
+    type ApolloContext = {
+      container?: ContainerInstance;
+      requestId?: string;
+      viewer?: Promise<{
+        name?: string | undefined;
+        email?: string | undefined;
+      }>;
+    };
     this.schema = await buildSchema({
       resolvers: [RootResolver, TasksResolver, TaskRunResolver],
-      container: Container,
+      container: ({ context }: ResolverData<ApolloContext>) => {
+        if (!context.container) {
+          context.container = Container.of(context.requestId);
+          context.container.set([
+            { id: "connection", factory: () => connection },
+            { id: "niceCommander", factory: () => this },
+          ]);
+        }
+        return context.container;
+      },
     });
 
     const server = new ApolloServer({
       schema: this.schema,
       playground: true,
       introspection: true,
-      context: async (args) => {
-        const viewer = await this.options?.getUser?.(args?.req);
+      context: (args) => {
+        const viewer = this.options?.getUser?.(args?.req);
 
-        return { viewer };
+        const container = Container.of(args.req.uuid);
+        const context: ApolloContext = {
+          requestId: args.req.uuid,
+          container,
+          viewer,
+        };
+        container.set([
+          { id: "connection", factory: () => connection },
+          { id: "niceCommander", factory: () => this },
+        ]);
+
+        return context;
       },
+      plugins: [
+        {
+          requestDidStart: () => ({
+            willSendResponse(requestContext) {
+              // Dispose the scoped container to prevent memory leaks
+              Container.reset(requestContext.context.requestId);
+            },
+          }),
+        },
+      ],
     });
 
     return server.getMiddleware({ path: "/graphql" });
@@ -801,6 +830,7 @@ export class NiceCommander {
         },
       }),
     });
+    this.debug(`Preparing Next.js app`);
     await app.prepare();
     const handle = app.getRequestHandler();
     return handle;
@@ -813,15 +843,21 @@ export class NiceCommander {
 
     // Sync task definitions
     if (!this.options.readonlyMode) {
+      this.debug("Not in read only mode. Syncing Task Definitions");
       let syncLock: Lock | null = null;
       try {
         syncLock = await this.redLock.lock("NiceCommander:sync", 60_000);
         await this.sync(this.taskDefinitionsFiles);
-      } catch {
-        // ignore
+      } catch (e) {
+        if (e?.constructor?.name !== "ResourceAlreadyExistsException") {
+          this.debug("There was an issue synching task definition");
+          this.debug(e);
+        }
       } finally {
+        this.debug("Done synching task definitions. Releasing the sync lock");
         if (syncLock) {
           await this.redLock.unlock(syncLock);
+          this.debug("Done releasing the sync lock");
         }
       }
     }
@@ -851,9 +887,15 @@ export class NiceCommander {
   public getExpressMiddleware() {
     const router = Router();
 
+    router.use((req, res, next) => {
+      req.uuid = uuidv4();
+      next();
+    });
+
     // Before this is instance ready we simply return a plain response
-    router.all("*", (_, res, next) => {
+    router.all("*", (req, res, next) => {
       if (this.bootstrapError) {
+        this.debug(`Bootstrap has failed`, this.bootstrapError);
         return next(this.bootstrapError);
       }
 
@@ -877,6 +919,7 @@ export class NiceCommander {
       .catch((e) => (this.bootstrapError = e))
       .then(async () => {
         // API
+        this.debug("Getting Apollo middleware");
         const middleware = await this.getApolloServerMiddleware();
         router.use(middleware);
 
@@ -884,10 +927,13 @@ export class NiceCommander {
         router.get("/logs/:taskName/:logStreamName", this.getRawLogsHandler());
 
         // UI
+        this.debug("Getting Next.js Request Handler");
         const handler = await this.getNextJsRequestHandler(
           this.options.mountPath
         );
-        router.all("*", (req, res) => handler(req, res));
+        router.all("*", (req, res) => {
+          handler(req, res);
+        });
       });
 
     return router;
