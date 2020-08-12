@@ -6,6 +6,8 @@ declare global {
   namespace Express {
     interface Request {
       user?: NiceCommanderUser;
+      /** Request unique identifier */
+      uuid?: string;
     }
   }
 }

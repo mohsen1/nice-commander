@@ -160,8 +160,9 @@ function createIsomorphLink(req: Express.Request) {
 
   return new SchemaLink({
     schema: publicRuntimeConfig.schema,
-    context: async () => ({
-      viewer: await publicRuntimeConfig?.getUser?.(req),
+    context: () => ({
+      viewer: publicRuntimeConfig?.getUser?.(req),
+      requestId: req.uuid,
     }),
   });
 }

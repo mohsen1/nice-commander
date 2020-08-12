@@ -25,6 +25,8 @@ const { middleware } = createMiddleware({
     name: "cluster_nice_commander",
   },
   taskDefinitionsDirectory: path.resolve(__dirname, "tasks"),
+  // Synching DB in cluster mode can cause issues with TypeORM
+  synchronizeDB: false,
 });
 app.use(mountPath, middleware);
 
