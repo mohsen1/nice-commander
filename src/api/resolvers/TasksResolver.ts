@@ -66,7 +66,7 @@ export default class TasksResolver {
     skip: number,
 
     @Arg("order", (type) => String, {
-      defaultValue: "ASC",
+      defaultValue: "DESC",
       nullable: true,
       description: "Sorting order based on startTime. ASC or DESC",
     })
