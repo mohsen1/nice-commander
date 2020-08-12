@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import gql from "graphql-tag";
 import { useQuery } from "react-apollo";
-import { Card, Elevation } from "@blueprintjs/core";
+import { Card, Elevation, Button, ButtonGroup } from "@blueprintjs/core";
 import { styled } from "linaria/react";
 
 import MainLayout from "../../../layouts/MainLayout";
@@ -27,7 +27,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
   const router = useRouter();
   const { taskName } = router.query;
   const query = gql`
-    query GetTask {
+    query GetTask($runsPage: Int = 0, $runsPageSize: Int) {
       task(name: "${taskName}") {
         name
         description
@@ -35,7 +35,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
         schedule
         code
         timeoutAfterDescription
-        runs {
+        runs(skip: $runsPage, take: $runsPageSize) {
           id
           state
           startTime
@@ -45,7 +45,30 @@ const TaskPage: React.FC<TaskPageProps> = () => {
       }
     }
   `;
-  const { data, error } = useQuery(query, { pollInterval: 2000 });
+  type QueryType = {
+    task: {
+      name: string;
+      description: string;
+      id: string;
+      schedule: string;
+      code: string;
+      timeoutAfterDescription: string;
+      runs: Array<{
+        id: string;
+        state: string;
+        startTime: number;
+        endTime: number;
+        payload: string;
+      }>;
+    };
+  };
+  const PAGE_SIZE = 2;
+  const { data, error, fetchMore } = useQuery<QueryType>(query, {
+    variables: {
+      runsPage: 0,
+      runsPageSize: PAGE_SIZE,
+    },
+  });
 
   if (error) {
     return <ErrorPresenter error={error} />;
@@ -76,6 +99,35 @@ const TaskPage: React.FC<TaskPageProps> = () => {
       {data?.task?.runs?.map((run) => (
         <TaskRunRow key={run.startTime} taskName={data?.task?.name} {...run} />
       ))}
+      <ButtonGroup minimal>
+        <Button
+          className="bp3-minimal"
+          icon="bring-data"
+          onClick={() => {
+            fetchMore({
+              variables: {
+                runsPageSize: PAGE_SIZE,
+                runsPage: data?.task?.runs?.length ?? 0,
+              },
+              updateQuery: (prev, { fetchMoreResult }) => {
+                if (!fetchMoreResult) return prev;
+
+                return {
+                  task: {
+                    ...prev.task,
+                    runs: [
+                      ...(prev?.task?.runs ?? []),
+                      ...(fetchMoreResult?.task?.runs ?? []),
+                    ],
+                  },
+                };
+              },
+            });
+          }}
+        >
+          Load more
+        </Button>
+      </ButtonGroup>
     </MainLayout>
   );
 };
