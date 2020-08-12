@@ -13,7 +13,7 @@ const query = gql`
       name
       id
       schedule
-      runs {
+      runs(take: 5) {
         state
         startTime
         endTime

@@ -85,12 +85,9 @@ const TaskListItem: React.FC<Task> = ({ name, runs, id, schedule }) => {
           )}
         </span>
         <span>
-          {runs
-            .slice(0, 5)
-            .reverse()
-            .map((run) => (
-              <RunDot run={run} key={run.startTime} />
-            ))}
+          {runs.map((run) => (
+            <RunDot run={run} key={run.startTime} />
+          ))}
         </span>
       </ItemRow>
     </Link>

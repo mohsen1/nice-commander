@@ -104,12 +104,14 @@ export default class TasksRunResolver {
       nullable: false,
     })
     taskId: string,
+
     @Arg("take", (type) => Int, {
       defaultValue: 10,
       nullable: true,
       description: "How many to take",
     })
     take: number,
+
     @Arg("skip", (type) => Int, {
       defaultValue: 0,
       nullable: true,
@@ -119,11 +121,6 @@ export default class TasksRunResolver {
   ) {
     assertNumberArgumentIsInRange("take", take, 1, 500);
     assertNumberArgumentIsInRange("skip", skip, 0, Infinity);
-    const task = await this.taskRepository.findOne({ where: { id: taskId } });
-
-    if (!task) {
-      throw new NotFound(`Task with id ${taskId} was not found.`);
-    }
 
     const taskRuns = await this.repository.find({
       take,
@@ -138,16 +135,10 @@ export default class TasksRunResolver {
 
   @Query((returns) => TaskRun)
   async taskRun(@Arg("id", (type) => String) id: string) {
-    const taskRun = await this.repository.findOne({
+    return this.repository.findOneOrFail({
       where: { id },
       relations: ["task"],
     });
-
-    if (!taskRun) {
-      throw new NotFound(`TaskRun with id ${id} was not found`);
-    }
-
-    return taskRun;
   }
 
   @Query((returns) => LogEventsResponse)
