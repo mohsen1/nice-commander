@@ -1,7 +1,7 @@
 import React, { useState, useRef, useContext } from "react";
 import { useQuery } from "react-apollo";
 import gql from "graphql-tag";
-import { uniqBy, sortBy } from "lodash";
+import sortBy from "lodash/sortBy";
 import { Button } from "@blueprintjs/core";
 
 import Editor from "./Editor";
@@ -40,7 +40,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
   const [isLive, goLive] = useState(isRunning);
   const [allLogs, setLogs] = useState([]);
   const { error, stopPolling, startPolling, refetch } = useQuery(query, {
-    pollInterval,
+    pollInterval: isLive ? pollInterval : undefined,
     notifyOnNetworkStatusChange: true,
     get variables() {
       return { taskRunId, nextToken };
@@ -48,8 +48,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
     onCompleted(data) {
       setLogs((all) => {
         const combined = [...all, ...(data?.taskRunLogs?.events ?? [])];
-        const unique = uniqBy(combined, (l) => l.timestamp);
-        const sorted = sortBy(unique, (l) => l.timestamp);
+        const sorted = sortBy(combined, (l) => l.timestamp);
 
         return sorted;
       });
