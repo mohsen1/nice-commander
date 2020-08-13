@@ -780,15 +780,11 @@ export class NiceCommander {
 
       let eventSerializer = DEFAULT_EVENT_SERIALIZER;
 
-      if (mode === "formatted") {
-        if (taskDefinitionsFile.taskDefinition.logEventSerializer) {
-          eventSerializer =
-            taskDefinitionsFile.taskDefinition.logEventSerializer;
-        } else {
-          return res
-            .send(400)
-            .send("This task does not have an event serializer defined");
-        }
+      if (
+        mode === "formatted" &&
+        taskDefinitionsFile.taskDefinition.logEventSerializer
+      ) {
+        eventSerializer = taskDefinitionsFile.taskDefinition.logEventSerializer;
       }
 
       const {

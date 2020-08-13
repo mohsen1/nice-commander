@@ -109,7 +109,8 @@ export default class CloudWatchLogsWritableStream extends Writable {
         timestamp: Date.now(),
       }))
       .forEach((event) => this.eventsBuffer.push(event));
-    this.submitLogs();
-    callback(null);
+    this.submitLogs()
+      .then(() => callback(null))
+      .catch((err) => callback(err));
   }
 }
