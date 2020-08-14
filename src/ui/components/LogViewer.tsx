@@ -33,14 +33,14 @@ const LogViewer: React.FC<LogViewerProps> = ({
   logStreamName,
   taskName,
 }) => {
-  const pollInterval = 1_000;
+  const INTERVAL_TIME = 1_000;
   const appContext = useContext(AppContext);
 
   const [nextToken, setNextToken] = useState<string | undefined>();
   const [isLive, goLive] = useState(isRunning);
   const [allLogs, setLogs] = useState([]);
   const { error, stopPolling, startPolling, refetch } = useQuery(query, {
-    pollInterval: isLive ? pollInterval : undefined,
+    pollInterval: isLive ? INTERVAL_TIME : undefined,
     notifyOnNetworkStatusChange: true,
     get variables() {
       return { taskRunId, nextToken };
@@ -96,13 +96,13 @@ const LogViewer: React.FC<LogViewerProps> = ({
           </a>
         </span>
         <Button
-          intent={isLive ? "success" : "primary"}
+          intent={isLive ? "danger" : "success"}
           icon="refresh"
           onClick={() => {
             goLive((oldValue) => {
               const isLive = !oldValue;
               if (isLive) {
-                startPolling(pollInterval);
+                startPolling(INTERVAL_TIME);
               } else {
                 stopPolling();
               }

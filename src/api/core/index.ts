@@ -40,7 +40,7 @@ interface TaskDefinitionFile {
 }
 
 export interface NiceCommanderContext {
-  viewer?: NiceCommanderUser;
+  viewer?: Promise<NiceCommanderUser>;
 }
 
 /**

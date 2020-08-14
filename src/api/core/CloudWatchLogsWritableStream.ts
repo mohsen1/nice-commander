@@ -54,9 +54,17 @@ export default class CloudWatchLogsWritableStream extends Writable {
         .promise();
 
       this.logStreamIsCreated = true;
-      this.submitLogs();
     } catch (err) {
-      console.error(err);
+      if (err?.constructor?.name === "ResourceAlreadyExistsException") {
+        this.logStreamIsCreated = true;
+      } else {
+        throw err;
+      }
+    } finally {
+      if (this.logStreamIsCreated) {
+        // eslint-disable-next-line no-unsafe-finally
+        return this.submitLogs();
+      }
     }
   }
 

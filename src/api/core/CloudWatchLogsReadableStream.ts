@@ -50,6 +50,7 @@ export default class CloudWatchLogsReadableStream extends Readable {
           logGroupName,
           logStreamName,
           nextToken: sequenceToken,
+          limit: 10_000,
           startFromHead: sequenceToken === undefined,
         })
         .promise();

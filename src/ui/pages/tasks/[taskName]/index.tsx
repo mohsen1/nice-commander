@@ -62,7 +62,7 @@ const TaskPage: React.FC<TaskPageProps> = () => {
       }>;
     };
   };
-  const PAGE_SIZE = 2;
+  const PAGE_SIZE = 5;
   const { data, error, fetchMore } = useQuery<QueryType>(query, {
     variables: {
       runsPage: 0,

@@ -73,14 +73,15 @@ export default class TasksRunResolver {
       throw new Error(`Task with ID ${id} was not found`);
     }
 
+    const viewer = await ctx?.viewer;
     const taskRun = new TaskRun();
     taskRun.task = task;
     taskRun.startTime = Date.now();
     taskRun.invocationSource = TaskRun.InvocationSource.MANUAL;
     taskRun.state = TaskRun.TaskRunState.RUNNING;
     taskRun.payload = payload;
-    taskRun.runnerEmail = ctx?.viewer?.email;
-    taskRun.runnerName = ctx?.viewer?.name;
+    taskRun.runnerEmail = viewer?.email;
+    taskRun.runnerName = viewer?.name;
     taskRun.hostname = os.hostname();
     taskRun.freemem = os.freemem();
     taskRun.loadavg = os.loadavg().join(", ");
@@ -148,7 +149,14 @@ export default class TasksRunResolver {
       description: "Next token",
       nullable: true,
     })
-    nextToken: string
+    nextToken: string,
+
+    @Arg("limit", (type) => Int, {
+      description: "How many lines to get. Defaults to maximum (10k lines)",
+      nullable: true,
+      defaultValue: 10_000,
+    })
+    limit: number
   ) {
     const taskRun = await this.repository.findOne({
       where: { id },
@@ -164,29 +172,41 @@ export default class TasksRunResolver {
       credentials: this.niceCommander.options.awsCredentials,
     });
 
-    const logsResponse = await cloudWatchLogs
-      .getLogEvents({
-        logGroupName: this.niceCommander.options.awsCloudWatchLogsLogGroupName,
-        logStreamName: taskRun.getUniqueId(
-          this.niceCommander.NODE_ENV,
-          String(this.niceCommander.options.sqlConnectionOptions.database)
-        ),
-        startFromHead: !nextToken,
-        nextToken,
-      })
-      .promise();
+    try {
+      const logsResponse = await cloudWatchLogs
+        .getLogEvents({
+          logGroupName: this.niceCommander.options
+            .awsCloudWatchLogsLogGroupName,
+          logStreamName: taskRun.getUniqueId(
+            this.niceCommander.NODE_ENV,
+            String(this.niceCommander.options.sqlConnectionOptions.database)
+          ),
+          limit,
+          startFromHead: !nextToken,
+          nextToken,
+        })
+        .promise();
 
-    const logEventSerializer = this.niceCommander.getTaskLogEventSerializer(
-      taskRun.task.name
-    );
+      const logEventSerializer = this.niceCommander.getTaskLogEventSerializer(
+        taskRun.task.name
+      );
 
-    return {
-      ...logsResponse,
-      events: logsResponse.events?.map((event) => ({
-        ...event,
-        message: logEventSerializer(event),
-      })),
-    };
+      return {
+        ...logsResponse,
+        events: logsResponse.events?.map((event) => ({
+          ...event,
+          message: logEventSerializer(event),
+        })),
+      };
+    } catch (err) {
+      if (err?.stack?.startsWith("ResourceNotFoundException")) {
+        return {
+          events: [],
+        };
+      }
+
+      throw err;
+    }
   }
 
   @Mutation((returns) => Boolean)
