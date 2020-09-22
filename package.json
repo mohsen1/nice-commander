@@ -54,7 +54,7 @@
     "redlock": "^4.1.0",
     "reflect-metadata": "^0.1.13",
     "timestring": "^6.0.0",
-    "type-graphql": "^0.17.5",
+    "type-graphql": "^1.0.0",
     "typedi": "^0.8.0",
     "typeorm-plus": "^0.1.2",
     "uuid": "^8.3.0"
