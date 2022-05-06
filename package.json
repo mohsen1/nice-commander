@@ -80,7 +80,7 @@
     "eslint": "^7.1.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-react": "^7.20.0",
-    "jest": "^26.0.1",
+    "jest": "^28.1.0",
     "monaco-editor": "^0.20.0",
     "nodemon": "^2.0.2",
     "pm2": "^4.4.0",
